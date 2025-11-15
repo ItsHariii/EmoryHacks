@@ -1,0 +1,38 @@
+{
+  "name": "aurea",
+  "version": "1.0.0",
+  "description": "Pregnancy Nutrition & Wellness Platform",
+  "private": true,
+  "scripts": {
+    "setup": "bash setup.sh",
+    "setup:windows": "setup.bat",
+    "backend": "cd backend && source venv/bin/activate && uvicorn app.main:app --reload",
+    "frontend": "cd aurea-frontend && npm start",
+    "backend:test": "cd backend && source venv/bin/activate && pytest",
+    "frontend:test": "cd aurea-frontend && npm test",
+    "backend:format": "cd backend && source venv/bin/activate && black . && isort .",
+    "backend:lint": "cd backend && source venv/bin/activate && flake8 app/ && mypy app/",
+    "backend:migrate": "cd backend && source venv/bin/activate && alembic upgrade head",
+    "backend:migrate:create": "cd backend && source venv/bin/activate && alembic revision --autogenerate -m",
+    "docs": "echo 'Backend API docs: http://localhost:8000/docs' && echo 'Frontend: See aurea-frontend/README.md'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/aurea.git"
+  },
+  "keywords": [
+    "pregnancy",
+    "nutrition",
+    "wellness",
+    "health",
+    "mobile-app",
+    "react-native",
+    "fastapi"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
