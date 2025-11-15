@@ -1,0 +1,618 @@
+{
+  "raw_salmon": {
+    "status": "avoid",
+    "notes": "Avoid raw salmon due to listeria risk"
+  },
+  "raw_tuna": {
+    "status": "avoid", 
+    "notes": "High mercury content and listeria risk"
+  },
+  "raw_fish": {
+    "status": "avoid",
+    "notes": "Risk of foodborne illness from raw fish"
+  },
+  "sushi": {
+    "status": "avoid",
+    "notes": "Contains raw fish with listeria and mercury risks"
+  },
+  "raw_shellfish": {
+    "status": "avoid",
+    "notes": "High risk of bacterial contamination"
+  },
+  "raw_oysters": {
+    "status": "avoid",
+    "notes": "Risk of vibrio and other bacterial infections"
+  },
+  "unpasteurized_cheese": {
+    "status": "avoid",
+    "notes": "Risk of listeria from soft unpasteurized cheeses"
+  },
+  "blue_cheese": {
+    "status": "avoid",
+    "notes": "Soft cheese with listeria risk"
+  },
+  "feta_cheese": {
+    "status": "limited",
+    "notes": "Safe if pasteurized, check label"
+  },
+  "brie": {
+    "status": "avoid",
+    "notes": "Soft cheese with potential listeria contamination"
+  },
+  "camembert": {
+    "status": "avoid",
+    "notes": "Soft cheese with listeria risk"
+  },
+  "raw_eggs": {
+    "status": "avoid",
+    "notes": "Risk of salmonella infection"
+  },
+  "undercooked_eggs": {
+    "status": "avoid",
+    "notes": "Ensure eggs are fully cooked to prevent salmonella"
+  },
+  "raw_meat": {
+    "status": "avoid",
+    "notes": "Risk of toxoplasmosis and bacterial infection"
+  },
+  "undercooked_meat": {
+    "status": "avoid",
+    "notes": "Ensure meat is fully cooked to safe temperatures"
+  },
+  "deli_meat": {
+    "status": "limited",
+    "notes": "Heat to steaming before eating to prevent listeria"
+  },
+  "hot_dogs": {
+    "status": "limited",
+    "notes": "Heat thoroughly before eating"
+  },
+  "pate": {
+    "status": "avoid",
+    "notes": "Risk of listeria contamination"
+  },
+  "liver": {
+    "status": "limited",
+    "notes": "High vitamin A content, limit consumption"
+  },
+  "caffeine": {
+    "status": "limited",
+    "notes": "Limit to <200mg per day during pregnancy"
+  },
+  "coffee": {
+    "status": "limited",
+    "notes": "Limit to 1-2 cups per day (under 200mg caffeine)"
+  },
+  "tea": {
+    "status": "limited",
+    "notes": "Moderate caffeine content, limit intake"
+  },
+  "green_tea": {
+    "status": "limited",
+    "notes": "Contains caffeine, limit to 1-2 cups daily"
+  },
+  "energy_drinks": {
+    "status": "avoid",
+    "notes": "High caffeine and other stimulants"
+  },
+  "alcohol": {
+    "status": "avoid",
+    "notes": "No safe level of alcohol during pregnancy"
+  },
+  "wine": {
+    "status": "avoid",
+    "notes": "Alcohol can cause fetal alcohol syndrome"
+  },
+  "beer": {
+    "status": "avoid",
+    "notes": "Contains alcohol which is harmful during pregnancy"
+  },
+  "unpasteurized_milk": {
+    "status": "avoid",
+    "notes": "Risk of listeria and other bacterial infections"
+  },
+  "unpasteurized_juice": {
+    "status": "avoid",
+    "notes": "Risk of bacterial contamination"
+  },
+  "herbal_tea": {
+    "status": "limited",
+    "notes": "Some herbs may be unsafe, consult healthcare provider"
+  },
+  "ginger": {
+    "status": "safe",
+    "notes": "Generally safe and may help with nausea"
+  },
+  "turmeric": {
+    "status": "limited",
+    "notes": "Safe in food amounts, avoid supplements"
+  },
+  "cinnamon": {
+    "status": "safe",
+    "notes": "Safe in normal culinary amounts"
+  },
+  "spinach": {
+    "status": "safe",
+    "notes": "Rich in folate, generally safe and beneficial"
+  },
+  "kale": {
+    "status": "safe",
+    "notes": "Excellent source of folate and iron"
+  },
+  "broccoli": {
+    "status": "safe",
+    "notes": "High in folate, vitamin C, and fiber"
+  },
+  "carrots": {
+    "status": "safe",
+    "notes": "Good source of beta-carotene and fiber"
+  },
+  "sweet_potato": {
+    "status": "safe",
+    "notes": "Rich in vitamin A and fiber"
+  },
+  "avocado": {
+    "status": "safe",
+    "notes": "Healthy fats and folate"
+  },
+  "banana": {
+    "status": "safe",
+    "notes": "Good source of potassium and vitamin B6"
+  },
+  "apple": {
+    "status": "safe",
+    "notes": "High in fiber and vitamin C"
+  },
+  "orange": {
+    "status": "safe",
+    "notes": "Excellent source of vitamin C and folate"
+  },
+  "berries": {
+    "status": "safe",
+    "notes": "Rich in antioxidants and vitamin C"
+  },
+  "strawberries": {
+    "status": "safe",
+    "notes": "High in vitamin C and folate"
+  },
+  "blueberries": {
+    "status": "safe",
+    "notes": "Rich in antioxidants and fiber"
+  },
+  "salmon": {
+    "status": "safe",
+    "notes": "Low mercury fish, good source of omega-3s when cooked"
+  },
+  "sardines": {
+    "status": "safe",
+    "notes": "Low mercury, high in omega-3 fatty acids"
+  },
+  "anchovies": {
+    "status": "safe",
+    "notes": "Low mercury fish, safe when cooked"
+  },
+  "cod": {
+    "status": "safe",
+    "notes": "Low mercury white fish"
+  },
+  "tilapia": {
+    "status": "safe",
+    "notes": "Low mercury fish option"
+  },
+  "catfish": {
+    "status": "safe",
+    "notes": "Low mercury freshwater fish"
+  },
+  "shrimp": {
+    "status": "safe",
+    "notes": "Low mercury shellfish when fully cooked"
+  },
+  "crab": {
+    "status": "safe",
+    "notes": "Low mercury shellfish when fully cooked"
+  },
+  "lobster": {
+    "status": "limited",
+    "notes": "Moderate mercury levels, limit consumption"
+  },
+  "shark": {
+    "status": "avoid",
+    "notes": "Very high mercury content"
+  },
+  "swordfish": {
+    "status": "avoid",
+    "notes": "High mercury levels"
+  },
+  "king_mackerel": {
+    "status": "avoid",
+    "notes": "High mercury content"
+  },
+  "tilefish": {
+    "status": "avoid",
+    "notes": "High mercury levels"
+  },
+  "tuna": {
+    "status": "limited",
+    "notes": "Limit to 6oz per week due to mercury content"
+  },
+  "albacore_tuna": {
+    "status": "limited",
+    "notes": "Higher mercury than light tuna, limit consumption"
+  },
+  "chicken": {
+    "status": "safe",
+    "notes": "Lean protein when fully cooked"
+  },
+  "turkey": {
+    "status": "safe",
+    "notes": "Good protein source when fully cooked"
+  },
+  "beef": {
+    "status": "safe",
+    "notes": "Good iron source when fully cooked"
+  },
+  "pork": {
+    "status": "safe",
+    "notes": "Safe when cooked to proper temperature"
+  },
+  "lamb": {
+    "status": "safe",
+    "notes": "Safe when fully cooked"
+  },
+  "eggs": {
+    "status": "safe",
+    "notes": "Excellent protein when fully cooked"
+  },
+  "pasteurized_cheese": {
+    "status": "safe",
+    "notes": "Safe cheese option during pregnancy"
+  },
+  "cheddar": {
+    "status": "safe",
+    "notes": "Hard cheese, generally pasteurized and safe"
+  },
+  "mozzarella": {
+    "status": "safe",
+    "notes": "Safe when pasteurized"
+  },
+  "parmesan": {
+    "status": "safe",
+    "notes": "Hard aged cheese, very safe"
+  },
+  "swiss_cheese": {
+    "status": "safe",
+    "notes": "Hard cheese, typically safe"
+  },
+  "yogurt": {
+    "status": "safe",
+    "notes": "Good source of calcium and probiotics"
+  },
+  "milk": {
+    "status": "safe",
+    "notes": "Pasteurized milk is safe and nutritious"
+  },
+  "beans": {
+    "status": "safe",
+    "notes": "Excellent source of protein and folate"
+  },
+  "lentils": {
+    "status": "safe",
+    "notes": "High in protein, iron, and folate"
+  },
+  "chickpeas": {
+    "status": "safe",
+    "notes": "Good source of protein and fiber"
+  },
+  "quinoa": {
+    "status": "safe",
+    "notes": "Complete protein and good source of folate"
+  },
+  "brown_rice": {
+    "status": "safe",
+    "notes": "Whole grain with B vitamins"
+  },
+  "oats": {
+    "status": "safe",
+    "notes": "High fiber whole grain"
+  },
+  "whole_wheat": {
+    "status": "safe",
+    "notes": "Good source of B vitamins and fiber"
+  },
+  "nuts": {
+    "status": "safe",
+    "notes": "Healthy fats and protein, unless allergic"
+  },
+  "almonds": {
+    "status": "safe",
+    "notes": "Good source of vitamin E and healthy fats"
+  },
+  "walnuts": {
+    "status": "safe",
+    "notes": "Rich in omega-3 fatty acids"
+  },
+  "peanuts": {
+    "status": "safe",
+    "notes": "Safe unless allergic, good protein source"
+  },
+  "sunflower_seeds": {
+    "status": "safe",
+    "notes": "Good source of vitamin E"
+  },
+  "chia_seeds": {
+    "status": "safe",
+    "notes": "Rich in omega-3s and fiber"
+  },
+  "flax_seeds": {
+    "status": "safe",
+    "notes": "Good source of omega-3 fatty acids"
+  },
+  "olive_oil": {
+    "status": "safe",
+    "notes": "Healthy monounsaturated fats"
+  },
+  "coconut_oil": {
+    "status": "safe",
+    "notes": "Safe in moderation"
+  },
+  "butter": {
+    "status": "safe",
+    "notes": "Safe in moderation when pasteurized"
+  },
+  "honey": {
+    "status": "safe",
+    "notes": "Safe for pregnant women (botulism risk only for infants)"
+  },
+  "garlic": {
+    "status": "safe",
+    "notes": "Safe and may have health benefits"
+  },
+  "onion": {
+    "status": "safe",
+    "notes": "Safe and nutritious"
+  },
+  "tomato": {
+    "status": "safe",
+    "notes": "Rich in lycopene and vitamin C"
+  },
+  "bell_pepper": {
+    "status": "safe",
+    "notes": "High in vitamin C"
+  },
+  "cucumber": {
+    "status": "safe",
+    "notes": "Hydrating and low calorie"
+  },
+  "lettuce": {
+    "status": "safe",
+    "notes": "Safe when properly washed"
+  },
+  "cabbage": {
+    "status": "safe",
+    "notes": "Good source of vitamin C"
+  },
+  "cauliflower": {
+    "status": "safe",
+    "notes": "Rich in folate and vitamin C"
+  },
+  "zucchini": {
+    "status": "safe",
+    "notes": "Low calorie, good source of vitamins"
+  },
+  "eggplant": {
+    "status": "safe",
+    "notes": "Safe when cooked properly"
+  },
+  "mushrooms": {
+    "status": "safe",
+    "notes": "Safe when cooked, avoid wild varieties"
+  },
+  "asparagus": {
+    "status": "safe",
+    "notes": "Excellent source of folate"
+  },
+  "artichoke": {
+    "status": "safe",
+    "notes": "High in fiber and folate"
+  },
+  "beets": {
+    "status": "safe",
+    "notes": "Good source of folate and fiber"
+  },
+  "celery": {
+    "status": "safe",
+    "notes": "Low calorie, wash thoroughly"
+  },
+  "corn": {
+    "status": "safe",
+    "notes": "Good source of fiber"
+  },
+  "peas": {
+    "status": "safe",
+    "notes": "High in protein and folate"
+  },
+  "potato": {
+    "status": "safe",
+    "notes": "Good source of potassium when cooked"
+  },
+  "pumpkin": {
+    "status": "safe",
+    "notes": "Rich in beta-carotene"
+  },
+  "squash": {
+    "status": "safe",
+    "notes": "Good source of vitamins A and C"
+  },
+  "watermelon": {
+    "status": "safe",
+    "notes": "Hydrating and rich in lycopene"
+  },
+  "cantaloupe": {
+    "status": "safe",
+    "notes": "High in vitamin A and C"
+  },
+  "honeydew": {
+    "status": "safe",
+    "notes": "Good source of vitamin C"
+  },
+  "grapes": {
+    "status": "safe",
+    "notes": "Safe when washed thoroughly"
+  },
+  "pineapple": {
+    "status": "safe",
+    "notes": "Rich in vitamin C, safe in normal amounts"
+  },
+  "mango": {
+    "status": "safe",
+    "notes": "High in vitamin A and C"
+  },
+  "papaya": {
+    "status": "limited",
+    "notes": "Ripe papaya is safe, avoid unripe papaya"
+  },
+  "kiwi": {
+    "status": "safe",
+    "notes": "Excellent source of vitamin C"
+  },
+  "peach": {
+    "status": "safe",
+    "notes": "Good source of vitamin A"
+  },
+  "plum": {
+    "status": "safe",
+    "notes": "Safe and nutritious"
+  },
+  "cherry": {
+    "status": "safe",
+    "notes": "Rich in antioxidants"
+  },
+  "cranberries": {
+    "status": "safe",
+    "notes": "May help prevent UTIs"
+  },
+  "pomegranate": {
+    "status": "safe",
+    "notes": "Rich in antioxidants"
+  },
+  "coconut": {
+    "status": "safe",
+    "notes": "Safe and hydrating"
+  },
+  "dates": {
+    "status": "safe",
+    "notes": "High in fiber and potassium"
+  },
+  "figs": {
+    "status": "safe",
+    "notes": "Good source of calcium and fiber"
+  },
+  "raisins": {
+    "status": "safe",
+    "notes": "High in iron and fiber"
+  },
+  "prunes": {
+    "status": "safe",
+    "notes": "High in fiber, may help with constipation"
+  },
+  "basil": {
+    "status": "safe",
+    "notes": "Safe in culinary amounts"
+  },
+  "oregano": {
+    "status": "safe",
+    "notes": "Safe as seasoning"
+  },
+  "thyme": {
+    "status": "safe",
+    "notes": "Safe in cooking amounts"
+  },
+  "rosemary": {
+    "status": "safe",
+    "notes": "Safe in culinary quantities"
+  },
+  "parsley": {
+    "status": "safe",
+    "notes": "Rich in folate and vitamin C"
+  },
+  "cilantro": {
+    "status": "safe",
+    "notes": "Safe and nutritious herb"
+  },
+  "mint": {
+    "status": "safe",
+    "notes": "Safe and may help with nausea"
+  },
+  "dill": {
+    "status": "safe",
+    "notes": "Safe in culinary amounts"
+  },
+  "sage": {
+    "status": "limited",
+    "notes": "Safe in small culinary amounts, avoid large quantities"
+  },
+  "black_pepper": {
+    "status": "safe",
+    "notes": "Safe as seasoning"
+  },
+  "salt": {
+    "status": "limited",
+    "notes": "Use in moderation, watch sodium intake"
+  },
+  "vanilla": {
+    "status": "safe",
+    "notes": "Safe flavoring in normal amounts"
+  },
+  "lemon": {
+    "status": "safe",
+    "notes": "High in vitamin C, may help with nausea"
+  },
+  "lime": {
+    "status": "safe",
+    "notes": "Rich in vitamin C"
+  },
+  "vinegar": {
+    "status": "safe",
+    "notes": "Safe in normal culinary amounts"
+  },
+  "baking_soda": {
+    "status": "safe",
+    "notes": "Safe in baking applications"
+  },
+  "cornstarch": {
+    "status": "safe",
+    "notes": "Safe thickening agent"
+  },
+  "flour": {
+    "status": "safe",
+    "notes": "Safe when used in cooked products"
+  },
+  "sugar": {
+    "status": "limited",
+    "notes": "Safe in moderation, monitor intake"
+  },
+  "brown_sugar": {
+    "status": "limited",
+    "notes": "Safe in moderation"
+  },
+  "maple_syrup": {
+    "status": "limited",
+    "notes": "Natural sweetener, use in moderation"
+  },
+  "molasses": {
+    "status": "safe",
+    "notes": "Good source of iron when used sparingly"
+  },
+  "cocoa": {
+    "status": "limited",
+    "notes": "Contains caffeine, consume in moderation"
+  },
+  "dark_chocolate": {
+    "status": "limited",
+    "notes": "Contains caffeine, limit intake"
+  },
+  "milk_chocolate": {
+    "status": "limited",
+    "notes": "Contains caffeine and sugar, consume moderately"
+  }
+}

@@ -1,0 +1,789 @@
+Objective
+
+Refactor the /food/search endpoint + caching logic to:
+
+Correctly distinguish packaged foods vs ingredients.
+
+Fetch full macros, micros, brand, and safety data.
+
+Use Spoonacular first, fallback to USDA FDC if missing.
+
+Cache complete data in Supabase to prevent repeated “Unknown Food” results.
+
+✅ Step 1 — Classification Fix
+
+Update spoonacular_service.classify_and_search(query) to:
+
+Hit Spoonacular's search endpoint.
+
+Use response metadata to decide between:
+
+Packaged products → /food/products/{id}
+
+Raw ingredients → /food/ingredients/{id}/information
+
+If Spoonacular returns no results, fallback to USDA search.
+
+✅ Step 2 — Unified Nutrition Fetcher
+
+Create a helper in spoonacular_service:
+
+async def fetch_nutrition(food_id: int, search_type: str):
+    if search_type == "product":
+        return await get_product_information(food_id)
+    return await get_food_information(food_id, amount=100, unit="g")
+
+
+This ensures we always call the right endpoint.
+
+✅ Step 3 — Improved create_and_cache_food
+
+Update create_and_cache_food to:
+
+Always populate:
+
+Name / Brand / Category
+
+Macros: calories, protein, carbs, fat, fiber, sugar.
+
+Micros: JSONB nutrients.
+
+Safety status via pregnancy_safety_service.
+
+Source: "spoonacular", "usda", or "manual".
+
+If Spoonacular data is incomplete → call USDA automatically.
+
+✅ Step 4 — Supabase Table Changes
+
+Your current foods table is missing some practical fields for packaged vs ingredient distinction.
+Update schema:
+
+ALTER TABLE foods
+ADD COLUMN spoonacular_id BIGINT,
+ADD COLUMN fdc_id BIGINT,
+ADD COLUMN source TEXT CHECK (source IN ('spoonacular', 'usda', 'manual')),
+ADD COLUMN ingredients TEXT[],
+ADD COLUMN allergens TEXT[],
+ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
+
+Step 5 — Safety Integration
+
+Pregnancy safety checks should:
+
+Use Spoonacular's ingredients[].safety_level when available.
+
+Cross-check USDA flagged ingredients.
+
+Cache results per ingredient in a separate ingredients table:
+
+CREATE TABLE ingredients (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    pregnancy_safety TEXT CHECK (pregnancy_safety IN ('safe', 'limited', 'avoid')),
+    safety_notes TEXT,
+    nutrients JSONB,
+    source TEXT
+);
+
+✅ Step 6 — Caching Strategy
+
+Before hitting any API:
+
+SELECT * FROM foods WHERE LOWER(name) = LOWER($1)
+OR spoonacular_id = $2 OR fdc_id = $3
+
+
+If exists → return cached result.
+
+Else → fetch, store, return.
+
+✅ Step 7 — Example Flow
+User searches for "Snickers Minis":
+
+Search local DB → not found.
+
+Classify via Spoonacular → returns product.
+
+Fetch from /food/products/{id} → get:
+
+Brand, ingredients, macros, micros, badges.
+
+Run pregnancy safety check.
+
+Cache full entry in foods.
+
+Next time → instant response, no API call.
+Documentation:
+Get Ingredient Information
+Use an ingredient id to get all available information about an ingredient, such as its image and supermarket aisle.
+
+GET https://api.spoonacular.com/food/ingredients/{id}/information
+Headers
+Response Headers:
+
+Content-Type: application/json
+Parameters
+Name	Type	Example	Description
+id	number	9266	The ingredient id.
+amount	number	150	The amount of this ingredient.
+unit	string	grams	The unit for the given amount.
+locale	string	en_US	The display name of the returned category, supported is en_US (for American English) and en_GB (for British English).
+Example Request and Response
+GET https://api.spoonacular.com/food/ingredients/9266/information?amount=1
+{
+    "id": 9266,
+    "original": "pineapples",
+    "originalName": "pineapples",
+    "name": "pineapples",
+    "amount": 1.0,
+    "unit": "",
+    "unitShort": "",
+    "unitLong": "",
+    "possibleUnits": [
+        "piece",
+        "slice",
+        "fruit",
+        "g",
+        "oz",
+        "cup",
+        "serving"
+    ],
+    "estimatedCost": {
+        "value": 299.0,
+        "unit": "US Cents"
+    },
+    "consistency": "solid",
+    "shoppingListUnits": [
+        "pieces"
+    ],
+    "aisle": "Produce",
+    "image": "pineapple.jpg",
+    "meta": [],
+    "nutrition": {
+        "nutrients": [
+            {
+                "name": "Calories",
+                "amount": 452.5,
+                "unit": "cal",
+                "percentOfDailyNeeds": 22.63
+            },
+            {
+                "name": "Fat",
+                "amount": 1.09,
+                "unit": "g",
+                "percentOfDailyNeeds": 1.67
+            },
+            {
+                "name": "Saturated Fat",
+                "amount": 0.08,
+                "unit": "g",
+                "percentOfDailyNeeds": 0.51
+            },
+            {
+                "name": "Carbohydrates",
+                "amount": 118.74,
+                "unit": "g",
+                "percentOfDailyNeeds": 39.58
+            },
+            {
+                "name": "Net Carbohydrates",
+                "amount": 106.07,
+                "unit": "g",
+                "percentOfDailyNeeds": 38.57
+            },
+            {
+                "name": "Sugar",
+                "amount": 89.14,
+                "unit": "g",
+                "percentOfDailyNeeds": 99.05
+            },
+            {
+                "name": "Cholesterol",
+                "amount": 0.0,
+                "unit": "mg",
+                "percentOfDailyNeeds": 0.0
+            },
+            {
+                "name": "Sodium",
+                "amount": 9.05,
+                "unit": "mg",
+                "percentOfDailyNeeds": 0.39
+            },
+            {
+                "name": "Protein",
+                "amount": 4.89,
+                "unit": "g",
+                "percentOfDailyNeeds": 9.77
+            },
+            {
+                "name": "Vitamin C",
+                "amount": 432.59,
+                "unit": "mg",
+                "percentOfDailyNeeds": 524.35
+            },
+            {
+                "name": "Manganese",
+                "amount": 8.39,
+                "unit": "mg",
+                "percentOfDailyNeeds": 419.47
+            },
+            {
+                "name": "Fiber",
+                "amount": 12.67,
+                "unit": "g",
+                "percentOfDailyNeeds": 50.68
+            },
+            {
+                "name": "Vitamin B6",
+                "amount": 1.01,
+                "unit": "mg",
+                "percentOfDailyNeeds": 50.68
+            },
+            {
+                "name": "Copper",
+                "amount": 1.0,
+                "unit": "mg",
+                "percentOfDailyNeeds": 49.78
+            },
+            {
+                "name": "Vitamin B1",
+                "amount": 0.72,
+                "unit": "mg",
+                "percentOfDailyNeeds": 47.66
+            },
+            {
+                "name": "Folate",
+                "amount": 162.9,
+                "unit": "µg",
+                "percentOfDailyNeeds": 40.73
+            },
+            {
+                "name": "Potassium",
+                "amount": 986.45,
+                "unit": "mg",
+                "percentOfDailyNeeds": 28.18
+            },
+            {
+                "name": "Magnesium",
+                "amount": 108.6,
+                "unit": "mg",
+                "percentOfDailyNeeds": 27.15
+            },
+            {
+                "name": "Vitamin B3",
+                "amount": 4.53,
+                "unit": "mg",
+                "percentOfDailyNeeds": 22.63
+            },
+            {
+                "name": "Vitamin B5",
+                "amount": 1.93,
+                "unit": "mg",
+                "percentOfDailyNeeds": 19.28
+            },
+            {
+                "name": "Vitamin B2",
+                "amount": 0.29,
+                "unit": "mg",
+                "percentOfDailyNeeds": 17.04
+            },
+            {
+                "name": "Iron",
+                "amount": 2.62,
+                "unit": "mg",
+                "percentOfDailyNeeds": 14.58
+            },
+            {
+                "name": "Calcium",
+                "amount": 117.65,
+                "unit": "mg",
+                "percentOfDailyNeeds": 11.77
+            },
+            {
+                "name": "Vitamin A",
+                "amount": 524.9,
+                "unit": "IU",
+                "percentOfDailyNeeds": 10.5
+            },
+            {
+                "name": "Zinc",
+                "amount": 1.09,
+                "unit": "mg",
+                "percentOfDailyNeeds": 7.24
+            },
+            {
+                "name": "Phosphorus",
+                "amount": 72.4,
+                "unit": "mg",
+                "percentOfDailyNeeds": 7.24
+            },
+            {
+                "name": "Vitamin K",
+                "amount": 6.34,
+                "unit": "Âµg",
+                "percentOfDailyNeeds": 6.03
+            },
+            {
+                "name": "Selenium",
+                "amount": 0.91,
+                "unit": "Âµg",
+                "percentOfDailyNeeds": 1.29
+            },
+            {
+                "name": "Vitamin E",
+                "amount": 0.18,
+                "unit": "mg",
+                "percentOfDailyNeeds": 1.21
+            }
+        ],
+        "properties": [
+            {
+                "name": "Glycemic Index",
+                "amount": 58.67,
+                "unit": ""
+            },
+            {
+                "name": "Glycemic Load",
+                "amount": 62.23,
+                "unit": ""
+            }
+        ],
+        "flavonoids": [
+            {
+                "name": "Cyanidin",
+                "amount": 0.0,
+                "unit": "mg"
+            }
+        ],
+        "caloricBreakdown": {
+            "percentProtein": 3.88,
+            "percentFat": 1.94,
+            "percentCarbs": 94.18
+        },
+        "weightPerServing": {
+            "amount": 905,
+            "unit": "g"
+        }
+    },
+    "categoryPath": [
+        "tropical fruit",
+        "fruit"
+    ]
+}
+
+
+
+Get Product Information
+Use a product id to get full information about a product, such as ingredients, nutrition, etc. The nutritional information is per serving.
+
+GET https://api.spoonacular.com/food/products/{id}
+Headers
+Response Headers:
+
+Content-Type: application/json
+Parameters
+Name	Type	Example	Description
+id	number	22347	The id of the packaged food.
+Example Request and Response
+GET https://api.spoonacular.com/food/products/22347
+{
+    "id": 22347,
+    "title": "SNICKERS Minis Size Chocolate Candy Bars Variety Mix 10.5-oz. Bag",
+    "breadcrumbs": [
+        "bars"
+    ],
+    "imageType": "jpg",
+    "badges": [
+        "msg_free",
+        "no_artificial_colors",
+        "no_artificial_flavors",
+        "no_artificial_ingredients",
+        "gluten_free"
+    ],
+    "importantBadges": [
+        "no_artificial_flavors",
+        "no_artificial_colors",
+        "no_artificial_ingredients",
+        "gluten_free",
+        "msg_free"
+    ],
+    "ingredientCount": 32,
+    "generatedText": null,
+    "ingredientList": "Snickers Brand Almond Bar: Milk Chocolate (Sugar, Cocoa Butter, Chocolate, Skim Milk, Lactose, Milkfat, Soy Lecithin, Artificial Flavor), Corn Syrup, Almonds, Sugar, Milkfat, Skim Milk, Less than 2% - Lactose, Salt, Hydrogenated Palm Kernel Oil and/or Palm Oil, Egg Whites, Chocolate, Artificial Flavor. Snickers Brand: Milk Chocolate (Sugar, Cocoa Butter, Chocolate, Skim Milk, Lactose, Milkfat, Soy Lecithin, Artificial Flavor), Peanuts, Corn Syrup, Sugar, Milkfat, Skim Milk, Partially Hydrogenated Soybean Oil, Lactose, Salt, Egg Whites, Chocolate, Artificial Flavor. Snickers Brand Peanut Butter Squared Bars: Milk Chocolate (Sugar, Cocoa Butter, Chocolate, Skim Milk, Lactose, Milkfat, Soy Lecithin, Artificial Flavor), Peanut Butter (Peanuts, Partially Hydrogenated Soybean Oil), Peanuts, Sugar, Corn Syrup, Vegetable Oil (Hydrogenated Palm Kernel Oil, Palm Oil, Rapeseed Oil and Cottonseed Oil and/or Partially Hydrogenated Palm Kernel Oil), Lactose, Corn Syrup Solids, Invert Sugar, Less than 2% - Glycerin, Dextrose, Skim Milk, Salt, Calcium Carbonate, Partially Hydrogenated Soybean Oil, Egg Whites, Artificial Flavor, TBHQ to Maintain Freshness",
+    "ingredients": [
+        {
+            "description": null,
+            "name": "emulsifier",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "added sugar",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "sweetener",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "cooking fat",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "cooking oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "lecithin",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "yeast",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "menu item type",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "nuts",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "partially hydrogenated vegetable oil",
+            "safety_level": "low"
+        },
+        {
+            "description": "Unlike partially hydrogenated oils, fully hydrogenated oils do not contain trans fat and thus are currently considered safer.",
+            "name": "hydrogenated vegetable oil",
+            "safety_level": "high"
+        },
+        {
+            "description": null,
+            "name": "calcium",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "nut butter",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "legumes",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "refined sweetener",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "non food item",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "tree nuts",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "chocolate",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "sugar",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "snack",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "corn syrup",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "drink",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "milk",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "spread",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "vegetable oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "yeast nutrient",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "palm kernel oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "artificial ingredient",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "stabilizer",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "additive",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "nutrient",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "soybean oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "supplement",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "mineral",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "artificial flavor",
+            "safety_level": "medium"
+        },
+        {
+            "description": null,
+            "name": "skim milk",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "peanuts",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "corn syrup solids",
+            "safety_level": "medium"
+        },
+        {
+            "description": "Unlike partially hydrogenated oils, fully hydrogenated oils do not contain trans fat and thus are currently considered safer.",
+            "name": "hydrogenated palm kernel oil",
+            "safety_level": "high"
+        },
+        {
+            "description": null,
+            "name": "cottonseed oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "milkfat",
+            "safety_level": "high"
+        },
+        {
+            "description": null,
+            "name": "lactose",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "corn syrup",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "cocoa butter",
+            "safety_level": "high"
+        },
+        {
+            "description": null,
+            "name": "tbhq to maintain freshness",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "peanut butter",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "egg whites",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "sugar",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "milk chocolate",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "palm oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "artificial flavor",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "salt",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "almonds",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "skim milk less than 2% - lactose",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "vegetable oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "less than 2% - glycerin",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "dextrose",
+            "safety_level": "high"
+        },
+        {
+            "description": "Soy lecithin is not a concern for most people allergic to soy.",
+            "name": "soy lecithin",
+            "safety_level": "high"
+        },
+        {
+            "description": null,
+            "name": "invert sugar",
+            "safety_level": "high"
+        },
+        {
+            "description": null,
+            "name": "chocolate",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "rapeseed oil",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "partially hydrogenated soybean oil",
+            "safety_level": "low"
+        },
+        {
+            "description": null,
+            "name": "calcium carbonate",
+            "safety_level": "high"
+        },
+        {
+            "description": null,
+            "name": "partially hydrogenated palm kernel oil",
+            "safety_level": "low"
+        },
+        {
+            "description": null,
+            "name": "artificial flavor.snickers brand",
+            "safety_level": null
+        },
+        {
+            "description": null,
+            "name": "snickers brand almond bar",
+            "safety_level": null
+        }
+    ],
+    "likes": 0,
+    "aisle": "Sweet Snacks",
+    "nutrition": {
+        "nutrients": [
+            {
+                "name": "Fat",
+                "amount": 4,
+                "unit": "g",
+                "percentOfDailyNeeds": 6.15
+            },
+            {
+                "name": "Protein",
+                "amount": 10,
+                "unit": "g",
+                "percentOfDailyNeeds": 20
+            },
+            {
+                "name": "Calories",
+                "amount": 200,
+                "unit": "cal",
+                "percentOfDailyNeeds": 10
+            },
+            {
+                "name": "Carbohydrates",
+                "amount": 26,
+                "unit": "g",
+                "percentOfDailyNeeds": 9.45
+            }
+        ],
+        "caloricBreakdown": {
+            "percentProtein": 22.22,
+            "percentFat": 20,
+            "percentCarbs": 57.78
+        }
+    },
+    "price": 324.0,
+    "servings": {
+        "number": 8,
+        "size": 4,
+        "unit": "pieces",
+        "raw": "pcs"
+    },
+    "spoonacularScore": 0.0
+}
