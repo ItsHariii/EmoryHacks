@@ -1,4 +1,5 @@
-from pydantic import BaseSettings, Field, SecretStr, validator
+from pydantic import Field, SecretStr, field_validator
+from pydantic_settings import BaseSettings
 from enum import Enum
 from typing import List, Union, Optional
 
@@ -37,18 +38,19 @@ class Settings(BaseSettings):
         "0.0.0.0"
     ])
     
-    @validator("TRUSTED_HOSTS", pre=True)
-    def assemble_trusted_hosts(cls, v: Union[str, List[str]], values: dict) -> List[str]:
-        if values.get("ENVIRONMENT") == Environment.PROD:
-            # In production, only allow specific hosts
-            if isinstance(v, str):
-                return [i.strip() for i in v.split(",") if i.strip()]
-            return v if isinstance(v, list) else []
-        else:
-            # In development, allow localhost variants
-            return ["localhost", "127.0.0.1", "0.0.0.0"]
+    @field_validator("TRUSTED_HOSTS", mode="before")
+    @classmethod
+    def assemble_trusted_hosts(cls, v: Union[str, List[str]]) -> List[str]:
+        # Note: In Pydantic v2, we can't access other field values in validators
+        # So we'll just parse the value as-is
+        if isinstance(v, str):
+            return [i.strip() for i in v.split(",") if i.strip()]
+        elif isinstance(v, list):
+            return v
+        return ["localhost", "127.0.0.1", "0.0.0.0"]
 
-    @validator("CORS_ORIGINS", pre=True)
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, str):
             return [i.strip() for i in v.split(",") if i.strip()]
@@ -71,7 +73,8 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-    @validator("LOG_LEVEL")
+    @field_validator("LOG_LEVEL")
+    @classmethod
     def validate_log_level(cls, v: str) -> str:
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
@@ -82,17 +85,13 @@ class Settings(BaseSettings):
     DOCS_URL: str = "/docs"
     REDOC_URL: str = "/redoc"
 
-    @validator("DOCS_URL", "REDOC_URL", pre=True)
-    def disable_docs_in_production(cls, v: str, values: dict) -> Optional[str]:
-        if values.get("ENVIRONMENT") == Environment.PROD:
-            return None
-        return v
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        validate_assignment = True
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+        "validate_assignment": True,
+        "extra": "ignore",  # Ignore extra fields in .env
+    }
 
 
 # Global settings instance

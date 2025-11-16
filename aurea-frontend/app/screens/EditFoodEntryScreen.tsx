@@ -3,18 +3,25 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 import { theme } from '../theme';
 import { SafetyTag } from '../components/SafetyTag';
+import { Button } from '../components/Button';
+import { ServingSizeInput } from '../components/ServingSizeInput';
+import { NutritionPreview } from '../components/NutritionPreview';
+import { SafetyWarningModal } from '../components/SafetyWarningModal';
+import { useToast } from '../components/ToastProvider';
+import { useCelebrations } from '../hooks/useCelebrations';
+import { useFoodEntry } from '../hooks/useFoodEntry';
 import { foodAPI } from '../services/api';
 import { FoodItem, FoodEntry, MealType } from '../types';
+import CelebrationModal from '../components/CelebrationModal';
 
 interface RouteParams {
   food?: FoodItem;
@@ -23,77 +30,118 @@ interface RouteParams {
   isNewEntry?: boolean;
 }
 
+/**
+ * EditFoodEntryScreen (Refactored)
+ * 
+ * Modular screen for creating or editing food entries
+ * Broken down into reusable components and custom hooks
+ */
 export const EditFoodEntryScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { showToast } = useToast();
+  const { celebrate, dismissCelebration, currentCelebration, showCelebration } = useCelebrations();
+  
   const { food, entry, mealType, isNewEntry = false } = route.params as RouteParams;
 
-  const [quantity, setQuantity] = useState(entry?.quantity?.toString() || '1');
-  const [servingSize, setServingSize] = useState(entry?.serving_size || food?.serving_size || '100g');
-  const [selectedMealType, setSelectedMealType] = useState<MealType>(
-    entry?.meal_type || mealType || 'breakfast'
-  );
+  // Use custom hook for food entry logic
+  const {
+    servingSize,
+    selectedMealType,
+    currentFood,
+    setServingSize,
+    setSelectedMealType,
+    nutrition,
+    isValid,
+  } = useFoodEntry({ food, entry, mealType });
+
   const [loading, setLoading] = useState(false);
+  const [showSafetyWarning, setShowSafetyWarning] = useState(false);
 
-  const currentFood = food || (entry ? {
-    id: entry.food_id,
-    name: entry.food_name,
-    calories_per_100g: entry.calories_logged / (entry.quantity || 1),
-  } as FoodItem : null);
+  // Early return if no food data
+  if (!currentFood) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const calculateNutrition = () => {
-    if (!currentFood || !quantity) return null;
-
-    const multiplier = parseFloat(quantity) || 0;
-    const baseCalories = currentFood.calories_per_100g || 0;
-    
-    // Simple calculation - in real app, this would use serving size conversion
-    const calories = Math.round(baseCalories * multiplier);
-    const protein = Math.round((currentFood.protein_per_100g || 0) * multiplier);
-    const carbs = Math.round((currentFood.carbs_per_100g || 0) * multiplier);
-    const fat = Math.round((currentFood.fat_per_100g || 0) * multiplier);
-
-    return { calories, protein, carbs, fat };
-  };
+  // Check if food should show safety warning on mount
+  useEffect(() => {
+    if (currentFood?.safety_status === 'avoid' && isNewEntry) {
+      setShowSafetyWarning(true);
+    }
+  }, [currentFood, isNewEntry]);
 
   const handleSave = async () => {
-    if (!currentFood || !quantity || !servingSize) {
+    if (!isValid) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
-    const quantityNum = parseFloat(quantity);
-    if (isNaN(quantityNum) || quantityNum <= 0) {
-      Alert.alert('Error', 'Please enter a valid quantity');
+    // Show safety warning for avoid foods if not already shown
+    if (currentFood?.safety_status === 'avoid' && isNewEntry && !showSafetyWarning) {
+      setShowSafetyWarning(true);
       return;
     }
 
     setLoading(true);
     try {
+      // Parse serving size to get amount and unit separately
+      const match = servingSize.match(/^([\d.]+)\s*(.*)$/);
+      if (!match) {
+        Alert.alert('Error', 'Invalid serving size format');
+        setLoading(false);
+        return;
+      }
+
+      const servingSizeNum = parseFloat(match[1]);
+      const servingUnit = match[2] || 'g';
+
       if (isNewEntry) {
         // Create new food entry
         await foodAPI.logFood({
-          food_id: currentFood.id,
-          quantity: quantityNum,
-          serving_size: servingSize,
+          food_id: currentFood!.id,
+          serving_size: servingSizeNum,
+          serving_unit: servingUnit,
           meal_type: selectedMealType,
         });
+        showToast('Food logged successfully!', 'success');
+
+        // Celebrate first meal logged
+        celebrate('first_meal_logged');
       } else if (entry) {
         // Update existing entry
         await foodAPI.updateFoodEntry(entry.id, {
-          quantity: quantityNum,
-          serving_size: servingSize,
+          serving_size: servingSizeNum,
+          serving_unit: servingUnit,
           meal_type: selectedMealType,
         });
+        showToast('Food entry updated!', 'success');
       }
 
-      navigation.goBack();
-    } catch (error) {
+      // Navigate back
+      if (isNewEntry) {
+        (navigation as any).navigate('Dashboard', { refresh: true });
+      } else {
+        navigation.goBack();
+      }
+    } catch (error: any) {
       console.error('Error saving food entry:', error);
-      Alert.alert('Error', 'Failed to save food entry. Please try again.');
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.detail || 'Failed to save food entry. Please try again.';
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSafetyWarningConfirm = () => {
+    setShowSafetyWarning(false);
+    handleSave();
   };
 
   const handleDelete = async () => {
@@ -110,6 +158,7 @@ export const EditFoodEntryScreen: React.FC = () => {
           onPress: async () => {
             try {
               await foodAPI.deleteFoodEntry(entry.id);
+              showToast('Entry deleted successfully', 'success');
               navigation.goBack();
             } catch (error) {
               Alert.alert('Error', 'Failed to delete entry. Please try again.');
@@ -120,126 +169,137 @@ export const EditFoodEntryScreen: React.FC = () => {
     );
   };
 
-  const nutrition = calculateNutrition();
-
   if (!currentFood) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Food data not available</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Food not found</Text>
+          <Button title="Go Back" onPress={() => navigation.goBack()} />
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Text style={styles.backButtonText}>← Cancel</Text>
+          <Text style={styles.backButtonText}>Cancel</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>
-          {isNewEntry ? 'Add Food' : 'Edit Entry'}
+        <Text style={styles.title} numberOfLines={1}>
+          {isNewEntry ? 'Log Food' : 'Edit Entry'}
         </Text>
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSave}
-          disabled={loading}
+          disabled={loading || !isValid}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Save food entry"
         >
-          <Text style={styles.saveButtonText}>
+          <Text
+            style={[
+              styles.saveButtonText,
+              (!isValid || loading) && styles.saveButtonTextDisabled,
+            ]}
+          >
             {loading ? 'Saving...' : 'Save'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+        {/* Food Info */}
         <View style={styles.foodInfo}>
-          <Text style={styles.foodName}>{currentFood.name}</Text>
-          {currentFood.brand && (
-            <Text style={styles.foodBrand}>{currentFood.brand}</Text>
-          )}
-          {currentFood.safety_status && (
-            <View style={styles.safetyContainer}>
+          <View style={styles.foodHeader}>
+            <View style={styles.foodTitleContainer}>
+              <Text style={styles.foodName}>{currentFood.name}</Text>
+              {currentFood.brand && (
+                <Text style={styles.foodBrand}>{currentFood.brand}</Text>
+              )}
+            </View>
+            {currentFood.safety_status && (
               <SafetyTag status={currentFood.safety_status} />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Quantity</Text>
-            <TextInput
-              style={styles.input}
-              value={quantity}
-              onChangeText={setQuantity}
-              keyboardType="numeric"
-              placeholder="1"
-              placeholderTextColor={theme.colors.text.muted}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Serving Size</Text>
-            <TextInput
-              style={styles.input}
-              value={servingSize}
-              onChangeText={setServingSize}
-              placeholder="100g"
-              placeholderTextColor={theme.colors.text.muted}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Meal</Text>
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedMealType}
-                onValueChange={setSelectedMealType}
-                style={styles.picker}
-              >
-                <Picker.Item label="Breakfast" value="breakfast" />
-                <Picker.Item label="Lunch" value="lunch" />
-                <Picker.Item label="Dinner" value="dinner" />
-                <Picker.Item label="Snack" value="snack" />
-              </Picker>
-            </View>
+            )}
           </View>
         </View>
 
-        {nutrition && (
-          <View style={styles.nutritionPreview}>
-            <Text style={styles.nutritionTitle}>Nutrition Preview</Text>
-            <View style={styles.nutritionGrid}>
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionValue}>{nutrition.calories}</Text>
-                <Text style={styles.nutritionLabel}>Calories</Text>
-              </View>
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionValue}>{nutrition.protein}g</Text>
-                <Text style={styles.nutritionLabel}>Protein</Text>
-              </View>
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionValue}>{nutrition.carbs}g</Text>
-                <Text style={styles.nutritionLabel}>Carbs</Text>
-              </View>
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionValue}>{nutrition.fat}g</Text>
-                <Text style={styles.nutritionLabel}>Fat</Text>
-              </View>
-            </View>
+        {/* Meal Type Selector */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Meal Type</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedMealType}
+              onValueChange={setSelectedMealType}
+              style={styles.picker}
+            >
+              <Picker.Item label="Breakfast" value="breakfast" />
+              <Picker.Item label="Lunch" value="lunch" />
+              <Picker.Item label="Dinner" value="dinner" />
+              <Picker.Item label="Snack" value="snack" />
+            </Picker>
           </View>
-        )}
+        </View>
 
+        {/* Serving Size Input */}
+        <View style={styles.section}>
+          <ServingSizeInput
+            value={servingSize}
+            onChange={setServingSize}
+          />
+        </View>
+
+        {/* Nutrition Preview */}
+        <NutritionPreview nutrition={nutrition} />
+
+        {/* Save Button */}
+        <Button
+          title={isNewEntry ? 'Log Food' : 'Update Entry'}
+          onPress={handleSave}
+          loading={loading}
+          disabled={!isValid}
+          style={styles.saveButtonLarge}
+        />
+
+        {/* Delete Button (Edit Mode Only) */}
         {!isNewEntry && entry && (
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={handleDelete}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Delete food entry"
           >
             <Text style={styles.deleteButtonText}>Delete Entry</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Safety Warning Modal */}
+      <SafetyWarningModal
+        visible={showSafetyWarning}
+        foodName={currentFood.name}
+        safetyNotes={currentFood.safety_notes}
+        onConfirm={handleSafetyWarningConfirm}
+        onCancel={() => setShowSafetyWarning(false)}
+      />
+
+      {/* Celebration Modal */}
+      {currentCelebration && (
+        <CelebrationModal
+          visible={showCelebration}
+          title={currentCelebration.title}
+          message={currentCelebration.message}
+          onDismiss={dismissCelebration}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -261,13 +321,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backButtonText: {
-    color: theme.colors.text.light,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.text.inverse,
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.medium,
   },
   title: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.accent,
     flex: 2,
     textAlign: 'center',
@@ -278,108 +338,93 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: theme.colors.accent,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  saveButtonTextDisabled: {
+    color: theme.colors.text.muted,
   },
   content: {
     flex: 1,
   },
+  scrollContent: {
+    padding: theme.spacing.lg,
+  },
   foodInfo: {
     backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.sm,
+  },
+  foodHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  foodTitleContainer: {
+    flex: 1,
+    marginRight: theme.spacing.md,
   },
   foodName: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   foodBrand: {
-    fontSize: theme.fontSize.md,
+    fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
   },
-  safetyContainer: {
-    alignItems: 'flex-start',
-  },
-  form: {
-    padding: theme.spacing.lg,
-  },
-  inputGroup: {
+  section: {
     marginBottom: theme.spacing.lg,
   },
-  label: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
+  sectionLabel: {
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
-  input: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    fontSize: theme.fontSize.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    color: theme.colors.text.primary,
-  },
   pickerContainer: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    overflow: 'hidden',
   },
   picker: {
     height: 50,
   },
-  nutritionPreview: {
-    backgroundColor: theme.colors.surface,
-    margin: theme.spacing.lg,
-    padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    ...theme.shadows.md,
+  customServingInput: {
+    marginTop: theme.spacing.md,
   },
-  nutritionTitle: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
-    textAlign: 'center',
-  },
-  nutritionGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  nutritionItem: {
-    alignItems: 'center',
-  },
-  nutritionValue: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+  inputLabel: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
-  nutritionLabel: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
+  saveButtonLarge: {
+    marginTop: theme.spacing.md,
   },
   deleteButton: {
-    backgroundColor: theme.colors.error,
-    margin: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   deleteButtonText: {
-    color: theme.colors.text.light,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.error,
+    fontSize: theme.typography.fontSize.md,
+    fontWeight: theme.typography.fontWeight.semibold,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
   },
   errorText: {
-    fontSize: theme.fontSize.lg,
+    fontSize: theme.typography.fontSize.lg,
     color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginTop: theme.spacing.xxl,
+    marginBottom: theme.spacing.lg,
   },
 });

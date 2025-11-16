@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { theme } from '../theme';
+import { createProgressFillAnimation } from '../utils/animations';
 
 interface ProgressBarProps {
   current: number;
@@ -19,9 +20,22 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 }) => {
   const percentage = Math.min((current / target) * 100, 100);
   const isOverTarget = current > target;
+  
+  // Animated width value
+  const animatedWidth = useRef(new Animated.Value(0)).current;
+
+  // Animate progress bar fill on mount or when percentage changes
+  useEffect(() => {
+    createProgressFillAnimation(animatedWidth, percentage).start();
+  }, [percentage]);
 
   return (
-    <View style={styles.container}>
+    <View 
+      style={styles.container}
+      accessible={true}
+      accessibilityLabel={`${label}: ${Math.round(current)} of ${Math.round(target)}, ${Math.round(percentage)}% complete`}
+      accessibilityRole="progressbar"
+    >
       <View style={styles.header}>
         <Text style={styles.label}>{label}</Text>
         {showNumbers && (
@@ -31,11 +45,14 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
         )}
       </View>
       <View style={styles.progressTrack}>
-        <View
+        <Animated.View
           style={[
             styles.progressFill,
             {
-              width: `${percentage}%`,
+              width: animatedWidth.interpolate({
+                inputRange: [0, 100],
+                outputRange: ['0%', '100%'],
+              }),
               backgroundColor: isOverTarget ? theme.colors.warning : color,
             },
           ]}

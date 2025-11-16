@@ -3,17 +3,20 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   RefreshControl,
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { theme } from '../theme';
 import { MealAccordionCard } from '../components/MealAccordionCard';
+import { EmptyState } from '../components/EmptyState';
+import { FoodListSkeleton } from '../components/skeletons';
 import { foodAPI, nutritionAPI } from '../services/api';
 import { FoodEntry, MealType, NutritionSummary } from '../types';
+import { FEATURE_ICONS } from '../components/icons/iconConstants';
 
 export const FoodLoggingScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -104,10 +107,27 @@ export const FoodLoggingScreen: React.FC = () => {
   const groupedEntries = groupEntriesByMeal(foodEntries);
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+  if (loading && foodEntries.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.title}>Food Log</Text>
+              <Text style={styles.subtitle}>Loading your meals...</Text>
+            </View>
+          </View>
+        </View>
+        <FoodListSkeleton />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -126,19 +146,31 @@ export const FoodLoggingScreen: React.FC = () => {
           </View>
         </View>
 
-        <View style={styles.mealsContainer}>
-          {mealTypes.map((mealType) => (
-            <MealAccordionCard
-              key={mealType}
-              mealType={mealType}
-              entries={groupedEntries[mealType] || []}
-              totalCalories={getCaloriesForMeal(mealType, foodEntries)}
-              onAddFood={handleAddFood}
-              onEditEntry={handleEditEntry}
-              onDeleteEntry={handleDeleteEntry}
+        {foodEntries.length === 0 ? (
+          <View style={styles.emptyStateContainer}>
+            <EmptyState
+              icon={FEATURE_ICONS.food}
+              headline="No meals logged today"
+              description="Ready to add your first meal? Track your nutrition to see your progress and reach your goals."
+              actionLabel="Log Your First Meal"
+              onAction={() => handleAddFood('breakfast')}
             />
-          ))}
-        </View>
+          </View>
+        ) : (
+          <View style={styles.mealsContainer}>
+            {mealTypes.map((mealType) => (
+              <MealAccordionCard
+                key={mealType}
+                mealType={mealType}
+                entries={groupedEntries[mealType] || []}
+                totalCalories={getCaloriesForMeal(mealType, foodEntries)}
+                onAddFood={handleAddFood}
+                onEditEntry={handleEditEntry}
+                onDeleteEntry={handleDeleteEntry}
+              />
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -151,6 +183,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // Extra padding for floating tab bar
   },
   header: {
     backgroundColor: theme.colors.primary,
@@ -185,5 +220,9 @@ const styles = StyleSheet.create({
   },
   mealsContainer: {
     padding: theme.spacing.md,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    paddingTop: theme.spacing.xxl,
   },
 });

@@ -288,3 +288,16 @@ service-account.json
 local_settings.py
 config.local.js
 config.local.json
+
+# Test and utility scripts (backend)
+backend/test_*.py
+backend/check_*.py
+backend/inspect_*.py
+backend/get_*.py
+backend/update_*.py
+!backend/tests/
+
+# Person folders (development branches)
+Person 1/
+Person 2/
+Person 3/

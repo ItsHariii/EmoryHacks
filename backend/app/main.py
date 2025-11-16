@@ -15,7 +15,7 @@ env_path = Path(__file__).parent.parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 from app.core.config import settings
-from .api import auth, health, journal
+from .api import auth, health, journal, users
 from .api.food import router as food_router
 from app.core.logging import logger
 from app.middleware.logging import LoggingMiddleware
@@ -215,6 +215,7 @@ async def not_found_exception_handler(request: Request, exc: Exception):
 # ======================================================
 app.include_router(health.router, prefix="/health", tags=["Health"])
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(food_router, prefix="/food")
 app.include_router(journal.router, prefix="/journal", tags=["Journal"])
 

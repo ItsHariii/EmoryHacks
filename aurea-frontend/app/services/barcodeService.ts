@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { FoodItem, BarcodeProduct } from '../types';
+import { safetyAPI } from './api';
 
 // OpenFoodFacts API configuration
 const OPENFOODFACTS_API = 'https://world.openfoodfacts.org/api/v0/product';
@@ -71,9 +72,22 @@ const queryOpenFoodFacts = async (barcode: string): Promise<BarcodeProduct | nul
 };
 
 /**
- * Transform BarcodeProduct to FoodItem format
+ * Transform BarcodeProduct to FoodItem format with safety check
  */
-const transformToFoodItem = (product: BarcodeProduct): FoodItem => {
+const transformToFoodItem = async (product: BarcodeProduct): Promise<FoodItem> => {
+  // Get pregnancy safety information from backend
+  let safetyStatus: 'safe' | 'caution' | 'avoid' = 'safe';
+  let safetyNotes: string | undefined;
+
+  try {
+    const safetyInfo = await safetyAPI.checkFood(product.name);
+    safetyStatus = safetyInfo.safety_status;
+    safetyNotes = safetyInfo.safety_notes;
+  } catch (error) {
+    console.warn('Could not fetch safety info:', error);
+    // Continue without safety info
+  }
+
   return {
     id: `barcode_${product.barcode}`,
     name: product.name,
@@ -87,18 +101,20 @@ const transformToFoodItem = (product: BarcodeProduct): FoodItem => {
     sodium_per_100g: product.nutrients.sodium_100g,
     serving_size: product.serving_size,
     serving_unit: 'g',
+    safety_status: safetyStatus,
+    safety_notes: safetyNotes,
   };
 };
 
 /**
- * Lookup product by barcode with caching
+ * Lookup product by barcode with caching and safety check
  */
 export const lookupBarcode = async (barcode: string): Promise<FoodItem | null> => {
   // Check cache first
   if (barcodeCache.has(barcode)) {
     const cached = barcodeCache.get(barcode);
     if (cached) {
-      return transformToFoodItem(cached);
+      return await transformToFoodItem(cached);
     }
     return null;
   }
@@ -116,7 +132,8 @@ export const lookupBarcode = async (barcode: string): Promise<FoodItem | null> =
     }, CACHE_EXPIRY);
 
     if (product) {
-      return transformToFoodItem(product);
+      // Transform to FoodItem with safety check
+      return await transformToFoodItem(product);
     }
 
     return null;

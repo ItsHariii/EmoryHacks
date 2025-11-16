@@ -107,6 +107,7 @@ class USDAService:
     def parse_nutrients(self, usda_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Parse USDA nutrient data into a standardized format.
+        Captures ALL nutrients from USDA, not just macros.
         
         Args:
             usda_data: Raw USDA food data
@@ -117,29 +118,57 @@ class USDAService:
         nutrients = {}
         food_nutrients = usda_data.get("foodNutrients", [])
         
-        # Map USDA nutrient IDs to our standard names
-        nutrient_mapping = {
+        # Map USDA nutrient IDs to our standard names for key nutrients
+        # This helps with consistent naming across the app
+        nutrient_id_mapping = {
             1008: "calories",      # Energy
             1003: "protein",       # Protein
             1005: "carbs",         # Carbohydrate, by difference
             1004: "fat",           # Total lipid (fat)
             1079: "fiber",         # Fiber, total dietary
             2000: "sugar",         # Sugars, total including NLEA
-            1093: "sodium"         # Sodium, Na
+            1093: "sodium",        # Sodium, Na
+            1087: "calcium",       # Calcium, Ca
+            1089: "iron",          # Iron, Fe
+            1090: "magnesium",     # Magnesium, Mg
+            1095: "zinc",          # Zinc, Zn
+            1092: "potassium",     # Potassium, K
+            1106: "vitamin_a",     # Vitamin A, RAE
+            1162: "vitamin_c",     # Vitamin C, total ascorbic acid
+            1114: "vitamin_d",     # Vitamin D (D2 + D3)
+            1109: "vitamin_e",     # Vitamin E (alpha-tocopherol)
+            1185: "folate",        # Folate, total
+            1165: "thiamin",       # Thiamin
+            1166: "riboflavin",    # Riboflavin
+            1167: "niacin",        # Niacin
+            1175: "vitamin_b6",    # Vitamin B-6
+            1178: "vitamin_b12",   # Vitamin B-12
         }
         
+        # Process ALL nutrients from USDA
         for nutrient in food_nutrients:
-            nutrient_id = nutrient.get("nutrient", {}).get("id")
-            if nutrient_id in nutrient_mapping:
-                nutrient_name = nutrient_mapping[nutrient_id]
-                amount = nutrient.get("amount", 0)
-                unit = nutrient.get("nutrient", {}).get("unitName", "")
-                
-                nutrients[nutrient_name] = {
-                    "amount": amount,
-                    "unit": unit,
-                    "percent_daily_value": nutrient.get("percentDailyValue")
-                }
+            nutrient_info = nutrient.get("nutrient", {})
+            nutrient_id = nutrient_info.get("id")
+            nutrient_name = nutrient_info.get("name", "").lower()
+            amount = nutrient.get("amount", 0)
+            unit = nutrient_info.get("unitName", "")
+            
+            # Skip if no name or amount is None
+            if not nutrient_name or amount is None:
+                continue
+            
+            # Use mapped name if available, otherwise use cleaned name
+            if nutrient_id in nutrient_id_mapping:
+                key = nutrient_id_mapping[nutrient_id]
+            else:
+                # Clean up the name for use as a key
+                key = nutrient_name.replace(" ", "_").replace(",", "").replace("(", "").replace(")", "")
+            
+            nutrients[key] = {
+                "amount": amount,
+                "unit": unit,
+                "percent_daily_value": nutrient.get("percentDailyValue")
+            }
         
         return nutrients
     

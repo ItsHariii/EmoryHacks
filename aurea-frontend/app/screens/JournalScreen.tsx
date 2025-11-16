@@ -8,10 +8,18 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { HeaderBar } from '../components/HeaderBar';
+import { SimpleDatePicker } from '../components/SimpleDatePicker';
+import { EmptyState } from '../components/EmptyState';
+import { JournalListSkeleton } from '../components/skeletons';
 import { theme } from '../theme';
 import { journalAPI } from '../services/api';
 import { JournalEntry } from '../types';
+import { FEATURE_ICONS } from '../components/icons/iconConstants';
 
 interface JournalScreenProps {
   navigation: any;
@@ -24,6 +32,11 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Date filtering state
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
   const loadEntries = async (isRefreshing = false) => {
     try {
@@ -32,7 +45,10 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
       }
       setError(null);
       
-      const data = await journalAPI.getJournalEntries();
+      const startDateStr = startDate ? startDate.toISOString().split('T')[0] : undefined;
+      const endDateStr = endDate ? endDate.toISOString().split('T')[0] : undefined;
+      
+      const data = await journalAPI.getJournalEntries(startDateStr, endDateStr);
       setEntries(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load journal entries');
@@ -52,7 +68,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
     });
 
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, startDate, endDate]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -65,6 +81,31 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
 
   const handleEditEntry = (entry: JournalEntry) => {
     navigation.navigate('JournalEntry', { entry });
+  };
+
+  const handleClearFilters = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setShowFilterModal(false);
+  };
+
+  const handleApplyFilters = () => {
+    setShowFilterModal(false);
+    loadEntries();
+  };
+
+  const getFilterLabel = () => {
+    if (!startDate && !endDate) return 'Filter by date';
+    if (startDate && endDate) {
+      return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
+    if (startDate) {
+      return `From ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
+    if (endDate) {
+      return `Until ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
+    return 'Filter by date';
   };
 
   const formatDate = (dateString: string): string => {
@@ -155,29 +196,55 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyEmoji}>📔</Text>
-      <Text style={styles.emptyTitle}>No Journal Entries Yet</Text>
-      <Text style={styles.emptyText}>
-        Start tracking your daily symptoms, mood, and wellness by creating your first journal
-        entry.
-      </Text>
-      <TouchableOpacity style={styles.emptyButton} onPress={handleCreateEntry}>
-        <Text style={styles.emptyButtonText}>Create First Entry</Text>
-      </TouchableOpacity>
-    </View>
+    <EmptyState
+      icon={FEATURE_ICONS.journal}
+      headline="Start your pregnancy journal today"
+      description="Track your mood, symptoms, and wellness journey. Your entries help you understand patterns and share with your healthcare provider."
+      actionLabel="Create First Entry"
+      onAction={handleCreateEntry}
+    />
   );
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <HeaderBar
+          title="My Journal"
+          subtitle="Loading your entries..."
+        />
+        <JournalListSkeleton />
+      </SafeAreaView>
     );
   }
 
+  const getFilterSubtitle = () => {
+    if (!startDate && !endDate) return 'Your wellness journey';
+    if (startDate && endDate) {
+      return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
+    if (startDate) {
+      return `From ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
+    if (endDate) {
+      return `Until ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    }
+    return 'Your wellness journey';
+  };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <HeaderBar
+        title="My Journal"
+        subtitle={getFilterSubtitle()}
+        rightActions={[
+          {
+            icon: 'filter-outline' as keyof typeof MaterialCommunityIcons.glyphMap,
+            onPress: () => setShowFilterModal(true),
+            accessibilityLabel: 'Filter journal entries by date',
+          },
+        ]}
+      />
+
       <FlatList
         data={entries}
         renderItem={renderEntry}
@@ -206,7 +273,86 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
       >
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
-    </View>
+
+      {/* Date Filter Modal */}
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowFilterModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Filter by Date Range</Text>
+            
+            {/* Start Date */}
+            <View style={styles.dateFilterSection}>
+              <Text style={styles.dateFilterLabel}>Start Date</Text>
+              {startDate ? (
+                <SimpleDatePicker
+                  value={startDate}
+                  onChange={setStartDate}
+                  maximumDate={endDate || new Date()}
+                />
+              ) : (
+                <TouchableOpacity
+                  style={styles.dateFilterButton}
+                  onPress={() => setStartDate(new Date())}
+                >
+                  <Text style={styles.dateFilterPlaceholder}>Select start date</Text>
+                  <MaterialCommunityIcons 
+                    name="calendar" 
+                    size={20} 
+                    color={theme.colors.text.secondary} 
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* End Date */}
+            <View style={styles.dateFilterSection}>
+              <Text style={styles.dateFilterLabel}>End Date</Text>
+              {endDate ? (
+                <SimpleDatePicker
+                  value={endDate}
+                  onChange={setEndDate}
+                  minimumDate={startDate || undefined}
+                  maximumDate={new Date()}
+                />
+              ) : (
+                <TouchableOpacity
+                  style={styles.dateFilterButton}
+                  onPress={() => setEndDate(new Date())}
+                >
+                  <Text style={styles.dateFilterPlaceholder}>Select end date</Text>
+                  <MaterialCommunityIcons 
+                    name="calendar" 
+                    size={20} 
+                    color={theme.colors.text.secondary} 
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Modal Actions */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowFilterModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.applyButton]}
+                onPress={handleApplyFilters}
+              >
+                <Text style={styles.applyButtonText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 };
 
@@ -223,7 +369,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: theme.spacing.md,
-    paddingBottom: 80, // Space for FAB
+    paddingBottom: 120, // Space for FAB and floating tab bar
   },
   listContentEmpty: {
     flexGrow: 1,
@@ -310,46 +456,10 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     fontSize: theme.fontSize.xs,
-    color: theme.colors.text.light,
+    color: theme.colors.text.inverse,
     fontWeight: theme.fontWeight.medium,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.spacing.xl,
-  },
-  emptyEmoji: {
-    fontSize: 64,
-    marginBottom: theme.spacing.md,
-  },
-  emptyTitle: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-    textAlign: 'center',
-  },
-  emptyText: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: theme.spacing.lg,
-  },
-  emptyButton: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  emptyButtonText: {
-    color: theme.colors.text.light,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-  },
+
   fab: {
     position: 'absolute',
     right: theme.spacing.md,
@@ -364,7 +474,83 @@ const styles = StyleSheet.create({
   },
   fabIcon: {
     fontSize: 32,
-    color: theme.colors.text.light,
+    color: theme.colors.text.inverse,
     fontWeight: theme.fontWeight.bold,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+    ...theme.shadows.lg,
+  },
+  modalTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.lg,
+  },
+  dateFilterSection: {
+    marginBottom: theme.spacing.md,
+  },
+  dateFilterLabel: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  dateFilterButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    minHeight: 44,
+  },
+  dateFilterPlaceholder: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.muted,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.lg,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  cancelButtonText: {
+    color: theme.colors.text.secondary,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.medium,
+  },
+  applyButton: {
+    backgroundColor: theme.colors.primary,
+  },
+  applyButtonText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
   },
 });

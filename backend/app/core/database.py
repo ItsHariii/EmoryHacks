@@ -75,17 +75,11 @@ def get_db() -> Generator[Session, None, None]:
     db = SessionScoped()
     try:
         yield db
-        db.commit()
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"Database error (SQLAlchemy): {str(e)}")
-        raise
     except Exception as e:
         db.rollback()
-        logger.critical(f"Unexpected database error: {str(e)}")
+        logger.error(f"Database error: {str(e)}")
         raise
     finally:
-        db.close()
         SessionScoped.remove()
 
 # --------------------------------------------------

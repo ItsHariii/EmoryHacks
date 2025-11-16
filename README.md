@@ -20,6 +20,15 @@ aurea/
 
 ### Mobile App (aurea-frontend)
 - **Food Logging**: Track meals with detailed nutrition information
+  - Search from 500,000+ foods (USDA + Spoonacular)
+  - Barcode scanner for quick entry
+  - Custom serving sizes and units
+  - Automatic nutrition calculation
+- **Comprehensive Nutrition Tracking**: 
+  - **65+ nutrients tracked** including all pregnancy-critical micronutrients
+  - Macronutrients: protein, carbs, fat, fiber, sugar
+  - Micronutrients: calcium, iron, folate, vitamins A/C/D/E/K, B-vitamins, zinc, magnesium, potassium, and more
+  - Trimester-specific recommendations
 - **Barcode Scanner**: Quick food entry via barcode scanning
 - **Journal & Mood Tracking**: Daily wellness journal with symptoms and mood
 - **Push Notifications**: Smart reminders for hydration, supplements, and meals
@@ -28,25 +37,39 @@ aurea/
 
 ### Backend API
 - **User Authentication**: Secure JWT-based authentication
-- **Food Database**: Integration with Spoonacular and USDA databases
+- **Food Database**: Integration with Spoonacular and USDA FoodData Central
+  - 500,000+ foods with complete nutrition data
+  - Automatic caching for performance
+  - Support for branded and raw foods
 - **Nutrition Analysis**: Real-time nutrition calculations
+  - Automatic scaling based on serving sizes
+  - Support for multiple serving units (g, ml, cups, oz, etc.)
+  - Comprehensive micronutrient tracking
 - **Journal API**: CRUD operations for wellness tracking
 - **Food Safety**: Pregnancy-safe food recommendations
 - **Health Monitoring**: Built-in health checks and metrics
+
+## 📚 Documentation
+
+- **[Quick Start Guide](QUICK_START.md)** - Get running in 5 minutes
+- **[Complete Setup Guide](SETUP.md)** - Detailed setup instructions
+- **[Backend Documentation](backend/README.md)** - API and backend details
+- **[Frontend Documentation](aurea-frontend/README.md)** - Mobile app details
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - **Backend:**
-  - Python 3.8+
-  - PostgreSQL (or SQLite for development)
-  - pip or poetry
+  - Python 3.9+
+  - PostgreSQL 13+ (or SQLite for development)
+  - pip for package management
 
 - **Frontend:**
   - Node.js 16+
   - npm or yarn
-  - Expo CLI
+  - Expo CLI (installed globally: `npm install -g expo-cli`)
 
 ### Backend Setup
 
@@ -63,18 +86,20 @@ pip install -r requirements.txt
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env with your configuration (see backend/README.md for details)
 
 # Run database migrations
 alembic upgrade head
 
-# Start the server
-uvicorn app.main:app --reload
+# Start the development server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will be available at `http://localhost:8000`
-- API Documentation: `http://localhost:8000/docs`
-- Alternative Docs: `http://localhost:8000/redoc`
+The API will be available at:
+- **API**: `http://localhost:8000`
+- **Interactive Docs**: `http://localhost:8000/docs`
+- **Alternative Docs**: `http://localhost:8000/redoc`
+- **Health Check**: `http://localhost:8000/health`
 
 ### Frontend Setup
 
@@ -89,10 +114,16 @@ npm install
 npm start
 
 # Run on specific platform
-npm run ios      # iOS
-npm run android  # Android
-npm run web      # Web
+npm run ios      # iOS Simulator
+npm run android  # Android Emulator
+npm run web      # Web Browser
 ```
+
+**Note**: Make sure the backend is running before starting the frontend.
+
+For detailed setup instructions, see:
+- [Backend README](backend/README.md)
+- [Frontend README](aurea-frontend/README.md)
 
 ## 📚 Documentation
 

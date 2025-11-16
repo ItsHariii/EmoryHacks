@@ -58,6 +58,7 @@ class FoodSearchResult(BaseSchema):
     serving_unit: Optional[str] = "g"
     calories: Optional[float] = 0.0
     safety_status: FoodSafetyStatus = FoodSafetyStatus.LIMITED
+    safety_notes: Optional[str] = None
     
     # Macronutrients
     protein: Optional[float] = 0.0
@@ -82,7 +83,7 @@ class FoodLogBase(BaseSchema):
     meal_type: Optional[str] = Field(
         None, 
         description="Type of meal (breakfast, lunch, dinner, snack)",
-        regex="^(breakfast|lunch|dinner|snack)$"
+        pattern="^(breakfast|lunch|dinner|snack)$"
     )
     notes: Optional[str] = None
 

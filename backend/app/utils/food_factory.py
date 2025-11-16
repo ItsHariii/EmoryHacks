@@ -241,7 +241,7 @@ class FoodFactory:
             new_ingredient = Ingredient(
                 name=unique_name,
                 description=basic_info["description"],
-                fdc_id=int(fdc_id),
+                fdc_id=str(fdc_id),
                 category=basic_info["category"],
                 calories=nutrients.get("calories", {}).get("amount", 0),
                 protein=nutrients.get("protein", {}).get("amount", 0),
@@ -325,7 +325,7 @@ class FoodFactory:
                 sugar=nutrients.get("sugar", {}).get("amount"),
                 micronutrients=nutrients,
                 ingredients=basic_info["ingredients"],
-                fdc_id=int(fdc_id),
+                fdc_id=str(fdc_id),
                 source=FoodSource.USDA
             )
             

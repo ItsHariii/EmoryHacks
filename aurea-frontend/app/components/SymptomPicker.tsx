@@ -127,6 +127,9 @@ export const SymptomPicker: React.FC<SymptomPickerProps> = ({ value, onChange })
               placeholderTextColor={theme.colors.text.muted}
               autoFocus
               onSubmitEditing={addCustomSymptom}
+              accessible={true}
+              accessibilityLabel="Custom symptom name"
+              accessibilityHint="Enter a custom symptom not in the predefined list"
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -135,6 +138,10 @@ export const SymptomPicker: React.FC<SymptomPickerProps> = ({ value, onChange })
                   setCustomSymptom('');
                   setShowModal(false);
                 }}
+                accessible={true}
+                accessibilityLabel="Cancel"
+                accessibilityRole="button"
+                accessibilityHint="Close modal without adding symptom"
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -142,6 +149,11 @@ export const SymptomPicker: React.FC<SymptomPickerProps> = ({ value, onChange })
                 style={[styles.modalButton, styles.addButton]}
                 onPress={addCustomSymptom}
                 disabled={!customSymptom.trim()}
+                accessible={true}
+                accessibilityLabel="Add symptom"
+                accessibilityRole="button"
+                accessibilityHint="Add the custom symptom to your list"
+                accessibilityState={{ disabled: !customSymptom.trim() }}
               >
                 <Text style={styles.addButtonText}>Add</Text>
               </TouchableOpacity>

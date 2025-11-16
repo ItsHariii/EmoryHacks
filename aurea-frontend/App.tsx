@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider } from './app/contexts/AuthContext';
+import { ToastProvider } from './app/components/ToastProvider';
 import { AuthScreen } from './app/screens/AuthScreen';
 import { DashboardScreen } from './app/screens/DashboardScreen';
 import { FoodLoggingScreen } from './app/screens/FoodLoggingScreen';
@@ -19,6 +20,17 @@ import { useAuth } from './app/contexts/AuthContext';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from './app/theme';
 import { setupNotificationListener } from './app/services/notificationService';
+import { CustomTabBar } from './app/components/CustomTabBar';
+import {
+  slideFromRightTransition,
+  fadeTransition,
+  modalSlideFromBottomTransition,
+  detailViewScreenOptions,
+  enhancedStackScreenOptions,
+  enhancedModalScreenOptions,
+  swipeBackGestureConfig,
+  swipeToDismissGestureConfig,
+} from './app/utils/navigationTransitions';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -26,15 +38,8 @@ const Stack = createStackNavigator();
 function MainTabs() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        tabBarStyle: {
-          backgroundColor: theme.colors.primary,
-          height: 65,
-          paddingBottom: 10,
-          paddingTop: 5,
-        },
-        tabBarActiveTintColor: theme.colors.accent,
-        tabBarInactiveTintColor: theme.colors.text.light,
         headerStyle: {
           backgroundColor: theme.colors.primary,
         },
@@ -46,13 +51,14 @@ function MainTabs() {
         component={DashboardScreen}
         options={{
           tabBarLabel: 'Home',
+          headerShown: false, // Use custom header in screen
         }}
       />
       <Tab.Screen 
         name="FoodLogging" 
         component={FoodStack}
         options={{
-          tabBarLabel: 'Food Log',
+          tabBarLabel: 'Food',
         }}
       />
       <Tab.Screen 
@@ -67,6 +73,7 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
+          headerShown: false, // Use custom header in screen
         }}
       />
     </Tab.Navigator>
@@ -75,11 +82,42 @@ function MainTabs() {
 
 function FoodStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="FoodLoggingMain" component={FoodLoggingScreen} />
-      <Stack.Screen name="SearchFood" component={SearchFoodScreen} />
-      <Stack.Screen name="EditFoodEntry" component={EditFoodEntryScreen} />
-      <Stack.Screen name="BarcodeScanner" component={BarcodeScannerScreen} />
+    <Stack.Navigator 
+      screenOptions={enhancedStackScreenOptions}
+      initialRouteName="SearchFood"
+    >
+      <Stack.Screen 
+        name="SearchFood" 
+        component={SearchFoodScreen}
+        options={{
+          ...slideFromRightTransition,
+          ...swipeBackGestureConfig,
+        }}
+      />
+      <Stack.Screen 
+        name="FoodLoggingMain" 
+        component={FoodLoggingScreen}
+        options={{
+          ...slideFromRightTransition,
+          ...swipeBackGestureConfig,
+        }}
+      />
+      <Stack.Screen 
+        name="EditFoodEntry" 
+        component={EditFoodEntryScreen}
+        options={{
+          ...detailViewScreenOptions,
+          ...swipeToDismissGestureConfig,
+        }}
+      />
+      <Stack.Screen 
+        name="BarcodeScanner" 
+        component={BarcodeScannerScreen}
+        options={{
+          ...fadeTransition,
+          ...swipeToDismissGestureConfig,
+        }}
+      />
     </Stack.Navigator>
   );
 }
@@ -95,17 +133,26 @@ function JournalStack() {
         headerTitleStyle: {
           fontWeight: theme.fontWeight.bold,
         },
+        ...enhancedStackScreenOptions,
       }}
     >
       <Stack.Screen 
         name="JournalMain" 
         component={JournalScreen}
-        options={{ title: 'My Journal' }}
+        options={{ 
+          headerShown: false,
+          ...slideFromRightTransition,
+          ...swipeBackGestureConfig,
+        }}
       />
       <Stack.Screen 
         name="JournalEntry" 
         component={JournalEntryScreen}
-        options={{ title: 'Journal Entry' }}
+        options={{ 
+          title: 'Journal Entry',
+          ...slideFromRightTransition,
+          ...swipeBackGestureConfig,
+        }}
       />
     </Stack.Navigator>
   );
@@ -132,10 +179,19 @@ function AppNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      screenOptions={enhancedStackScreenOptions}
+    >
       {user ? (
         <>
-          <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen 
+            name="Main" 
+            component={MainTabs}
+            options={{
+              ...slideFromRightTransition,
+              gestureEnabled: false, // Disable gesture for main tabs
+            }}
+          />
           <Stack.Screen 
             name="NotificationSettings" 
             component={NotificationSettingsScreen}
@@ -149,11 +205,19 @@ function AppNavigator() {
                 fontWeight: theme.fontWeight.bold,
               },
               title: 'Notification Settings',
+              ...enhancedModalScreenOptions,
             }}
           />
         </>
       ) : (
-        <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen 
+          name="Auth" 
+          component={AuthScreen}
+          options={{
+            ...fadeTransition,
+            gestureEnabled: false, // Disable gesture for auth screen
+          }}
+        />
       )}
     </Stack.Navigator>
   );
@@ -172,10 +236,12 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <NavigationContainer ref={navigationRef}>
-        <StatusBar style="light" />
-        <AppNavigator />
-      </NavigationContainer>
+      <ToastProvider>
+        <NavigationContainer ref={navigationRef}>
+          <StatusBar style="light" />
+          <AppNavigator />
+        </NavigationContainer>
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -3,18 +3,20 @@ import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../theme';
 
 interface SafetyTagProps {
-  status: 'safe' | 'caution' | 'avoid';
+  status: 'safe' | 'limited' | 'avoid' | 'caution'; // 'caution' for backward compatibility
   size?: 'small' | 'medium';
 }
 
 export const SafetyTag: React.FC<SafetyTagProps> = ({ status, size = 'medium' }) => {
   const getTagStyle = () => {
     const baseStyle = [styles.tag, size === 'small' ? styles.tagSmall : styles.tagMedium];
+    // Normalize 'caution' to 'limited' for backward compatibility
+    const normalizedStatus = status === 'caution' ? 'limited' : status;
     
-    switch (status) {
+    switch (normalizedStatus) {
       case 'safe':
         return [...baseStyle, styles.tagSafe];
-      case 'caution':
+      case 'limited':
         return [...baseStyle, styles.tagCaution];
       case 'avoid':
         return [...baseStyle, styles.tagAvoid];
@@ -28,11 +30,14 @@ export const SafetyTag: React.FC<SafetyTagProps> = ({ status, size = 'medium' })
   };
 
   const getTagText = () => {
-    switch (status) {
+    // Normalize 'caution' to 'limited' for backward compatibility
+    const normalizedStatus = status === 'caution' ? 'limited' : status;
+    
+    switch (normalizedStatus) {
       case 'safe':
         return '✓ Safe';
-      case 'caution':
-        return '⚠ Caution';
+      case 'limited':
+        return '⚠ Limited';
       case 'avoid':
         return '✕ Avoid';
       default:

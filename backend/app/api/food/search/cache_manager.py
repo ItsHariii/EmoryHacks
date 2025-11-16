@@ -30,7 +30,7 @@ pregnancy_safety_service = PregnancySafetyService()
 food_factory = FoodFactory()
 
 async def cache_usda_ingredients(usda_foods: List[dict], db: Session, existing_results: List) -> List:
-    """Cache USDA ingredients and return new results."""
+    """Cache USDA ingredients and return new results. Returns results even if caching fails."""
     new_results = []
     
     for usda_food in usda_foods:
@@ -39,7 +39,7 @@ async def cache_usda_ingredients(usda_foods: List[dict], db: Session, existing_r
         if any(f.name.lower() == food_name.lower() for f in existing_results):
             continue
         
-        # Create and cache USDA ingredient
+        # Try to create and cache USDA ingredient
         try:
             fdc_id = usda_food.get("fdcId") or usda_food.get("fdc_id")
             if not fdc_id:
@@ -56,7 +56,76 @@ async def cache_usda_ingredients(usda_foods: List[dict], db: Session, existing_r
                 if len(existing_results) + len(new_results) >= 10:
                     break
         except Exception as e:
-            logger.error(f"Error caching USDA ingredient: {e}")
+            logger.warning(f"Could not cache USDA ingredient, returning uncached result: {e}")
+            # Return result without caching - parse nutrition from API data
+            try:
+                from ....schemas.food import FoodSearchResult, FoodSafetyStatus
+                
+                # Log the USDA food structure to understand the data format
+                logger.info(f"USDA food structure keys: {usda_food.keys()}")
+                logger.info(f"USDA food nutrients sample: {usda_food.get('foodNutrients', [])[:2] if usda_food.get('foodNutrients') else 'No nutrients'}")
+                
+                # Parse nutrition data from USDA search response
+                nutrients = {}
+                food_nutrients = usda_food.get('foodNutrients', [])
+                
+                for nutrient_data in food_nutrients:
+                    name = nutrient_data.get('nutrientName', '').lower()
+                    amount = nutrient_data.get('value', 0)
+                    
+                    if not name or amount is None:
+                        continue
+                    
+                    # Map USDA nutrient names to our fields
+                    if name == 'protein':
+                        nutrients['protein'] = float(amount)
+                    elif name == 'carbohydrate, by difference':
+                        nutrients['carbs'] = float(amount)
+                    elif name == 'total lipid (fat)':
+                        nutrients['fat'] = float(amount)
+                    elif name == 'fiber, total dietary':
+                        nutrients['fiber'] = float(amount)
+                    elif name == 'total sugars' or name == 'sugars, total including nlea':
+                        nutrients['sugar'] = float(amount)
+                    elif name == 'energy':
+                        nutrients['calories'] = float(amount)
+                    elif name == 'sodium, na':
+                        nutrients['sodium'] = float(amount)
+                
+                # Determine safety status and provide explanation
+                food_name_lower = food_name.lower()
+                if any(safe_food in food_name_lower for safe_food in ['apple', 'banana', 'orange', 'strawberry', 'blueberry', 'carrot', 'broccoli', 'spinach', 'chicken', 'salmon', 'egg', 'yogurt', 'milk', 'cheese', 'bread', 'rice', 'pasta', 'oat']):
+                    safety_status = FoodSafetyStatus.SAFE
+                    safety_notes = "Generally safe for pregnancy when properly prepared and consumed in moderation."
+                else:
+                    safety_status = FoodSafetyStatus.LIMITED
+                    safety_notes = "Safety status not verified. Consult your healthcare provider if you have concerns."
+                
+                logger.info(f"Parsed nutrients for {food_name}: {nutrients}")
+                
+                new_results.append(FoodSearchResult(
+                    id=f"usda_{fdc_id}",
+                    name=food_name,
+                    brand=usda_food.get("brandOwner"),
+                    serving_size=100.0,
+                    serving_unit="g",
+                    calories=nutrients.get('calories', 0.0),
+                    safety_status=safety_status,
+                    safety_notes=safety_notes,
+                    protein=nutrients.get('protein', 0.0),
+                    carbs=nutrients.get('carbs', 0.0),
+                    fat=nutrients.get('fat', 0.0),
+                    fiber=nutrients.get('fiber', 0.0),
+                    sugar=nutrients.get('sugar', 0.0),
+                    sodium=nutrients.get('sodium', 0.0),
+                    micronutrients={},
+                    source="usda",
+                    item_type="ingredient"
+                ))
+                if len(existing_results) + len(new_results) >= 10:
+                    break
+            except Exception as e2:
+                logger.error(f"Could not build uncached result: {e2}")
     
     return new_results
 

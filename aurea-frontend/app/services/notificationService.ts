@@ -2,14 +2,20 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configure notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Check if notifications are available
+// In development builds, notifications should work. Only Expo Go doesn't support them.
+const NOTIFICATIONS_AVAILABLE = true;
+
+// Configure notification handler only if available
+if (NOTIFICATIONS_AVAILABLE) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export interface NotificationIdentifiers {
   hydration?: string[];
@@ -26,17 +32,33 @@ const NOTIFICATION_IDS_KEY = 'notification_identifiers';
  * @returns Promise<boolean> - true if permissions granted, false otherwise
  */
 export const requestPermissions = async (): Promise<boolean> => {
+  if (!NOTIFICATIONS_AVAILABLE) {
+    console.log('Notifications not available in Expo Go. Use a development build.');
+    return false;
+  }
+  
   try {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+    // First check current permissions
+    const { status: currentStatus } = await Notifications.getPermissionsAsync();
+    
+    // If already granted, configure and return true
+    if (currentStatus === 'granted') {
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#8B0000',
+        });
+      }
+      return true;
     }
 
-    if (finalStatus !== 'granted') {
-      console.warn('Notification permissions not granted');
+    // If not granted, try to request
+    const { status } = await Notifications.requestPermissionsAsync();
+
+    if (status !== 'granted') {
+      console.warn('Notification permissions not granted, status:', status);
       return false;
     }
 

@@ -1,253 +1,126 @@
-# Quick Start Guide
+# Aurea - Quick Start Guide
 
-Get Aurea up and running in minutes!
+Get up and running in 5 minutes!
 
-## 🚀 Automated Setup
+## Prerequisites Check
 
-### macOS/Linux
 ```bash
-chmod +x setup.sh
-./setup.sh
+# Check Python version (need 3.9+)
+python3 --version
+
+# Check Node.js version (need 16+)
+node --version
+
+# Check PostgreSQL (optional, can use SQLite)
+psql --version
 ```
 
-### Windows
-```bash
-setup.bat
-```
-
-## 🔧 Manual Setup
-
-### Backend
+## Backend (2 minutes)
 
 ```bash
-# 1. Navigate to backend
+# 1. Setup
 cd backend
-
-# 2. Create virtual environment
 python3 -m venv venv
-
-# 3. Activate virtual environment
-source venv/bin/activate  # macOS/Linux
-# OR
-venv\Scripts\activate.bat  # Windows
-
-# 4. Install dependencies
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# 5. Set up environment
+# 2. Configure
 cp .env.example .env
-# Edit .env with your settings
+# Edit .env - set DATABASE_URL and SECRET_KEY
 
-# 6. Run migrations
+# 3. Database
 alembic upgrade head
 
-# 7. Start server
+# 4. Run
 uvicorn app.main:app --reload
 ```
 
-**Backend is now running at:** `http://localhost:8000`
-**API Docs:** `http://localhost:8000/docs`
+✅ Backend running at http://localhost:8000
 
-### Frontend
+## Frontend (2 minutes)
 
 ```bash
-# 1. Navigate to frontend
+# 1. Setup
 cd aurea-frontend
-
-# 2. Install dependencies
 npm install
 
-# 3. Start development server
+# 2. Run
 npm start
 
-# 4. Choose platform
-# Press 'i' for iOS simulator
-# Press 'a' for Android emulator
-# Press 'w' for web browser
+# 3. Choose platform
+# Press 'i' for iOS
+# Press 'a' for Android
+# Press 'w' for Web
 ```
 
-## 📱 Running the App
+✅ Frontend running!
 
-### iOS (macOS only)
+## Verify Setup
+
+1. **Backend Health**: http://localhost:8000/health
+2. **API Docs**: http://localhost:8000/docs
+3. **Frontend**: Should load in simulator/browser
+
+## Quick Test
+
+### Register a User (via API docs)
+
+1. Go to http://localhost:8000/docs
+2. Find `POST /auth/register`
+3. Click "Try it out"
+4. Enter:
+   ```json
+   {
+     "email": "test@example.com",
+     "password": "password123",
+     "first_name": "Test",
+     "last_name": "User",
+     "due_date": "2025-08-01"
+   }
+   ```
+5. Click "Execute"
+
+### Login (via app)
+
+1. Open the app
+2. Enter credentials
+3. Start logging food!
+
+## Common Issues
+
+**Backend won't start?**
 ```bash
-cd aurea-frontend
-npm run ios
+# Check if port 8000 is in use
+lsof -i :8000
+# Use different port
+uvicorn app.main:app --reload --port 8001
 ```
 
-### Android
+**Frontend won't start?**
 ```bash
-cd aurea-frontend
-npm run android
-```
-
-### Web
-```bash
-cd aurea-frontend
-npm run web
-```
-
-## 🔑 Configuration
-
-### Backend Environment Variables
-
-Edit `backend/.env`:
-
-```env
-# Required
-DATABASE_URL=sqlite:///./test.db
-SECRET_KEY=your-secret-key-here
-
-# Optional API Keys
-SPOONACULAR_API_KEY=your-key-here
-USDA_API_KEY=your-key-here
-```
-
-### Frontend API URL
-
-Edit `aurea-frontend/app/services/api.ts`:
-
-```typescript
-const API_BASE_URL = 'http://localhost:8000';
-```
-
-## 🧪 Testing
-
-### Backend Tests
-```bash
-cd backend
-source venv/bin/activate
-pytest
-```
-
-### Frontend Tests
-```bash
-cd aurea-frontend
-npm test
-```
-
-## 🐛 Troubleshooting
-
-### Backend Issues
-
-**Port already in use:**
-```bash
-# Kill process on port 8000
-lsof -ti:8000 | xargs kill -9  # macOS/Linux
-netstat -ano | findstr :8000   # Windows (find PID, then kill)
-```
-
-**Database errors:**
-```bash
-# Reset database
-cd backend
-rm test.db  # If using SQLite
-alembic downgrade base
-alembic upgrade head
-```
-
-**Import errors:**
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
-```
-
-### Frontend Issues
-
-**Metro bundler issues:**
-```bash
-npm start -- --reset-cache
-```
-
-**Dependency issues:**
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**iOS build issues:**
-```bash
-cd ios
-pod install
-cd ..
-```
-
-**Android build issues:**
-```bash
-cd android
-./gradlew clean
-cd ..
-```
-
-## 📚 Common Commands
-
-### Backend
-```bash
-# Start server
-uvicorn app.main:app --reload
-
-# Run tests
-pytest
-
-# Format code
-black .
-isort .
-
-# Create migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-```
-
-### Frontend
-```bash
-# Start dev server
-npm start
-
-# Run on iOS
-npm run ios
-
-# Run on Android
-npm run android
-
-# Run on web
-npm run web
-
 # Clear cache
 npm start -- --reset-cache
 ```
 
-## 🔗 Useful URLs
+**Database errors?**
+```bash
+# Use SQLite instead (in .env)
+DATABASE_URL=sqlite:///./aurea.db
+```
 
-- **Backend API:** http://localhost:8000
-- **API Documentation:** http://localhost:8000/docs
-- **Alternative Docs:** http://localhost:8000/redoc
-- **Health Check:** http://localhost:8000/health
+## Next Steps
 
-## 📖 Next Steps
+- 📖 Read [SETUP.md](SETUP.md) for detailed setup
+- 📚 Check [README.md](README.md) for features
+- 🔧 See [backend/README.md](backend/README.md) for API docs
+- 📱 See [aurea-frontend/README.md](aurea-frontend/README.md) for app docs
 
-1. **Read the full README:** See `README.md` for detailed information
-2. **Check the docs:** Backend API docs at `/docs`
-3. **Explore the code:** Start with `backend/app/main.py` and `aurea-frontend/App.tsx`
-4. **Run tests:** Make sure everything works
-5. **Start developing:** See `CONTRIBUTING.md` for guidelines
+## Need Help?
 
-## 💡 Tips
+- Check [SETUP.md](SETUP.md) troubleshooting section
+- Review API docs at http://localhost:8000/docs
+- Contact: support@aurea.app
 
-- Use the API docs at `/docs` to test endpoints
-- Check logs for debugging: backend prints to console
-- Use React Native Debugger for frontend debugging
-- Keep dependencies updated regularly
-- Run tests before committing changes
+---
 
-## 🆘 Getting Help
-
-- Check the full README.md
-- Review CONTRIBUTING.md
-- Check existing issues on GitHub
-- Create a new issue if needed
-- Email: support@aurea.app
-
-## 🎉 You're Ready!
-
-Start building amazing features for expecting mothers! 🤰✨
+**Happy Coding! 🚀**

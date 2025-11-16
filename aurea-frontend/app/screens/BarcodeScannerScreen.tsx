@@ -34,18 +34,17 @@ export const BarcodeScannerScreen: React.FC = () => {
     setShowNotFoundModal,
   } = useBarcodeScanner();
 
+  // Re-check permissions when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      requestPermission();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   useEffect(() => {
     if (!permission) {
       requestPermission();
-    } else if (!permission.granted) {
-      Alert.alert(
-        'Camera Permission Required',
-        'Please enable camera access in your device settings to scan barcodes.',
-        [
-          { text: 'Cancel', onPress: () => navigation.goBack() },
-          { text: 'Request Again', onPress: requestPermission },
-        ]
-      );
     }
   }, [permission]);
 

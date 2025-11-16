@@ -8,13 +8,16 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { theme } from '../theme';
-import { MoodSelector } from '../components/MoodSelector';
+import { SimpleDatePicker } from '../components/SimpleDatePicker';
+import { JournalMoodSelector } from '../components/JournalMoodSelector';
 import { SymptomPicker } from '../components/SymptomPicker';
+import { useToast } from '../components/ToastProvider';
+import { useCelebrations } from '../hooks/useCelebrations';
 import { journalAPI } from '../services/api';
 import { JournalEntry, JournalEntryCreate } from '../types';
+import CelebrationModal from '../components/CelebrationModal';
 
 interface JournalEntryScreenProps {
   navigation: any;
@@ -27,13 +30,15 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
 }) => {
   const editEntry: JournalEntry | undefined = route.params?.entry;
   const isEditMode = !!editEntry;
+  const { showToast } = useToast();
+  const { celebrate, dismissCelebration, currentCelebration, showCelebration } = useCelebrations();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   
   // Form state
   const [entryDate, setEntryDate] = useState(
-    editEntry?.entry_date || new Date().toISOString().split('T')[0]
+    editEntry?.entry_date ? new Date(editEntry.entry_date) : new Date()
   );
   const [mood, setMood] = useState<number | null>(editEntry?.mood || null);
   const [symptoms, setSymptoms] = useState<string[]>(editEntry?.symptoms || []);
@@ -53,11 +58,7 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
   }, [isEditMode]);
 
   const validateForm = (): boolean => {
-    if (!entryDate) {
-      Alert.alert('Validation Error', 'Please select a date');
-      return false;
-    }
-    return true;
+    return true; // Date is always set
   };
 
   const handleSave = async () => {
@@ -66,7 +67,7 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
     setSaving(true);
     try {
       const entryData: JournalEntryCreate = {
-        entry_date: entryDate,
+        entry_date: entryDate.toISOString().split('T')[0],
         mood: mood || undefined,
         symptoms: symptoms.length > 0 ? symptoms : undefined,
         cravings: cravings.trim() || undefined,
@@ -77,15 +78,18 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
 
       if (isEditMode && editEntry) {
         await journalAPI.updateJournalEntry(editEntry.id, entryData);
-        Alert.alert('Success', 'Journal entry updated successfully');
+        showToast('Journal entry updated successfully', 'success');
       } else {
         await journalAPI.createJournalEntry(entryData);
-        Alert.alert('Success', 'Journal entry created successfully');
+        showToast('Journal entry created successfully', 'success');
+        
+        // Celebrate first journal entry
+        celebrate('first_journal_entry');
       }
 
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save journal entry');
+      showToast(error.message || 'Failed to save journal entry', 'error');
     } finally {
       setSaving(false);
     }
@@ -106,10 +110,10 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
             setSaving(true);
             try {
               await journalAPI.deleteJournalEntry(editEntry.id);
-              Alert.alert('Success', 'Journal entry deleted');
+              showToast('Journal entry deleted successfully', 'success');
               navigation.goBack();
             } catch (error: any) {
-              Alert.alert('Error', error.message || 'Failed to delete entry');
+              showToast(error.message || 'Failed to delete entry', 'error');
             } finally {
               setSaving(false);
             }
@@ -130,24 +134,23 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Date Display */}
+        {/* Date Picker */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Date</Text>
-          <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>
-              {new Date(entryDate).toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </Text>
-          </View>
+          <SimpleDatePicker
+            value={entryDate}
+            onChange={setEntryDate}
+            maximumDate={new Date()}
+          />
         </View>
 
         {/* Mood Selector */}
         <View style={styles.section}>
-          <MoodSelector value={mood} onChange={setMood} />
+          <JournalMoodSelector 
+            value={mood} 
+            onChange={setMood}
+            label="How are you feeling today?"
+          />
         </View>
 
         {/* Symptom Picker */}
@@ -155,68 +158,22 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
           <SymptomPicker value={symptoms} onChange={setSymptoms} />
         </View>
 
-        {/* Sleep Quality Slider */}
+        {/* Sleep Quality Selector */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Sleep Quality</Text>
-          <View style={styles.sliderContainer}>
-            {[1, 2, 3, 4, 5].map((value) => (
-              <TouchableOpacity
-                key={value}
-                style={[
-                  styles.sliderButton,
-                  sleepQuality === value && styles.sliderButtonSelected,
-                ]}
-                onPress={() => setSleepQuality(value)}
-                accessibilityLabel={`Sleep quality ${value} out of 5`}
-                accessibilityRole="button"
-              >
-                <Text
-                  style={[
-                    styles.sliderButtonText,
-                    sleepQuality === value && styles.sliderButtonTextSelected,
-                  ]}
-                >
-                  {value}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.sliderLabels}>
-            <Text style={styles.sliderLabelText}>Poor</Text>
-            <Text style={styles.sliderLabelText}>Excellent</Text>
-          </View>
+          <JournalMoodSelector 
+            value={sleepQuality} 
+            onChange={setSleepQuality}
+            label="How well did you sleep?"
+          />
         </View>
 
-        {/* Energy Level Slider */}
+        {/* Energy Level Selector */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Energy Level</Text>
-          <View style={styles.sliderContainer}>
-            {[1, 2, 3, 4, 5].map((value) => (
-              <TouchableOpacity
-                key={value}
-                style={[
-                  styles.sliderButton,
-                  energyLevel === value && styles.sliderButtonSelected,
-                ]}
-                onPress={() => setEnergyLevel(value)}
-                accessibilityLabel={`Energy level ${value} out of 5`}
-                accessibilityRole="button"
-              >
-                <Text
-                  style={[
-                    styles.sliderButtonText,
-                    energyLevel === value && styles.sliderButtonTextSelected,
-                  ]}
-                >
-                  {value}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.sliderLabels}>
-            <Text style={styles.sliderLabelText}>Very Low</Text>
-            <Text style={styles.sliderLabelText}>Very High</Text>
-          </View>
+          <JournalMoodSelector 
+            value={energyLevel} 
+            onChange={setEnergyLevel}
+            label="What's your energy level?"
+          />
         </View>
 
         {/* Cravings Input */}
@@ -266,7 +223,7 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator color={theme.colors.text.light} />
+            <ActivityIndicator color={theme.colors.text.inverse} />
           ) : (
             <Text style={styles.saveButtonText}>
               {isEditMode ? 'Update' : 'Save'}
@@ -274,6 +231,16 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Celebration Modal */}
+      {currentCelebration && (
+        <CelebrationModal
+          visible={showCelebration}
+          title={currentCelebration.title}
+          message={currentCelebration.message}
+          onDismiss={dismissCelebration}
+        />
+      )}
     </View>
   );
 };
@@ -305,55 +272,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
-  dateContainer: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  dateText: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fontWeight.medium,
-  },
-  sliderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.sm,
-  },
-  sliderButton: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 44,
-  },
-  sliderButtonSelected: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primary,
-  },
-  sliderButtonText: {
-    fontSize: theme.fontSize.lg,
-    color: theme.colors.text.secondary,
-    fontWeight: theme.fontWeight.semibold,
-  },
-  sliderButtonTextSelected: {
-    color: theme.colors.text.light,
-  },
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: theme.spacing.xs,
-  },
-  sliderLabelText: {
-    fontSize: theme.fontSize.xs,
-    color: theme.colors.text.muted,
-  },
+
   input: {
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -388,7 +307,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.error,
   },
   deleteButtonText: {
-    color: theme.colors.text.light,
+    color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
   },
@@ -400,7 +319,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   saveButtonText: {
-    color: theme.colors.text.light,
+    color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
   },

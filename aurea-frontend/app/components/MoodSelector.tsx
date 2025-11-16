@@ -71,7 +71,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.background,
-    minHeight: 80,
+    minHeight: 80, // Accessibility: exceeds 44pt minimum
+    minWidth: 44, // Accessibility: minimum touch target width
     justifyContent: 'center',
   },
   moodButtonSelected: {

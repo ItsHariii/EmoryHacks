@@ -4,12 +4,44 @@ React Native mobile application built with Expo for pregnancy nutrition tracking
 
 ## 📱 Features
 
-- **Food Logging**: Track daily meals with nutrition information
-- **Barcode Scanner**: Quick food logging via barcode scanning
-- **Journal & Mood Tracking**: Daily wellness journal with mood, symptoms, and energy tracking
-- **Push Notifications**: Reminders for hydration, supplements, and meal logging
-- **Nutrition Dashboard**: Visual progress tracking for daily nutrition goals
-- **Food Safety**: Pregnancy-safe food recommendations
+### Core Features
+- **Food Logging**: Track daily meals with comprehensive nutrition information
+  - Search from USDA and Spoonacular databases
+  - Barcode scanner for quick entry
+  - Custom serving sizes and units
+  - Meal type categorization (breakfast, lunch, dinner, snack)
+  
+- **Nutrition Dashboard**: Visual progress tracking
+  - Daily macronutrient goals (protein, carbs, fat)
+  - Micronutrient tracking (calcium, iron, folate, vitamins)
+  - Weekly nutrition trends
+  - Pregnancy-specific recommendations by trimester
+
+- **Journal & Wellness Tracking**: Daily wellness monitoring
+  - Mood tracking with visual indicators
+  - Symptom logging (nausea, fatigue, cravings, etc.)
+  - Energy level tracking
+  - Sleep quality monitoring
+  - Personal notes
+
+- **Push Notifications**: Smart reminders
+  - Hydration reminders (configurable intervals)
+  - Supplement reminders (daily at specific times)
+  - Meal logging reminders
+  - Customizable notification preferences
+
+- **Food Safety**: Pregnancy-specific guidance
+  - Real-time food safety checks
+  - Safety status indicators (safe, limited, avoid)
+  - Detailed safety notes and recommendations
+  - Ingredient analysis
+
+### UI/UX Features
+- **Smooth Animations**: Lottie animations for enhanced user experience
+- **Skeleton Loading**: Professional loading states
+- **Empty States**: Helpful guidance when no data exists
+- **Toast Notifications**: Non-intrusive feedback
+- **Responsive Design**: Optimized for various screen sizes
 
 ## 🚀 Getting Started
 

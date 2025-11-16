@@ -131,6 +131,12 @@ class NutritionCalculatorService:
         Returns:
             Dictionary containing calculated nutrition values
         """
+        print(f"\n{'='*60}")
+        print(f"🔍 MICRONUTRIENT FIX ACTIVE - Calculating nutrition for {food.name}")
+        print(f"   Food has {len(food.micronutrients) if food.micronutrients else 0} micronutrients in database")
+        print(f"{'='*60}\n")
+        logger.info(f"🔍 MICRONUTRIENT FIX ACTIVE - Calculating nutrition for {food.name}")
+        logger.info(f"   Food has {len(food.micronutrients) if food.micronutrients else 0} micronutrients in database")
         try:
             # Normalize serving information
             serving_size, serving_unit = self.normalize_serving_info(food, user_serving_size, user_serving_unit)
@@ -151,10 +157,43 @@ class NutritionCalculatorService:
             }
             
             # Add micronutrients if available
+            # Map USDA nutrient names to our standard keys
+            micronutrient_mapping = {
+                'calcium_ca': 'calcium',
+                'calcium': 'calcium',
+                'iron_fe': 'iron',
+                'iron': 'iron',
+                'vitamin_a_iu': 'vitamin_a',
+                'vitamin_a_rae': 'vitamin_a',
+                'vitamin_a': 'vitamin_a',
+                'vitamin_c_total_ascorbic_acid': 'vitamin_c',
+                'vitamin_c': 'vitamin_c',
+                'vitamin_d_(d2_+_d3)': 'vitamin_d',
+                'vitamin_d': 'vitamin_d',
+                'folate_total': 'folate',
+                'folate': 'folate',
+                'magnesium_mg': 'magnesium',
+                'magnesium': 'magnesium',
+                'zinc_zn': 'zinc',
+                'zinc': 'zinc',
+                'potassium_k': 'potassium',
+                'potassium': 'potassium',
+                'sodium_na': 'sodium',
+                'sodium': 'sodium',
+            }
+            
             if food.micronutrients:
+                micronutrients_found = []
                 for nutrient_name, nutrient_data in food.micronutrients.items():
                     if isinstance(nutrient_data, dict) and 'amount' in nutrient_data:
-                        nutrients_logged[nutrient_name] = round(nutrient_data['amount'] * multiplier, 1)
+                        # Use mapped name if available, otherwise use original
+                        mapped_name = micronutrient_mapping.get(nutrient_name.lower(), nutrient_name)
+                        nutrients_logged[mapped_name] = round(nutrient_data['amount'] * multiplier, 1)
+                        if mapped_name in ['calcium', 'iron', 'vitamin_a', 'vitamin_c', 'vitamin_d', 'folate']:
+                            micronutrients_found.append(f"{mapped_name}={nutrients_logged[mapped_name]}")
+                
+                if micronutrients_found:
+                    logger.info(f"Micronutrients added: {', '.join(micronutrients_found)}")
             
             logger.info(f"Calculated nutrition for {food.name}: {calories_logged} calories, multiplier: {multiplier}")
             

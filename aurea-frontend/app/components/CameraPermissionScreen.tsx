@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Linking, Platform } from 'react-native';
 import { theme } from '../theme';
 
 interface CameraPermissionScreenProps {
@@ -25,14 +25,22 @@ export const CameraPermissionScreen: React.FC<CameraPermissionScreenProps> = ({
   }
 
   if (denied) {
+    const openSettings = () => {
+      if (Platform.OS === 'ios') {
+        Linking.openURL('app-settings:');
+      } else {
+        Linking.openSettings();
+      }
+    };
+
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Camera access denied</Text>
+        <Text style={styles.errorText}>📷 Camera Access Required</Text>
         <Text style={styles.errorSubtext}>
-          Please enable camera permissions in settings to use the barcode scanner.
+          To scan barcodes, please enable camera permissions in your device settings.
         </Text>
-        <TouchableOpacity style={styles.button} onPress={onRequestPermission}>
-          <Text style={styles.buttonText}>Request Permission</Text>
+        <TouchableOpacity style={styles.button} onPress={openSettings}>
+          <Text style={styles.buttonText}>Open Settings</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.button, styles.secondaryButton]} 

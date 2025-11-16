@@ -15,8 +15,10 @@
     "ios": {
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to scan barcodes for quick food logging.",
-        "NSMicrophoneUsageDescription": "This app does not use the microphone."
-      }
+        "NSMicrophoneUsageDescription": "This app does not use the microphone.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.itshari.ovifrontend"
     },
     "android": {
       "adaptiveIcon": {
@@ -27,8 +29,11 @@
         "CAMERA",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "SCHEDULE_EXACT_ALARM"
-      ]
+        "SCHEDULE_EXACT_ALARM",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.itshari.ovifrontend"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -48,6 +53,11 @@
           "sounds": []
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6fe6292e-ed5d-431a-a8ef-4a9059970a85"
+      }
+    }
   }
 }

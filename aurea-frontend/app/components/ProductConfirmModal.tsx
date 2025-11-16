@@ -35,6 +35,25 @@ export const ProductConfirmModal: React.FC<ProductConfirmModalProps> = ({
               <Text style={styles.productBrand}>{product.brand}</Text>
             )}
             
+            {/* Pregnancy Safety Rating */}
+            {product.safety_status && (
+              <View style={[
+                styles.safetyBadge,
+                product.safety_status === 'safe' && styles.safetyBadgeSafe,
+                product.safety_status === 'caution' && styles.safetyBadgeCaution,
+                product.safety_status === 'avoid' && styles.safetyBadgeAvoid,
+              ]}>
+                <Text style={styles.safetyBadgeText}>
+                  {product.safety_status === 'safe' && '✓ Safe During Pregnancy'}
+                  {product.safety_status === 'caution' && '⚠️ Use Caution'}
+                  {product.safety_status === 'avoid' && '⛔ Avoid During Pregnancy'}
+                </Text>
+                {product.safety_notes && (
+                  <Text style={styles.safetyNotes}>{product.safety_notes}</Text>
+                )}
+              </View>
+            )}
+            
             <View style={styles.nutritionInfo}>
               <Text style={styles.nutritionLabel}>Nutrition per 100g:</Text>
               <Text style={styles.nutritionText}>
@@ -49,6 +68,21 @@ export const ProductConfirmModal: React.FC<ProductConfirmModalProps> = ({
               <Text style={styles.nutritionText}>
                 Fat: {product.fat_per_100g?.toFixed(1) || 0}g
               </Text>
+              {product.fiber_per_100g !== undefined && (
+                <Text style={styles.nutritionText}>
+                  Fiber: {product.fiber_per_100g.toFixed(1)}g
+                </Text>
+              )}
+              {product.sugar_per_100g !== undefined && (
+                <Text style={styles.nutritionText}>
+                  Sugar: {product.sugar_per_100g.toFixed(1)}g
+                </Text>
+              )}
+              {product.sodium_per_100g !== undefined && (
+                <Text style={styles.nutritionText}>
+                  Sodium: {(product.sodium_per_100g * 1000).toFixed(0)}mg
+                </Text>
+              )}
             </View>
           </View>
 
@@ -152,5 +186,34 @@ const styles = StyleSheet.create({
     color: theme.colors.text.light,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
+  },
+  safetyBadge: {
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 2,
+  },
+  safetyBadgeSafe: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#4CAF50',
+  },
+  safetyBadgeCaution: {
+    backgroundColor: '#FFF3E0',
+    borderColor: '#FF9800',
+  },
+  safetyBadgeAvoid: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#F44336',
+  },
+  safetyBadgeText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  safetyNotes: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
   },
 });

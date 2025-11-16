@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import timedelta, date, datetime
 from enum import Enum
@@ -10,7 +10,7 @@ class UserBase(BaseSchema):
     email: EmailStr
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    due_date: date
+    due_date: Optional[date] = None  # Made optional for registration
     babies: int = 1
     pre_pregnancy_weight: Optional[float] = None
     height: Optional[float] = None  # in cm
@@ -23,7 +23,8 @@ class UserBase(BaseSchema):
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=100)
     
-    @validator('password')
+    @field_validator('password')
+    @classmethod
     def password_strength(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters')
@@ -53,8 +54,7 @@ class UserInDB(UserBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 class UserLogin(BaseSchema):
     email: EmailStr
@@ -72,7 +72,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     first_name: Optional[str]
     last_name: Optional[str]
-    due_date: date
+    due_date: Optional[date]
     babies: int
     pre_pregnancy_weight: Optional[float]
     height: Optional[float]
@@ -81,16 +81,28 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
     @classmethod
     def from_orm(cls, user: UserModel):
         today = date.today()
-        # Calculate weeks pregnant based on due date
+        # Calculate weeks pregnant based on due date (40 weeks = 280 days)
         conception_date = user.due_date - timedelta(weeks=40)
         weeks_pregnant = (today - conception_date).days // 7
-        trimester = min(3, max(1, (weeks_pregnant // 13) + 1))
+        
+        # Calculate trimester based on standard medical definitions:
+        # Trimester 1: Weeks 1-13
+        # Trimester 2: Weeks 14-27
+        # Trimester 3: Weeks 28-40
+        if weeks_pregnant <= 13:
+            trimester = 1
+        elif weeks_pregnant <= 27:
+            trimester = 2
+        else:
+            trimester = 3
+        
+        # Ensure trimester is within valid range
+        trimester = min(3, max(1, trimester))
     
         return cls(
             id=str(user.id),

@@ -3,6 +3,9 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  dueDate?: string;
+  trimester?: number;
+  babies?: number;
 }
 
 export interface FoodItem {
@@ -18,7 +21,7 @@ export interface FoodItem {
   sodium_per_100g?: number;
   serving_size?: string;
   serving_unit?: string;
-  safety_status?: 'safe' | 'caution' | 'avoid';
+  safety_status?: 'safe' | 'limited' | 'avoid';
   safety_notes?: string;
 }
 
@@ -35,17 +38,53 @@ export interface FoodEntry {
   fat_logged?: number;
   fiber_logged?: number;
   logged_at: string;
-  safety_status?: 'safe' | 'caution' | 'avoid';
+  safety_status?: 'safe' | 'limited' | 'avoid';
 }
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 export interface NutritionSummary {
+  date: string;
+  total_calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g: number;
+  sugar_g?: number;
+  sodium_mg?: number;
+  calcium_mg?: number;
+  iron_mg?: number;
+  vitamin_a_mcg?: number;
+  vitamin_c_mg?: number;
+  vitamin_d_mcg?: number;
+  folate_mcg?: number;
+  vitamin_b12_mcg?: number;
+  magnesium_mg?: number;
+  dha_mg?: number;
+  choline_mg?: number;
+}
+
+export interface NutritionTargets {
   calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber: number;
+  macros: {
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  };
+  micronutrients: {
+    fiber_g: number;
+    calcium_mg: number;
+    iron_mg: number;
+    folate_mcg: number;
+    vitamin_d_mcg: number;
+    vitamin_c_mg: number;
+    vitamin_a_mcg: number;
+    vitamin_b12_mcg: number;
+    magnesium_mg: number;
+    dha_mg: number;
+    choline_mg: number;
+  };
+  water_ml: number;
 }
 
 export interface DailyGoals {
@@ -98,10 +137,12 @@ export interface JournalEntryUpdate {
 
 // Pregnancy Week and Progress Types
 export interface PregnancyInfo {
-  currentWeek: number;
+  week: number;
   trimester: number;
-  dueDate: string;
   daysUntilDue: number;
+  daysPassed: number;
+  weekTip: string;
+  trimesterName: string;
 }
 
 // Micronutrient Tracking Types
@@ -111,6 +152,16 @@ export interface MicronutrientTarget {
   target: number;
   unit: string;
   importance: string;
+}
+
+export interface MicronutrientData {
+  name: string;
+  current: number;
+  target: number;
+  unit: string;
+  importance: string;
+  foodSources: string[];
+  percentOfTarget: number;
 }
 
 // Notification Types
@@ -156,4 +207,14 @@ export interface BarcodeProduct {
     sugars_100g?: number;
     sodium_100g?: number;
   };
+}
+
+// Offline Sync Types
+export interface PendingAction {
+  id: string;
+  type: 'food_log' | 'journal_entry' | 'profile_update';
+  timestamp: number;
+  data: any;
+  endpoint: string;
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 }

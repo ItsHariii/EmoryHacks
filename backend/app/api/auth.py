@@ -18,6 +18,11 @@ from ..core.config import settings
 
 router = APIRouter()
 
+@router.options("/register")
+async def register_options():
+    """Handle CORS preflight for register endpoint."""
+    return {}
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_in: UserCreate,
@@ -37,13 +42,18 @@ async def register_user(
             )
         
         # Create new user
+        from datetime import date, timedelta
         hashed_password = get_password_hash(user_in.password)
+        
+        # Set default due date to 9 months from now if not provided
+        due_date = user_in.due_date if user_in.due_date else date.today() + timedelta(days=270)
+        
         db_user = UserModel(
             email=user_in.email,
             password_hash=hashed_password,
             first_name=user_in.first_name,
             last_name=user_in.last_name,
-            due_date=user_in.due_date,
+            due_date=due_date,
             babies=user_in.babies,
             pre_pregnancy_weight=user_in.pre_pregnancy_weight,
             height=user_in.height,
@@ -75,6 +85,11 @@ async def register_user(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during registration. Please try again."
         )
+
+@router.options("/login")
+async def login_options():
+    """Handle CORS preflight for login endpoint."""
+    return {}
 
 @router.post("/login", response_model=Token)
 async def login_for_access_token(

@@ -25,6 +25,7 @@ async def search_external_apis(
 ) -> List[FoodSearchResult]:
     """
     Search external APIs for additional results.
+    Uses only USDA API (Spoonacular disabled due to credit limits).
     Returns list of new FoodSearchResult objects.
     """
     new_results = []
@@ -34,34 +35,18 @@ async def search_external_apis(
         return new_results
     
     try:
-        logger.info(f"Searching external APIs for '{query}' (need {results_needed} more results)")
+        logger.info(f"Searching USDA API for '{query}' (need {results_needed} more results)")
         
-        # Use Spoonacular classification to determine product vs ingredient
-        search_result = await spoonacular_service.classify_and_search(query, number=results_needed)
-        search_type = search_result["type"]
-        spoonacular_foods = search_result["results"]
+        # Search USDA directly (Spoonacular disabled)
+        usda_foods = await usda_service.search_foods(query, max_results)
+        logger.info(f"USDA search returned {len(usda_foods)} foods")
         
-        logger.info(f"Classified '{query}' as {search_type}, found {len(spoonacular_foods)} results")
-        
-        # For ingredients, try USDA first before Spoonacular products
-        if search_type == "ingredient" and len(existing_results) < 5:
-            usda_results = await _search_usda_ingredients(query, existing_results, db)
-            new_results.extend(usda_results)
-        
-        # Process Spoonacular results
-        if len(existing_results) + len(new_results) < max_results:
-            spoonacular_results = await cache_spoonacular_results(
-                spoonacular_foods, search_type, db, existing_results + new_results
-            )
-            new_results.extend(spoonacular_results)
-        
-        # If still need more results, try USDA fallback
-        if len(existing_results) + len(new_results) < 5:
-            fallback_results = await _search_usda_fallback(query, search_type, existing_results + new_results, db)
-            new_results.extend(fallback_results)
+        # Try to cache as ingredients first
+        usda_results = await cache_usda_ingredients(usda_foods, db, existing_results)
+        new_results.extend(usda_results)
             
     except Exception as e:
-        logger.error(f"Error searching external APIs: {e}")
+        logger.error(f"Error searching USDA API: {e}")
     
     return new_results
 

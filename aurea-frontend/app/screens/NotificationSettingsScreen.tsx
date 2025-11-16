@@ -48,6 +48,14 @@ export const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProp
     });
   }, []);
 
+  // Re-check permissions when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      checkPermissions();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   const handleToggleNotifications = async (value: boolean) => {
     try {
       if (value) {

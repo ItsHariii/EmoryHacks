@@ -2,11 +2,15 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import status, HTTPException
+from fastapi import status, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
 
 from .config import settings
 from .logging import logger
 from ..models.user import User as UserModel
+
+# OAuth2 scheme for token extraction
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -71,7 +75,7 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 def get_current_user(
-    token: str,
+    token: str = Depends(oauth2_scheme),
     db = None
 ):
     """Get the current user from a JWT token."""

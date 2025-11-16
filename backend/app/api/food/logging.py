@@ -12,7 +12,6 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.food import Food, FoodLog
-from app.models.ingredient import Ingredient
 from app.schemas.food import FoodLogCreate, FoodLogUpdate, FoodLogResponse, DailyNutrition
 from app.services.usda_service import USDAService
 from app.utils.food_factory import FoodFactory
@@ -64,7 +63,7 @@ def _format_food_log_response(food_log: FoodLog, food: Food, serving_size: float
             },
             "safety_status": food.safety_status,
             "safety_notes": food.safety_notes,
-            "fdc_id": food.fdc_id,
+            "fdc_id": str(food.fdc_id) if food.fdc_id is not None else None,
             "created_at": food.created_at,
             "updated_at": food.updated_at,
             "source": food.source,
@@ -110,7 +109,7 @@ async def log_food(
                 
                 # Create Food object from USDA data
                 food_factory = FoodFactory()
-                food = await food_factory.create_food_from_usda(usda_food, db)
+                food = await food_factory.create_food_from_usda(db, fdc_id)
                 
         except Exception as e:
             logger.error(f"Error processing USDA food {food_id}: {str(e)}")
@@ -119,38 +118,8 @@ async def log_food(
                 detail=f"Failed to process USDA food: {str(e)}"
             )
     else:
-        # Regular food lookup by UUID - check both foods and ingredients tables
+        # Regular food lookup by UUID
         food = db.query(Food).filter(Food.id == food_id).first()
-        
-        # If not found in foods table, check ingredients table
-        if not food:
-            ingredient = db.query(Ingredient).filter(Ingredient.id == food_id).first()
-            if ingredient:
-                # Convert ingredient to food-like object for logging
-                # Create a temporary Food object with ingredient data
-                food = Food(
-                    id=ingredient.id,
-                    name=ingredient.name,
-                    description=ingredient.description,
-                    category=ingredient.category,
-                    brand=getattr(ingredient, 'brand', None),
-                    serving_size=getattr(ingredient, 'serving_size', 100.0),
-                    serving_unit=getattr(ingredient, 'serving_unit', 'g'),
-                    calories=ingredient.calories,
-                    protein=ingredient.protein,
-                    carbs=ingredient.carbs,
-                    fat=ingredient.fat,
-                    fiber=ingredient.fiber,
-                    sugar=ingredient.sugar,
-                    micronutrients=ingredient.micronutrients,
-                    safety_status=ingredient.safety_status,
-                    safety_notes=ingredient.safety_notes,
-                    fdc_id=ingredient.fdc_id,
-                    source=ingredient.source,
-                    is_verified=getattr(ingredient, 'is_verified', True),
-                    created_at=ingredient.created_at,
-                    updated_at=ingredient.updated_at
-                )
     
     if not food:
         # If food not found in either table, try to recreate it
@@ -171,7 +140,7 @@ async def log_food(
                     usda_food = await usda_service.get_food_details(fdc_id)
                     if usda_food:
                         food_factory = FoodFactory()
-                        food = await food_factory.create_food_from_usda(usda_food, db)
+                        food = await food_factory.create_food_from_usda(db, fdc_id)
                 
                 if not food:
                     raise HTTPException(

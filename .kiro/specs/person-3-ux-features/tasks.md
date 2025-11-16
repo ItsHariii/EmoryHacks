@@ -138,8 +138,8 @@
     - Handle notification taps and deep linking
     - _Requirements: 3.1, 3.7, 3.9, 3.10_
 
-- [ ] 6. Build enhanced UI/UX components
-  - [ ] 6.1 Create PregnancyWeekDisplay component
+- [x] 6. Build enhanced UI/UX components
+  - [x] 6.1 Create PregnancyWeekDisplay component
     - Implement calculatePregnancyWeek utility function
     - Build component to display current week and trimester
     - Add visual progress indicator
@@ -147,14 +147,14 @@
     - Style with maroon theme
     - _Requirements: 4.1, 4.2_
   
-  - [ ] 6.2 Create usePregnancyWeek custom hook
+  - [x] 6.2 Create usePregnancyWeek custom hook
     - Implement hook to calculate and manage pregnancy week
     - Load due date from user profile
     - Provide week, trimester, and days until due
     - Handle missing due date scenario
     - _Requirements: 4.2_
   
-  - [ ] 6.3 Build NutrientChart component
+  - [x] 6.3 Build NutrientChart component
     - Create visual chart for micronutrients using react-native-svg
     - Implement color-coded status indicators (green/yellow/red)
     - Add tap handler to show detailed nutrient info
@@ -163,14 +163,14 @@
     - Style with maroon theme
     - _Requirements: 4.4, 4.5, 4.6_
   
-  - [ ] 6.4 Create WeekTransitionAnimation component
+  - [x] 6.4 Create WeekTransitionAnimation component
     - Integrate Lottie animation for week changes
     - Display congratulatory message
     - Show new week milestone
     - Implement auto-dismiss after 3 seconds
     - _Requirements: 4.7_
   
-  - [ ] 6.5 Enhance DashboardScreen
+  - [x] 6.5 Enhance DashboardScreen
     - Add PregnancyWeekDisplay at top of dashboard
     - Replace simple progress bars with NutrientChart
     - Add quick action buttons for journal and barcode scanner
@@ -179,7 +179,7 @@
     - Ensure all elements use maroon theme
     - _Requirements: 4.1, 4.3, 4.4, 4.8, 4.9_
   
-  - [ ] 6.6 Implement accessibility improvements
+  - [x] 6.6 Implement accessibility improvements
     - Ensure all interactive elements have 44x44pt minimum touch targets
     - Add proper labels to all form inputs
     - Implement screen reader support for all components
