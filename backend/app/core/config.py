@@ -21,7 +21,10 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: SecretStr = Field(..., env="SECRET_KEY")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Database
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
     SECURE_HEADERS: bool = True
 
@@ -68,7 +71,9 @@ class Settings(BaseSettings):
     # External APIs
     USDA_API_KEY: str = ""
     SPOONACULAR_API_KEY: str = ""
-
+    GEMINI_API_KEY: str = ""  # Deprecated, kept for backward compatibility
+    GEMINI_FOOD_API_KEY: str = ""
+    GEMINI_CHATBOT_API_KEY: str = ""
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

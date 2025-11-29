@@ -1,6 +1,6 @@
-# Aurea - Complete Setup Guide
+# Ovi - Complete Setup Guide
 
-This guide will help you set up the Aurea pregnancy nutrition platform from scratch.
+This guide will help you set up the Ovi pregnancy nutrition platform from scratch.
 
 ## 📋 Table of Contents
 
@@ -68,7 +68,7 @@ nano .env  # or use your preferred editor
 Required environment variables:
 ```env
 # Database (use PostgreSQL for production)
-DATABASE_URL=postgresql://username:password@localhost:5432/aurea_db
+DATABASE_URL=postgresql://username:password@localhost:5432/ovi_db
 
 # Security (generate a secure random key)
 SECRET_KEY=your-very-long-secret-key-at-least-32-characters
@@ -101,11 +101,11 @@ sudo apt-get install postgresql postgresql-contrib
 # Download from https://www.postgresql.org/download/windows/
 
 # Create database
-createdb aurea_db
+createdb ovi_db
 
 # Or using psql:
 psql postgres
-CREATE DATABASE aurea_db;
+CREATE DATABASE ovi_db;
 \q
 ```
 
@@ -113,7 +113,7 @@ CREATE DATABASE aurea_db;
 
 ```env
 # In .env file:
-DATABASE_URL=sqlite:///./aurea.db
+DATABASE_URL=sqlite:///./ovi.db
 ```
 
 ### 4. Run Database Migrations
@@ -146,7 +146,7 @@ You should see the interactive API documentation and a healthy status.
 
 ```bash
 # Navigate to frontend directory
-cd aurea-frontend
+cd ovi-frontend
 
 # Install dependencies
 npm install
@@ -160,7 +160,7 @@ npm install -g expo-cli
 The frontend is pre-configured to connect to `http://localhost:8000`. If your backend runs on a different URL, update:
 
 ```typescript
-// aurea-frontend/app/services/api.ts
+// ovi-frontend/app/services/api.ts
 const API_BASE_URL = 'http://localhost:8000'; // Change if needed
 ```
 
@@ -214,19 +214,19 @@ python scripts/seed_database.py  # If available
 
 **View tables:**
 ```bash
-psql aurea_db
+psql ovi_db
 \dt  # List tables
 \d users  # Describe users table
 ```
 
 **Backup database:**
 ```bash
-pg_dump aurea_db > backup.sql
+pg_dump ovi_db > backup.sql
 ```
 
 **Restore database:**
 ```bash
-psql aurea_db < backup.sql
+psql ovi_db < backup.sql
 ```
 
 ## API Keys
@@ -254,6 +254,19 @@ psql aurea_db < backup.sql
 - Product information
 - Ingredient analysis
 - Free tier: 150 requests/day
+
+### Gemini API Key (Required for Chatbot & Vision)
+
+1. Visit: https://ai.google.dev/
+2. Sign in with Google and click "Get API key in Google AI Studio"
+3. Create a free API key
+4. Add to `.env`: `GEMINI_API_KEY=your-key-here`
+
+**Benefits:**
+- AI Wellness Chatbot
+- Food photo analysis
+- Smart nutrition insights
+- Generous free tier
 
 **Note:** The app works without API keys but with limited functionality.
 
@@ -398,7 +411,7 @@ After successful setup:
 ## Additional Resources
 
 - **Backend README**: [backend/README.md](backend/README.md)
-- **Frontend README**: [aurea-frontend/README.md](aurea-frontend/README.md)
+- **Frontend README**: [ovi-frontend/README.md](ovi-frontend/README.md)
 - **Database Schema**: [.kiro/specs/database-schema.md](.kiro/specs/database-schema.md)
 - **Contributing Guide**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
@@ -408,7 +421,7 @@ For issues or questions:
 - Check the troubleshooting section above
 - Review the README files
 - Check existing issues on GitHub
-- Contact: support@aurea.app
+- Contact: support@ovi.app
 
 ---
 

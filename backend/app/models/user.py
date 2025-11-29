@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Date, Integer, Float, JSON, DateTime
+from sqlalchemy import Column, String, Date, Integer, Float, JSON, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import date, datetime, timedelta
@@ -24,6 +24,11 @@ class User(Base):
     allergies = Column(JSON, default=list)
     conditions = Column(JSON, default=list)
     dietary_preferences = Column(String, nullable=True)
+    
+    # Verification
+    is_verified = Column(Boolean, default=False, nullable=False)
+    verification_token = Column(String, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

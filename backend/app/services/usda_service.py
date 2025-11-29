@@ -143,6 +143,18 @@ class USDAService:
             1167: "niacin",        # Niacin
             1175: "vitamin_b6",    # Vitamin B-6
             1178: "vitamin_b12",   # Vitamin B-12
+            1253: "cholesterol",   # Cholesterol
+            1258: "saturated_fat", # Fatty acids, total saturated
+            1257: "trans_fat",     # Fatty acids, total trans
+            1057: "caffeine",      # Caffeine
+            1018: "alcohol",       # Alcohol, ethyl
+            1009: "starch",        # Starch
+            1010: "sucrose",       # Sucrose
+            1011: "glucose",       # Glucose
+            1012: "fructose",      # Fructose
+            1013: "lactose",       # Lactose
+            1014: "maltose",       # Maltose
+            1051: "water",         # Water
         }
         
         # Process ALL nutrients from USDA

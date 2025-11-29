@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
 import uvicorn
 import uuid
 import os
@@ -11,8 +12,10 @@ from dotenv import load_dotenv
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # Load environment variables from .env file
-env_path = Path(__file__).parent.parent.parent / '.env'
+env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
+print(f"Loading .env from: {env_path}")
+print(f".env exists: {env_path.exists()}")
 
 from app.core.config import settings
 from .api import auth, health, journal, users
@@ -194,8 +197,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
-            "detail": exc.errors(),
-            "request_id": request.state.request_id,
+            "detail": jsonable_encoder(exc.errors()),
+            "request_id": getattr(request.state, "request_id", None),
         },
     )
 

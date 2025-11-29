@@ -31,7 +31,7 @@ def create_access_token(
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     # Ensure we have a subject claim
     subject = str(data.get("sub"))  # This should be the user ID
@@ -50,6 +50,38 @@ def create_access_token(
     to_encode = {k: v for k, v in to_encode.items() if v is not None}
     
     # Get the secret key value from SecretStr
+    secret_key = settings.SECRET_KEY.get_secret_value()
+    
+    encoded_jwt = jwt.encode(
+        to_encode, 
+        secret_key,
+        algorithm=settings.ALGORITHM
+    )
+    return encoded_jwt
+
+def create_refresh_token(
+    data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+) -> str:
+    """Create a JWT refresh token."""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    
+    subject = str(data.get("sub"))
+    if not subject:
+        raise ValueError("Token must have a 'sub' (subject) claim")
+        
+    to_encode.update({
+        "exp": expire,
+        "sub": subject,
+        "iat": datetime.utcnow(),
+        "type": "refresh"
+    })
+    
+    to_encode = {k: v for k, v in to_encode.items() if v is not None}
+    
     secret_key = settings.SECRET_KEY.get_secret_value()
     
     encoded_jwt = jwt.encode(
@@ -117,6 +149,8 @@ def get_current_user(
             
         return user
         
+    except HTTPException:
+        raise
     except JWTError as e:
         logger.error(f"JWT validation error: {str(e)}", exc_info=True)
         raise credentials_exception

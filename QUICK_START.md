@@ -1,4 +1,4 @@
-# Aurea - Quick Start Guide
+# Ovi - Quick Start Guide
 
 Get up and running in 5 minutes!
 
@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 # 2. Configure
 cp .env.example .env
-# Edit .env - set DATABASE_URL and SECRET_KEY
+# Edit .env - set DATABASE_URL, SECRET_KEY, and GEMINI_API_KEY (for AI features)
 
 # 3. Database
 alembic upgrade head
@@ -41,7 +41,7 @@ uvicorn app.main:app --reload
 
 ```bash
 # 1. Setup
-cd aurea-frontend
+cd ovi-frontend
 npm install
 
 # 2. Run
@@ -105,7 +105,7 @@ npm start -- --reset-cache
 **Database errors?**
 ```bash
 # Use SQLite instead (in .env)
-DATABASE_URL=sqlite:///./aurea.db
+DATABASE_URL=sqlite:///./ovi.db
 ```
 
 ## Next Steps
@@ -113,13 +113,13 @@ DATABASE_URL=sqlite:///./aurea.db
 - 📖 Read [SETUP.md](SETUP.md) for detailed setup
 - 📚 Check [README.md](README.md) for features
 - 🔧 See [backend/README.md](backend/README.md) for API docs
-- 📱 See [aurea-frontend/README.md](aurea-frontend/README.md) for app docs
+- 📱 See [ovi-frontend/README.md](ovi-frontend/README.md) for app docs
 
 ## Need Help?
 
 - Check [SETUP.md](SETUP.md) troubleshooting section
 - Review API docs at http://localhost:8000/docs
-- Contact: support@aurea.app
+- Contact: support@ovi.app
 
 ---
 

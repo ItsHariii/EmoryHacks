@@ -198,7 +198,7 @@ app.include_router(ai.router, prefix="/ai", tags=["AI"])
 
 ### 6. Frontend Screens (CRITICAL - 0% Complete)
 
-**Location:** `aurea-frontend/app/screens/`
+**Location:** `ovi-frontend/app/screens/`
 
 #### Missing Screens:
 
@@ -243,7 +243,7 @@ app.include_router(ai.router, prefix="/ai", tags=["AI"])
 
 ### 7. Frontend Components (HIGH PRIORITY - 0% Complete)
 
-**Location:** `aurea-frontend/app/components/`
+**Location:** `ovi-frontend/app/components/`
 
 #### Missing Components:
 - ❌ `PhotoAnalysisResult.tsx` - Display detected foods from photo
@@ -259,7 +259,7 @@ app.include_router(ai.router, prefix="/ai", tags=["AI"])
 
 ### 8. Frontend Services (HIGH PRIORITY - 0% Complete)
 
-**Location:** `aurea-frontend/app/services/`
+**Location:** `ovi-frontend/app/services/`
 
 #### Missing Service:
 - ❌ `aiAPI.ts` - API client for AI endpoints
@@ -293,7 +293,7 @@ getJournalPrompts(): Promise<string[]>
 
 ### 9. Navigation Integration (MEDIUM PRIORITY - 0% Complete)
 
-**Location:** `aurea-frontend/App.tsx` and navigation files
+**Location:** `ovi-frontend/App.tsx` and navigation files
 
 #### Required Changes:
 - ❌ Add PhotoFoodLoggingScreen to navigation

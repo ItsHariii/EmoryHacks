@@ -16,6 +16,12 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
+    # Drop existing tables and types if they exist to ensure clean state
+    op.execute('DROP TABLE IF EXISTS food_logs CASCADE')
+    op.execute('DROP TABLE IF EXISTS foods CASCADE')
+    op.execute('DROP TYPE IF EXISTS food_safety_status CASCADE')
+    op.execute('DROP TYPE IF EXISTS foodsource CASCADE')
+
     # Create the foods table with optimized schema
     op.create_table(
         'foods',
@@ -65,15 +71,28 @@ def upgrade():
                           name='ck_foods_source'),
         
         # Add any additional indexes
-        postgresql_using='btree'
     )
     
     # Create additional indexes
-    op.create_index('ix_foods_name', 'foods', ['name'])
-    op.create_index('ix_foods_brand', 'foods', ['brand'])
-    op.create_index('ix_foods_fdc_id', 'foods', ['fdc_id'])
-    op.create_index('ix_foods_spoonacular_id', 'foods', ['spoonacular_id'])
-    op.create_index('ix_foods_category', 'foods', ['category'])
+    # Note: Indexes for name, brand, fdc_id, spoonacular_id, category are created via index=True in create_table
+
+    # Recreate food_logs table
+    op.create_table('food_logs',
+        sa.Column('id', sa.UUID(), nullable=False),
+        sa.Column('user_id', sa.UUID(), nullable=False),
+        sa.Column('food_id', sa.UUID(), nullable=False),
+        sa.Column('quantity', sa.Float(), nullable=False),
+        sa.Column('consumed_at', sa.DateTime(), nullable=False),
+        sa.Column('meal_type', sa.String(), nullable=True),
+        sa.Column('notes', sa.String(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=True),
+        sa.Column('updated_at', sa.DateTime(), nullable=True),
+        sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_food_logs_food_id'), 'food_logs', ['food_id'], unique=False)
+    op.create_index(op.f('ix_food_logs_user_id'), 'food_logs', ['user_id'], unique=False)
 
 def downgrade():
     # Drop the table completely on downgrade

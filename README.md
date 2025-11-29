@@ -1,16 +1,16 @@
-# Aurea - Pregnancy Nutrition & Wellness Platform
+# Ovi - Pregnancy Nutrition & Wellness Platform
 
 A comprehensive mobile and web platform for pregnancy nutrition tracking, food safety analysis, and wellness monitoring.
 
 ## 🌟 Overview
 
-Aurea helps expecting mothers track their nutrition, monitor wellness, and make informed food choices during pregnancy. The platform combines a React Native mobile app with a FastAPI backend to provide real-time nutrition tracking, food safety recommendations, and personalized wellness insights.
+Ovi helps expecting mothers track their nutrition, monitor wellness, and make informed food choices during pregnancy. The platform combines a React Native mobile app with a FastAPI backend to provide real-time nutrition tracking, food safety recommendations, and personalized wellness insights.
 
 ## 🏗️ Architecture
 
 ```
-aurea/
-├── aurea-frontend/      # React Native mobile app (Expo)
+ovi/
+├── ovi-frontend/      # React Native mobile app (Expo)
 ├── backend/             # FastAPI Python backend
 ├── frontend/            # Alternative frontend (if applicable)
 └── .kiro/              # Kiro IDE specifications
@@ -18,7 +18,7 @@ aurea/
 
 ## 📱 Features
 
-### Mobile App (aurea-frontend)
+### Mobile App (ovi-frontend)
 - **Food Logging**: Track meals with detailed nutrition information
   - Search from 500,000+ foods (USDA + Spoonacular)
   - Barcode scanner for quick entry
@@ -54,7 +54,7 @@ aurea/
 - **[Quick Start Guide](QUICK_START.md)** - Get running in 5 minutes
 - **[Complete Setup Guide](SETUP.md)** - Detailed setup instructions
 - **[Backend Documentation](backend/README.md)** - API and backend details
-- **[Frontend Documentation](aurea-frontend/README.md)** - Mobile app details
+- **[Frontend Documentation](ovi-frontend/README.md)** - Mobile app details
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 
 ## 🚀 Quick Start
@@ -105,7 +105,7 @@ The API will be available at:
 
 ```bash
 # Navigate to frontend directory
-cd aurea-frontend
+cd ovi-frontend
 
 # Install dependencies
 npm install
@@ -123,7 +123,7 @@ npm run web      # Web Browser
 
 For detailed setup instructions, see:
 - [Backend README](backend/README.md)
-- [Frontend README](aurea-frontend/README.md)
+- [Frontend README](ovi-frontend/README.md)
 
 ## 📚 Documentation
 
@@ -158,7 +158,7 @@ Full API documentation available at `/docs` when running the backend.
 ### Frontend Structure
 
 ```
-aurea-frontend/
+ovi-frontend/
 ├── app/
 │   ├── components/       # Reusable UI components
 │   │   ├── MoodSelector.tsx
@@ -191,7 +191,7 @@ Create a `.env` file in the `backend/` directory:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost/aurea_db
+DATABASE_URL=postgresql://user:password@localhost/ovi_db
 
 # Security
 SECRET_KEY=your-secret-key-here
@@ -209,7 +209,7 @@ DEBUG=True
 
 ### Frontend Configuration
 
-The frontend uses the backend API URL configured in the code. Update `aurea-frontend/app/services/api.ts`:
+The frontend uses the backend API URL configured in the code. Update `ovi-frontend/app/services/api.ts`:
 
 ```typescript
 const API_BASE_URL = 'http://localhost:8000'; // Update for production
@@ -228,7 +228,7 @@ pytest --cov=app tests/  # With coverage
 ### Frontend Tests
 
 ```bash
-cd aurea-frontend
+cd ovi-frontend
 npm test
 ```
 
@@ -241,8 +241,8 @@ The backend can be deployed to various platforms:
 **Docker:**
 ```bash
 cd backend
-docker build -t aurea-backend .
-docker run -p 8000:8000 aurea-backend
+docker build -t ovi-backend .
+docker run -p 8000:8000 ovi-backend
 ```
 
 **Heroku, AWS, or similar:**
@@ -254,7 +254,7 @@ docker run -p 8000:8000 aurea-backend
 
 **Expo Build:**
 ```bash
-cd aurea-frontend
+cd ovi-frontend
 expo build:ios     # iOS
 expo build:android # Android
 ```
@@ -330,7 +330,7 @@ MIT License - see LICENSE file for details
 ## 👥 Team & Support
 
 For questions or support:
-- Email: support@aurea.app
+- Email: support@ovi.app
 - Documentation: See individual README files in each directory
 
 ## 🗺️ Roadmap

@@ -1,6 +1,6 @@
-# Aurea Backend API
+# Ovi Backend API
 
-FastAPI-based backend for the Aurea pregnancy nutrition and wellness platform.
+FastAPI-based backend for the Ovi pregnancy nutrition and wellness platform.
 
 ## 🚀 Quick Start
 
@@ -15,7 +15,7 @@ FastAPI-based backend for the Aurea pregnancy nutrition and wellness platform.
 1. **Clone the repository** (if not already done)
    ```bash
    git clone <repository-url>
-   cd aurea/backend
+   cd ovi/backend
    ```
 
 2. **Create a virtual environment**
@@ -42,7 +42,7 @@ FastAPI-based backend for the Aurea pregnancy nutrition and wellness platform.
    Edit `.env` with your configuration:
    ```env
    # Database
-   DATABASE_URL=postgresql://user:password@localhost:5432/aurea_db
+   DATABASE_URL=postgresql://user:password@localhost:5432/ovi_db
    
    # Security
    SECRET_KEY=your-secret-key-here-min-32-characters
@@ -243,12 +243,12 @@ pre-commit run --all-files
 
 Build image:
 ```bash
-docker build -t aurea-backend .
+docker build -t ovi-backend .
 ```
 
 Run container:
 ```bash
-docker run -p 8000:8000 --env-file .env aurea-backend
+docker run -p 8000:8000 --env-file .env ovi-backend
 ```
 
 ### Production
@@ -302,7 +302,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 pg_isready
 
 # Test connection
-psql -U username -d aurea_db
+psql -U username -d ovi_db
 ```
 
 ### Migration Issues

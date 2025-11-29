@@ -74,9 +74,7 @@ debug.log
 instance/
 .webassets-cache
 
-# Alembic
-alembic/versions/*.py
-!alembic/versions/.gitkeep
+
 
 # Project specific
 .venv/

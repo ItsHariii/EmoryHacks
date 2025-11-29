@@ -68,8 +68,18 @@ async def get_nutrition_targets(
     """
     trimester = current_user.trimester
     
-    # Base calorie needs (this is a simplified calculation)
-    base_calories = 2000  # Base for average woman
+    # Base calorie needs
+    base_calories = 2000  # Default base
+    
+    # Use Mifflin-St Jeor Formula if data is available
+    # BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(y) - 161
+    # Assuming age 30 if not provided (TODO: Add birthdate to user model)
+    if current_user.pre_pregnancy_weight and current_user.height:
+        age = 30 
+        bmr = (10 * current_user.pre_pregnancy_weight) + (6.25 * current_user.height) - (5 * age) - 161
+        # Activity factor 1.5 (Moderate) as per guide example
+        base_calories = bmr * 1.5
+
     additional_calories = 0
     
     # Additional calories based on trimester
@@ -81,8 +91,10 @@ async def get_nutrition_targets(
         additional_calories = 450
     
     # Adjust for multiple babies
-    if current_user.babies > 1:
-        additional_calories *= 1.5  # Rough estimate for twins+
+    if current_user.babies and current_user.babies > 1:
+        # Guide says +600 total for twins in 2nd/3rd tri
+        if trimester > 1:
+            additional_calories = 600 + (300 * (current_user.babies - 2)) # +600 for twins, +900 for triplets
     
     total_calories = base_calories + additional_calories
     

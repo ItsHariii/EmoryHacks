@@ -60,21 +60,21 @@ venv.bak/
 .DS_Store
 
 # React Native / Expo
-aurea-frontend/node_modules/
-aurea-frontend/.expo/
-aurea-frontend/.expo-shared/
-aurea-frontend/dist/
-aurea-frontend/npm-debug.*
-aurea-frontend/yarn-debug.*
-aurea-frontend/yarn-error.*
-aurea-frontend/*.jks
-aurea-frontend/*.p8
-aurea-frontend/*.p12
-aurea-frontend/*.key
-aurea-frontend/*.mobileprovision
-aurea-frontend/*.orig.*
-aurea-frontend/web-build/
-aurea-frontend/.cache/
+ovi-frontend/node_modules/
+ovi-frontend/.expo/
+ovi-frontend/.expo-shared/
+ovi-frontend/dist/
+ovi-frontend/npm-debug.*
+ovi-frontend/yarn-debug.*
+ovi-frontend/yarn-error.*
+ovi-frontend/*.jks
+ovi-frontend/*.p8
+ovi-frontend/*.p12
+ovi-frontend/*.key
+ovi-frontend/*.mobileprovision
+ovi-frontend/*.orig.*
+ovi-frontend/web-build/
+ovi-frontend/.cache/
 
 # Frontend (if using separate frontend directory)
 frontend/node_modules/
@@ -100,8 +100,17 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-package-lock.json
-yarn.lock
+# Debug scripts
+debug_*.py
+refresh_*.py
+verify_*.py
+check_*.py
+discover_*.py
+test_usda_api.py
+update_food_logs.py
+
+# Local tools
+.kiro/
 
 # macOS
 .DS_Store

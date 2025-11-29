@@ -65,7 +65,7 @@ backend/
 │   └── core/
 │       └── prompts.py (NEW)
 
-aurea-frontend/
+ovi-frontend/
 ├── app/
 │   ├── screens/
 │   │   ├── PhotoFoodLoggingScreen.tsx (NEW)

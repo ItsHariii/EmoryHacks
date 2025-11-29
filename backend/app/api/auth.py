@@ -10,6 +10,7 @@ from ..core.security import (
     get_password_hash,
     verify_password,
     create_access_token,
+    create_refresh_token,
     get_current_user,
 )
 from ..models.user import User as UserModel
@@ -116,10 +117,20 @@ async def login_for_access_token(
             expires_delta=access_token_expires
         )
         
+        # Create refresh token
+        refresh_token = create_refresh_token(
+            data={"sub": str(user.id), "email": user.email}
+        )
+        
         return Token(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer"
         )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as they are (like 401 Unauthorized)
+        raise
         
     except Exception as e:
         logging.error(f"Login error: {str(e)}", exc_info=True)
@@ -127,6 +138,96 @@ async def login_for_access_token(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during login"
         )
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token(
+    refresh_token: str = Body(..., embed=True),
+    db: Session = Depends(get_db)
+):
+    """
+    Refresh access token using a valid refresh token.
+    """
+    from ..core.security import verify_token
+    
+    try:
+        payload = verify_token(refresh_token)
+        if not payload or payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token claims",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            
+        # Verify user still exists
+        user = db.query(UserModel).filter(UserModel.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            
+        # Create new access token
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(user.id), "email": user.email},
+            expires_delta=access_token_expires
+        )
+        
+        # Create new refresh token (rotate)
+        new_refresh_token = create_refresh_token(
+            data={"sub": str(user.id), "email": user.email}
+        )
+        
+        return Token(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Refresh token error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+@router.post("/verify-email")
+async def verify_email(
+    token: str = Body(..., embed=True),
+    db: Session = Depends(get_db)
+):
+    """
+    Verify user email address.
+    """
+    # In a real implementation, you would verify the token against the one stored in DB
+    # or verify the JWT signature if stateless
+    
+    # For now, we'll assume it's a simple token lookup
+    user = db.query(UserModel).filter(UserModel.verification_token == token).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification token"
+        )
+        
+    user.is_verified = True
+    user.verification_token = None
+    db.commit()
+    
+    return {"message": "Email verified successfully"}
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(
@@ -137,6 +238,22 @@ async def read_users_me(
     Get current user information.
     """
     return UserResponse.from_orm(current_user)
+
+@router.options("/logout")
+async def logout_options():
+    """Handle CORS preflight for logout endpoint."""
+    return {}
+
+@router.post("/logout")
+async def logout(
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Logout user. Since we're using JWT tokens, the actual logout is handled
+    client-side by removing the token. This endpoint validates the token
+    and confirms the logout action.
+    """
+    return {"message": "Successfully logged out"}
 
 @router.post("/password-recovery/{email}")
 async def recover_password(email: str, db: Session = Depends(get_db)):

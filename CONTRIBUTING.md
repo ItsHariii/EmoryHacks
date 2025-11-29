@@ -1,6 +1,6 @@
-# Contributing to Aurea
+# Contributing to Ovi
 
-Thank you for your interest in contributing to Aurea! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Ovi! This document provides guidelines and instructions for contributing to the project.
 
 ## 🌟 How to Contribute
 
@@ -85,7 +85,7 @@ uvicorn app.main:app --reload
 ### Frontend Setup
 
 ```bash
-cd aurea-frontend
+cd ovi-frontend
 
 # Install dependencies
 npm install
@@ -117,7 +117,7 @@ pytest -v
 ### Frontend Tests
 
 ```bash
-cd aurea-frontend
+cd ovi-frontend
 
 # Run tests
 npm test
@@ -318,7 +318,7 @@ npx react-native log-android
 - **Questions**: Open a discussion on GitHub
 - **Bugs**: Create an issue
 - **Chat**: Join our community (if available)
-- **Email**: support@aurea.app
+- **Email**: support@ovi.app
 
 ## 📄 License
 
@@ -326,4 +326,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ## 🙏 Thank You!
 
-Your contributions help make Aurea better for expecting mothers everywhere. Thank you for your time and effort!
+Your contributions help make Ovi better for expecting mothers everywhere. Thank you for your time and effort!
