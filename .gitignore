@@ -238,6 +238,9 @@ dist
 # Gatsby files
 .cache/
 public
+# Exception: ovi-landing static assets (root public is for Gatsby)
+!ovi-landing/public/
+!ovi-landing/public/*
 
 # Serverless directories
 .serverless/
