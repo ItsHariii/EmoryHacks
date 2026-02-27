@@ -11,6 +11,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+# Exception: ovi-landing PostHog analytics (root lib/ is for Python)
+!ovi-landing/src/lib/
+!ovi-landing/src/lib/*
 lib64/
 parts/
 sdist/
