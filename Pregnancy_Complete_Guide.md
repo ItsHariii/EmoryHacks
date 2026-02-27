@@ -215,6 +215,23 @@ Hydration needs increase in pregnancy. You should drink plenty of fluids—about
 
 Other fluids like milk, herbal teas, soups, and water-rich fruits also contribute to hydration. (Limit sugary drinks and avoid alcohol entirely—see below.)
 
+Gradual Weekly Extra-Calorie Schedule
+Assume “maintenance” is your pre‑pregnancy calorie need. The numbers below are extra calories per day to add on top of maintenance.
+
+Weeks	Trimester	Extra kcal/day (guide)	Notes
+1–12	1st	0	Focus on nutrient density; no extra calories needed on average.
+13–14	2nd	+150	Gentle start as baby’s growth and blood volume begin to increase.
+15–16	2nd	+200	Small bump as second trimester gets underway.
+17–18	2nd	+250	Approaching mid‑pregnancy growth spurt.
+19–20	2nd	+290	Near the classic “+340” guideline but eased in.
+21–22	2nd	+320	Almost at full second‑trimester target.
+23–26	2nd	+340	Hold steady around the standard +340 kcal/day.
+27–28	3rd	+360	Early 3rd trimester; start edging above 2nd‑trimester level.
+29–30	3rd	+380	Baby’s growth accelerating.
+31–32	3rd	+400	Mid‑third trimester.
+33–34	3rd	+425	Approaching peak needs.
+35–40	3rd	+450	Full third‑trimester target; maintain unless weight gain is off‑track.
+
 ---
 
 ## KEY MICRONUTRIENT NEEDS (VITAMINS AND MINERALS)

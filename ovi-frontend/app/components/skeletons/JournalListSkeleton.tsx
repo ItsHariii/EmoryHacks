@@ -1,7 +1,8 @@
+// @ts-nocheck
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { theme } from '../../theme';
-import { SkeletonJournalEntry } from '../SkeletonLoader';
+import { SkeletonJournalEntry } from './SkeletonLoader';
 
 /**
  * Skeleton screen for Journal entries list

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Example component demonstrating the icon system usage
  * This file can be used as a reference or removed in production

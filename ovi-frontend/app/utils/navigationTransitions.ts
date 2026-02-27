@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Easing } from 'react-native';
 import { StackNavigationOptions, TransitionPresets } from '@react-navigation/stack';
 

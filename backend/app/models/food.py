@@ -243,6 +243,11 @@ class Food(Base):
         food.micronutrients = nutrients
         return food
 
+    @property
+    def nutrients(self):
+        """Alias for micronutrients to match Pydantic schema."""
+        return self.micronutrients
+
     def __repr__(self):
         return f"<Food {self.name}>"
 

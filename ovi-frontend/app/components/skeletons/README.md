@@ -31,7 +31,7 @@ Skeleton screens use a shimmer animation effect (gradient moving left to right) 
 ### Basic Usage
 
 ```typescript
-import { SkeletonLoader } from '../components/SkeletonLoader';
+import { SkeletonLoader } from './SkeletonLoader';
 
 // Simple skeleton
 <SkeletonLoader width="100%" height={20} />

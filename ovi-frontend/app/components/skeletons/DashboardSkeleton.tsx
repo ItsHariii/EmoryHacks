@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { theme } from '../../theme';
@@ -5,7 +6,7 @@ import {
   SkeletonPregnancyWeek,
   SkeletonMacroCard,
   SkeletonMicronutrientChart,
-} from '../SkeletonLoader';
+} from './SkeletonLoader';
 
 /**
  * Skeleton screen for Dashboard

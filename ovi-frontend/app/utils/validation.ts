@@ -17,6 +17,7 @@ export const registrationSchema = z.object({
     babies: z.number().min(1).max(10),
 
     // Step 3: Health Info (Optional but validated if present)
+    birthDate: z.date().optional(),
     prePregnancyWeight: z.string().optional(),
     height: z.string().optional(),
     currentWeight: z.string().optional(),

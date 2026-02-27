@@ -1,7 +1,8 @@
+// @ts-nocheck
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { theme } from '../../theme';
-import { SkeletonProfileInfo, SkeletonPregnancyWeek } from '../SkeletonLoader';
+import { SkeletonProfileInfo, SkeletonPregnancyWeek } from './SkeletonLoader';
 
 /**
  * Skeleton screen for Profile

@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, PlainTextResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 import uvicorn
@@ -122,7 +122,14 @@ app = FastAPI(
 
 # ----- Security Middleware -----
 app.add_middleware(SecurityHeadersMiddleware)
-app.add_middleware(RateLimitMiddleware, calls_per_minute=100)
+if settings.RATE_LIMIT_ENABLED:
+    app.add_middleware(
+        RateLimitMiddleware,
+        calls_per_minute=settings.RATE_LIMIT_CALLS_PER_MINUTE,
+        backend=settings.RATE_LIMIT_BACKEND,
+        window_seconds=settings.RATE_LIMIT_WINDOW_SECONDS,
+        redis_url=settings.RATE_LIMIT_REDIS_URL,
+    )
 
 # ----- Metrics Middleware -----
 app.add_middleware(MetricsMiddleware)
@@ -237,20 +244,20 @@ async def root(request: Request):
     }
 
 # ======================================================
-# Metrics Endpoint
+# Metrics Endpoints
 # ======================================================
 @app.get("/metrics", tags=["Monitoring"])
 async def get_metrics():
-    """Get application metrics for monitoring."""
+    """Get application metrics for monitoring in JSON format."""
     return metrics_collector.get_metrics()
 
-# ======================================================
-# Health Check Endpoint
-# ======================================================
-@app.get("/health", tags=["Health"])
-async def health_check():
-    """Health check endpoint for load balancers and monitoring."""
-    return {"status": "healthy"}
+
+@app.get("/metrics/prometheus", tags=["Monitoring"])
+async def get_metrics_prometheus():
+    """Get application metrics in Prometheus text exposition format."""
+    return PlainTextResponse(metrics_collector.get_prometheus_metrics())
+
+
 
 # ======================================================
 # Main Entry Point

@@ -5,8 +5,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import { AuthProvider } from './app/contexts/AuthContext';
-import { ToastProvider } from './app/components/ToastProvider';
-import { ErrorBoundary } from './app/components/ErrorBoundary';
+import { ToastProvider } from './app/components/ui/ToastProvider';
+import { ErrorBoundary } from './app/components/ui/ErrorBoundary';
 import { AuthScreen } from './app/screens/AuthScreen';
 import { DashboardScreen } from './app/screens/DashboardScreen';
 // Lazy load other screens
@@ -27,7 +27,13 @@ import { useAuth } from './app/contexts/AuthContext';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { theme } from './app/theme';
 import { setupNotificationListener } from './app/services/notificationService';
-import { CustomTabBar } from './app/components/CustomTabBar';
+import { CustomTabBar } from './app/components/layout/CustomTabBar';
+import type {
+  RootStackParamList,
+  MainTabParamList,
+  FoodStackParamList,
+  JournalStackParamList,
+} from './app/types/navigation';
 import {
   slideFromRightTransition,
   fadeTransition,
@@ -39,8 +45,10 @@ import {
   swipeToDismissGestureConfig,
 } from './app/utils/navigationTransitions';
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
+const RootStack = createStackNavigator<RootStackParamList>();
+const FoodStackNavigator = createStackNavigator<FoodStackParamList>();
+const JournalStackNavigator = createStackNavigator<JournalStackParamList>();
 
 const LoadingFallback = () => (
   <View style={styles.loadingContainer}>
@@ -115,11 +123,11 @@ function MainTabs() {
 
 function FoodStack() {
   return (
-    <Stack.Navigator
+    <FoodStackNavigator.Navigator
       screenOptions={enhancedStackScreenOptions}
       initialRouteName="SearchFood"
     >
-      <Stack.Screen
+      <FoodStackNavigator.Screen
         name="SearchFood"
         component={SearchFoodScreenWrapped}
         options={{
@@ -127,7 +135,7 @@ function FoodStack() {
           ...swipeBackGestureConfig,
         }}
       />
-      <Stack.Screen
+      <FoodStackNavigator.Screen
         name="FoodLoggingMain"
         component={FoodLoggingScreenWrapped}
         options={{
@@ -135,7 +143,7 @@ function FoodStack() {
           ...swipeBackGestureConfig,
         }}
       />
-      <Stack.Screen
+      <FoodStackNavigator.Screen
         name="EditFoodEntry"
         component={EditFoodEntryScreenWrapped}
         options={{
@@ -144,7 +152,7 @@ function FoodStack() {
           headerShown: false, // Use custom header in screen
         }}
       />
-      <Stack.Screen
+      <FoodStackNavigator.Screen
         name="BarcodeScanner"
         component={BarcodeScannerScreenWrapped}
         options={{
@@ -152,7 +160,7 @@ function FoodStack() {
           ...swipeToDismissGestureConfig,
         }}
       />
-      <Stack.Screen
+      <FoodStackNavigator.Screen
         name="AIPhotoAnalysis"
         component={AIPhotoAnalysisScreenWrapped}
         options={{
@@ -161,13 +169,13 @@ function FoodStack() {
           ...swipeToDismissGestureConfig,
         }}
       />
-    </Stack.Navigator>
+    </FoodStackNavigator.Navigator>
   );
 }
 
 function JournalStack() {
   return (
-    <Stack.Navigator
+    <JournalStackNavigator.Navigator
       screenOptions={{
         headerStyle: {
           backgroundColor: theme.colors.primary,
@@ -179,7 +187,7 @@ function JournalStack() {
         ...enhancedStackScreenOptions,
       }}
     >
-      <Stack.Screen
+      <JournalStackNavigator.Screen
         name="JournalMain"
         component={JournalScreenWrapped}
         options={{
@@ -188,7 +196,7 @@ function JournalStack() {
           ...swipeBackGestureConfig,
         }}
       />
-      <Stack.Screen
+      <JournalStackNavigator.Screen
         name="JournalEntry"
         component={JournalEntryScreenWrapped}
         options={{
@@ -197,7 +205,7 @@ function JournalStack() {
           ...swipeBackGestureConfig,
         }}
       />
-      <Stack.Screen
+      <JournalStackNavigator.Screen
         name="ChatJournal"
         component={ChatJournalScreenWrapped}
         options={{
@@ -206,7 +214,7 @@ function JournalStack() {
           ...swipeBackGestureConfig,
         }}
       />
-    </Stack.Navigator>
+    </JournalStackNavigator.Navigator>
   );
 }
 
@@ -231,12 +239,12 @@ function AppNavigator() {
   }
 
   return (
-    <Stack.Navigator
+    <RootStack.Navigator
       screenOptions={enhancedStackScreenOptions}
     >
       {user ? (
         <>
-          <Stack.Screen
+          <RootStack.Screen
             name="Main"
             component={MainTabs}
             options={{
@@ -244,7 +252,7 @@ function AppNavigator() {
               gestureEnabled: false, // Disable gesture for main tabs
             }}
           />
-          <Stack.Screen
+          <RootStack.Screen
             name="NotificationSettings"
             component={NotificationSettingsScreenWrapped}
             options={{
@@ -260,10 +268,26 @@ function AppNavigator() {
               ...enhancedModalScreenOptions,
             }}
           />
+          <RootStack.Screen
+            name="Profile"
+            component={ProfileScreenWrapped}
+            options={{
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: theme.colors.primary,
+              },
+              headerTintColor: theme.colors.text.inverse,
+              headerTitleStyle: {
+                fontWeight: theme.fontWeight.bold,
+              },
+              title: 'Profile',
+              ...slideFromRightTransition,
+            }}
+          />
 
         </>
       ) : (
-        <Stack.Screen
+        <RootStack.Screen
           name="Auth"
           component={AuthScreen}
           options={{
@@ -272,7 +296,7 @@ function AppNavigator() {
           }}
         />
       )}
-    </Stack.Navigator>
+    </RootStack.Navigator>
   );
 }
 

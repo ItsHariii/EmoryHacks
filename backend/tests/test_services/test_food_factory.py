@@ -7,7 +7,8 @@ class TestFoodFactory:
     """Test food factory functions."""
 
     @patch('app.services.spoonacular_service.spoonacular_service.get_food_information')
-    def test_spoonacular_service_mock(self, mock_spoonacular):
+    @pytest.mark.asyncio
+    async def test_spoonacular_service_mock(self, mock_spoonacular):
         """Test Spoonacular service with mocking."""
         mock_spoonacular.return_value = {
             "id": 9003,
@@ -21,12 +22,13 @@ class TestFoodFactory:
         }
         
         # Test that the service can be called
-        result = mock_spoonacular(9003)
+        result = await mock_spoonacular(9003)
         assert result["name"] == "apple"
         mock_spoonacular.assert_called_once_with(9003)
 
     @patch('app.services.usda_service.usda_service.get_food_details')
-    def test_usda_service_mock(self, mock_usda):
+    @pytest.mark.asyncio
+    async def test_usda_service_mock(self, mock_usda):
         """Test USDA service with mocking."""
         mock_usda.return_value = {
             "fdcId": 171688,
@@ -38,7 +40,7 @@ class TestFoodFactory:
         }
         
         # Test that the service can be called
-        result = mock_usda("171688")
+        result = await mock_usda("171688")
         assert result["description"] == "Apple, raw"
         mock_usda.assert_called_once_with("171688")
 

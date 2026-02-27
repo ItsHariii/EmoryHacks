@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply antialiased font-sans text-ovi-text-primary bg-ovi-cream;
+}
+
+.cta-shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+.cta-shimmer-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.cta-shimmer-btn:hover::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-shimmer-btn::after {
+    display: none;
+  }
+}

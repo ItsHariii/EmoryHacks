@@ -8,6 +8,143 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+# Fix for SQLite UUID compatibility
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ENUM
+from sqlalchemy import ARRAY
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.types import CHAR, JSON, TypeDecorator
+from sqlalchemy import Enum as SQLEnum
+import uuid
+import sqlalchemy.dialects.postgresql
+import json
+
+# Monkeypatch UUID to handle SQLite
+class SQLiteUUID(TypeDecorator):
+    impl = CHAR
+    cache_ok = True
+
+    def __init__(self, as_uuid=True, **kwargs):
+        self.as_uuid = as_uuid
+        super().__init__(**kwargs)
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(UUID())
+        else:
+            return dialect.type_descriptor(CHAR(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if not isinstance(value, uuid.UUID):
+            try:
+                return uuid.UUID(value)
+            except ValueError:
+                return value
+        return value
+
+# Monkeypatch ARRAY to handle SQLite (map to JSON/Text)
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
+from sqlalchemy.types import TypeDecorator, CHAR, Text
+
+class SQLiteArray(TypeDecorator):
+    impl = Text
+    cache_ok = True
+
+    def __init__(self, item_type=None, as_tuple=False, dimensions=None, zero_indexes=False):
+        super().__init__()
+        self.item_type = item_type
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_ARRAY(self.item_type))
+        else:
+            return dialect.type_descriptor(Text())
+
+    def process_bind_param(self, value, dialect):
+        if dialect.name == 'postgresql':
+            return value
+        if value is None:
+            return None
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if dialect.name == 'postgresql':
+            return value
+        if value is None:
+            return None
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except ValueError:
+                return []
+        return value
+
+# Monkeypatch JSONB to handle SQLite (map to JSON/Text)
+from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
+class SQLiteJSON(TypeDecorator):
+    impl = Text
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_JSONB())
+        else:
+            return dialect.type_descriptor(Text())
+
+    def process_bind_param(self, value, dialect):
+        if dialect.name == 'postgresql':
+            return value
+        if value is None:
+            return None
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if dialect.name == 'postgresql':
+            return value
+        if value is None:
+            return None
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except ValueError:
+                return {}
+        return value
+
+# Patch types before importing models
+sqlalchemy.dialects.postgresql.UUID = SQLiteUUID
+sqlalchemy.dialects.postgresql.ARRAY = SQLiteArray
+sqlalchemy.dialects.postgresql.JSONB = SQLiteJSON
+
+# Also patch generic ARRAY since some models use it directly
+import sqlalchemy.sql.sqltypes
+sqlalchemy.sql.sqltypes.ARRAY = SQLiteArray
+sqlalchemy.ARRAY = SQLiteArray
+
+@compiles(SQLiteUUID, "sqlite")
+def compile_uuid(type_, compiler, **kw):
+    return "CHAR(36)"
+
+@compiles(SQLiteArray, "sqlite")
+def compile_array(type_, compiler, **kw):
+    return "JSON"
+
+@compiles(SQLiteJSON, "sqlite")
+def compile_jsonb(type_, compiler, **kw):
+    return "JSON"
+
+@compiles(SQLEnum, "sqlite")
+@compiles(ENUM, "sqlite")
+def compile_enum(type_, compiler, **kw):
+    return "VARCHAR(50)"
+
+# No sqlite3 adapters needed as SQLAlchemy JSON type handles it
+
 from app.main import app
 from app.core.database import Base, get_db
 from app.core.config import settings
@@ -43,6 +180,9 @@ else:
     )
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+
 
 
 @pytest.fixture(scope="session")
@@ -91,12 +231,14 @@ def client(db_session):
 @pytest.fixture
 def test_user(db_session):
     """Create a test user."""
+    from datetime import date, timedelta
+    
     user = User(
         email="test@example.com",
-        hashed_password=get_password_hash("testpassword"),
+        password_hash=get_password_hash("testpassword"),
         first_name="Test",
         last_name="User",
-        is_active=True,
+        due_date=date.today() + timedelta(days=180),
         is_verified=True
     )
     db_session.add(user)
@@ -108,7 +250,7 @@ def test_user(db_session):
 @pytest.fixture
 def auth_headers(test_user):
     """Get authentication headers for test user."""
-    access_token = create_access_token(data={"sub": test_user.email})
+    access_token = create_access_token(data={"sub": str(test_user.id)})
     return {"Authorization": f"Bearer {access_token}"}
 
 

@@ -11,6 +11,7 @@ class UserBase(BaseSchema):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     due_date: Optional[date] = None  # Made optional for registration
+    birth_date: Optional[date] = None
     babies: int = 1
     pre_pregnancy_weight: Optional[float] = None
     height: Optional[float] = None  # in cm
@@ -40,6 +41,7 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     due_date: Optional[date] = None
+    birth_date: Optional[date] = None
     babies: Optional[int] = None
     pre_pregnancy_weight: Optional[float] = None
     height: Optional[float] = None
@@ -74,6 +76,7 @@ class UserResponse(BaseModel):
     first_name: Optional[str]
     last_name: Optional[str]
     due_date: Optional[date]
+    birth_date: Optional[date]
     babies: int
     pre_pregnancy_weight: Optional[float]
     height: Optional[float]
@@ -111,6 +114,7 @@ class UserResponse(BaseModel):
             first_name=user.first_name,
             last_name=user.last_name,
             due_date=user.due_date,
+            birth_date=user.birth_date,
             babies=user.babies,
             pre_pregnancy_weight=user.pre_pregnancy_weight,
             height=user.height,

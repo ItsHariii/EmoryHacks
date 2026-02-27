@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
+from jose.exceptions import ExpiredSignatureError
 from passlib.context import CryptContext
 from fastapi import status, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
@@ -31,31 +32,39 @@ def create_access_token(
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+        expire = datetime.utcnow() + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+
     # Ensure we have a subject claim
     subject = str(data.get("sub"))  # This should be the user ID
     if not subject:
         raise ValueError("Token must have a 'sub' (subject) claim")
-    
+
+    now = datetime.utcnow()
+
     # Set the standard claims
-    to_encode.update({
-        "exp": expire,
-        "sub": subject,
-        "iat": datetime.utcnow(),
-        "type": "access"
-    })
-    
+    to_encode.update(
+        {
+            "exp": expire,
+            "sub": subject,
+            "iat": now,
+            "type": "access",
+            "aud": settings.TOKEN_AUDIENCE,
+            "iss": settings.TOKEN_ISSUER,
+        }
+    )
+
     # Remove None values to avoid serialization issues
     to_encode = {k: v for k, v in to_encode.items() if v is not None}
-    
+
     # Get the secret key value from SecretStr
     secret_key = settings.SECRET_KEY.get_secret_value()
-    
+
     encoded_jwt = jwt.encode(
-        to_encode, 
+        to_encode,
         secret_key,
-        algorithm=settings.ALGORITHM
+        algorithm=settings.ALGORITHM,
     )
     return encoded_jwt
 
@@ -67,31 +76,43 @@ def create_refresh_token(
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    
+        expire = datetime.utcnow() + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
+
     subject = str(data.get("sub"))
     if not subject:
         raise ValueError("Token must have a 'sub' (subject) claim")
-        
-    to_encode.update({
-        "exp": expire,
-        "sub": subject,
-        "iat": datetime.utcnow(),
-        "type": "refresh"
-    })
-    
+
+    now = datetime.utcnow()
+
+    to_encode.update(
+        {
+            "exp": expire,
+            "sub": subject,
+            "iat": now,
+            "type": "refresh",
+            "aud": settings.TOKEN_AUDIENCE,
+            "iss": settings.TOKEN_ISSUER,
+        }
+    )
+
     to_encode = {k: v for k, v in to_encode.items() if v is not None}
-    
+
     secret_key = settings.SECRET_KEY.get_secret_value()
-    
+
     encoded_jwt = jwt.encode(
-        to_encode, 
+        to_encode,
         secret_key,
-        algorithm=settings.ALGORITHM
+        algorithm=settings.ALGORITHM,
     )
     return encoded_jwt
 
-def verify_token(token: str) -> Optional[Dict[str, Any]]:
+
+def verify_token(
+    token: str,
+    token_type: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
     """Verify a JWT token and return the payload if valid."""
     try:
         # Get the secret key value from SecretStr
@@ -99,16 +120,30 @@ def verify_token(token: str) -> Optional[Dict[str, Any]]:
         payload = jwt.decode(
             token,
             secret_key,
-            algorithms=[settings.ALGORITHM]
+            algorithms=[settings.ALGORITHM],
+            audience=settings.TOKEN_AUDIENCE,
+            issuer=settings.TOKEN_ISSUER,
         )
+
+        if token_type and payload.get("type") != token_type:
+            logger.error(
+                f"Token type mismatch. Expected '{token_type}', got '{payload.get('type')}'"
+            )
+            return None
+
         return payload
+    except ExpiredSignatureError as e:
+        logger.warning(f"Token expired: {str(e)}", exc_info=True)
+        return None
     except JWTError as e:
         logger.error(f"Token verification failed: {str(e)}", exc_info=True)
         return None
 
+from .database import get_db
+from sqlalchemy.orm import Session
+
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db = None
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ):
     """Get the current user from a JWT token."""
     credentials_exception = HTTPException(
@@ -118,8 +153,8 @@ def get_current_user(
     )
     
     try:
-        # Verify and decode the token
-        payload = verify_token(token)
+        # Verify and decode the token as an access token
+        payload = verify_token(token, token_type="access")
         if not payload:
             logger.error("Invalid token: Verification failed")
             raise credentials_exception
@@ -131,20 +166,21 @@ def get_current_user(
             raise credentials_exception
             
         # Get database session if not provided
-        if db is None:
-            from .database import SessionScoped
-            db = SessionScoped()
+        # if db is None:
+        #     from .database import SessionScoped
+        #     db = SessionScoped()
             
         # Get user from database
-        user = db.query(UserModel).filter(UserModel.id == user_id).first()
-        if not user:
-            logger.error(f"User not found for ID: {user_id}")
+        import uuid
+        try:
+            user_uuid = uuid.UUID(user_id)
+        except ValueError:
+            logger.error(f"Invalid UUID format for user_id: {user_id}")
             raise credentials_exception
             
-        # Verify token type if present
-        token_type = payload.get("type")
-        if token_type and token_type != "access":
-            logger.error(f"Invalid token type: {token_type}")
+        user = db.query(UserModel).filter(UserModel.id == user_uuid).first()
+        if not user:
+            logger.error(f"User not found for ID: {user_id}")
             raise credentials_exception
             
         return user

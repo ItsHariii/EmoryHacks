@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from datetime import date, datetime
 from uuid import UUID
@@ -16,7 +16,8 @@ class JournalEntryBase(BaseSchema):
     energy_level: Optional[int] = Field(None, ge=1, le=5, description="Energy level from 1 (very low) to 5 (very high)")
     notes: Optional[str] = None
 
-    @validator('mood', 'sleep_quality', 'energy_level')
+    @field_validator('mood', 'sleep_quality', 'energy_level')
+    @classmethod
     def validate_rating_range(cls, v):
         """Validate that ratings are within 1-5 range"""
         if v is not None and (v < 1 or v > 5):
@@ -39,7 +40,8 @@ class JournalEntryUpdate(BaseModel):
     energy_level: Optional[int] = Field(None, ge=1, le=5)
     notes: Optional[str] = None
 
-    @validator('mood', 'sleep_quality', 'energy_level')
+    @field_validator('mood', 'sleep_quality', 'energy_level')
+    @classmethod
     def validate_rating_range(cls, v):
         """Validate that ratings are within 1-5 range"""
         if v is not None and (v < 1 or v > 5):

@@ -16,6 +16,7 @@ class User(Base):
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     due_date = Column(Date, nullable=False)
+    birth_date = Column(Date, nullable=True)
     babies = Column(Integer, default=1)
     pre_pregnancy_weight = Column(Float, nullable=True)
     height = Column(Float, nullable=True)

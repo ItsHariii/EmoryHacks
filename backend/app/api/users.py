@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import date
 
 from ..core.database import get_db
 from ..core.security import get_current_user
@@ -29,7 +30,7 @@ async def update_current_user(
     Update current user information.
     """
     # Update user fields
-    for field, value in user_in.dict(exclude_unset=True).items():
+    for field, value in user_in.model_dump(exclude_unset=True).items():
         setattr(current_user, field, value)
     
     db.add(current_user)
@@ -73,9 +74,13 @@ async def get_nutrition_targets(
     
     # Use Mifflin-St Jeor Formula if data is available
     # BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(y) - 161
-    # Assuming age 30 if not provided (TODO: Add birthdate to user model)
+    # BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(y) - 161
     if current_user.pre_pregnancy_weight and current_user.height:
-        age = 30 
+        age = 30  # Default fallback
+        if current_user.birth_date:
+            today = date.today()
+            age = today.year - current_user.birth_date.year - ((today.month, today.day) < (current_user.birth_date.month, current_user.birth_date.day))
+            
         bmr = (10 * current_user.pre_pregnancy_weight) + (6.25 * current_user.height) - (5 * age) - 161
         # Activity factor 1.5 (Moderate) as per guide example
         base_calories = bmr * 1.5

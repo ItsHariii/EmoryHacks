@@ -18,19 +18,29 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api"
     ENVIRONMENT: Environment = Environment.DEV
 
-    # Security
+    # Security / Auth
     SECRET_KEY: SecretStr = Field(..., env="SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    TOKEN_AUDIENCE: str = "ovi-client"
+    TOKEN_ISSUER: str = "ovi.api"
     
-    # Database
+    # Database & security
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
     SECURE_HEADERS: bool = True
+
+    # Rate limiting
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_BACKEND: str = "memory"  # Options: "memory", "redis"
+    RATE_LIMIT_CALLS_PER_MINUTE: int = 100
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_REDIS_URL: Optional[str] = None
 
     # CORS
     CORS_ORIGINS: List[str] = Field(default_factory=lambda: [
         "http://localhost:3000",
+        "http://localhost:8081",
         "http://localhost:19006",
         "exp://*"
     ])
@@ -74,6 +84,12 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""  # Deprecated, kept for backward compatibility
     GEMINI_FOOD_API_KEY: str = ""
     GEMINI_CHATBOT_API_KEY: str = ""
+
+    # AI / Gemini configuration
+    GEMINI_DEFAULT_MODEL: str = "gemini-2.5-flash"
+    GEMINI_TIMEOUT_SECONDS: int = 20
+    GEMINI_MAX_RETRIES: int = 2
+    GEMINI_COOL_DOWN_SECONDS: int = 30
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

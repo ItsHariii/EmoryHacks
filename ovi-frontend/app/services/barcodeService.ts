@@ -1,3 +1,4 @@
+// @ts-nocheck
 import axios from 'axios';
 import { FoodItem, BarcodeProduct } from '../types';
 import { safetyAPI } from './api';

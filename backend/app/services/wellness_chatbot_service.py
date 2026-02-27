@@ -6,11 +6,20 @@ It engages users in natural conversation to capture mood, symptoms, and notes,
 making journaling more intuitive and engaging for pregnant users.
 """
 
-import os
 import logging
-import google.generativeai as genai
-from typing import Dict, Any, List, Optional
 from datetime import date
+from typing import Any, Dict, List, Optional
+
+from pydantic import ValidationError
+
+from app.schemas.journal import ExtractedJournalData
+from app.services.ai_client import (
+    chatbot_gemini_client,
+    AIServiceUnavailable,
+    AIRequestFailed,
+    AITimeoutError,
+    extract_text_from_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,23 +68,15 @@ Current conversation goal: Help the user document their daily wellness check-in 
 Remember: You're a supportive companion, not a medical professional. Focus on listening and documenting their experience."""
     
     def __init__(self):
-        self.api_key = os.getenv('GEMINI_CHATBOT_API_KEY')
-        self.model = None
-        
+        self.client = chatbot_gemini_client
+
         logger.info("Initializing WellnessChatbotService...")
-        logger.info(f"GEMINI_API_KEY present: {bool(self.api_key)}")
-        
-        if self.api_key:
-            try:
-                genai.configure(api_key=self.api_key)
-                # Use Gemini 2.5 Flash for fast, conversational responses
-                self.model = genai.GenerativeModel('gemini-2.5-flash')
-                logger.info("✅ Wellness Chatbot Service initialized with Gemini 2.5 Flash")
-            except Exception as e:
-                logger.error(f"❌ Error initializing Gemini for wellness chatbot: {e}")
-                self.model = None
-        else:
-            logger.warning("❌ GEMINI_API_KEY not found - wellness chatbot will be disabled")
+        logger.info("Gemini wellness client configured: %s", bool(self.client.is_configured))
+
+        if not self.client.is_configured:
+            logger.warning(
+                "GEMINI_CHATBOT_API_KEY/GEMINI_API_KEY not configured - wellness chatbot will be disabled"
+            )
     
     async def start_conversation(self, user_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -87,7 +88,7 @@ Remember: You're a supportive companion, not a medical professional. Focus on li
         Returns:
             Dict with greeting message and initial state
         """
-        if not self.model:
+        if not self.client.is_available:
             return {
                 "response": "I'm sorry, but the wellness chatbot is currently unavailable. Please try the traditional journal form.",
                 "fallback_to_form": True,
@@ -105,8 +106,15 @@ Remember: You're a supportive companion, not a medical professional. Focus on li
                 "suggestions": ["Tell me about your day", "I'm feeling...", "I've been experiencing..."]
             }
             
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error starting wellness conversation: %s", e)
+            return {
+                "response": "I'm sorry, but the wellness chatbot is currently unavailable. Please try the traditional journal form.",
+                "fallback_to_form": True,
+                "error": "ai_unavailable",
+            }
         except Exception as e:
-            logger.error(f"Error starting conversation: {e}")
+            logger.error(f"Error starting conversation: {e}", exc_info=True)
             return {
                 "response": "Hi! How are you feeling today? 😊",
                 "conversation_started": True,
@@ -131,7 +139,7 @@ Remember: You're a supportive companion, not a medical professional. Focus on li
         Returns:
             Dict with response, extracted data, and conversation state
         """
-        if not self.model:
+        if not self.client.is_available:
             return {
                 "response": "I'm sorry, but the wellness chatbot is currently unavailable.",
                 "fallback_to_form": True,
@@ -168,8 +176,16 @@ Remember: You're a supportive companion, not a medical professional. Focus on li
             
             return result
             
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error in continue_conversation: %s", e, exc_info=True)
+            return {
+                "response": "I'm having trouble responding right now. Would you like to use the traditional journal form instead?",
+                "extracted_data": {},
+                "fallback_to_form": True,
+                "error": "ai_unavailable",
+            }
         except Exception as e:
-            logger.error(f"Error in continue_conversation: {e}", exc_info=True)
+            logger.error("Error in continue_conversation: %s", e, exc_info=True)
             return {
                 "response": "I'm having a bit of trouble right now. Could you tell me again how you're feeling?",
                 "extracted_data": {},
@@ -218,11 +234,23 @@ Remember: You're a supportive companion, not a medical professional. Focus on li
                 "notes": notes,
                 "cravings": cravings,
                 "sleep_quality": sleep_quality,
-                "energy_level": energy_level
+                "energy_level": energy_level,
             }
-            
+
+        except ValidationError as e:
+            logger.error("Validation error building ExtractedJournalData: %s", e)
+            return {
+                "mood": None,
+                "symptoms": [],
+                "notes": " ".join(
+                    [msg["content"] for msg in conversation_history if msg.get("role") == "user"]
+                ),
+                "cravings": None,
+                "sleep_quality": None,
+                "energy_level": None,
+            }
         except Exception as e:
-            logger.error(f"Error extracting journal data: {e}")
+            logger.error(f"Error extracting journal data: {e}", exc_info=True)
             return {
                 "mood": None,
                 "symptoms": [],
@@ -325,7 +353,7 @@ Remember: You're a supportive companion, not a medical professional. Focus on li
         Returns:
             Conversational summary string
         """
-        if not self.model:
+        if not self.client.is_available:
             return self._create_fallback_summary(journal_entry)
         
         try:
@@ -343,20 +371,17 @@ Journal Entry:
 Create a brief, empathetic summary (2-3 sentences) that captures the essence of their day.
 
 Summary:"""
-            
-            response = self.model.generate_content(prompt)
-            
-            try:
-                return response.text.strip()
-            except:
-                if response.candidates and len(response.candidates) > 0:
-                    candidate = response.candidates[0]
-                    if candidate.content and candidate.content.parts:
-                        return ''.join([part.text for part in candidate.content.parts if hasattr(part, 'text')]).strip()
+            response = await self.client.generate_content(prompt)
+            text = extract_text_from_response(response)
+            if not text:
                 return self._create_fallback_summary(journal_entry)
-            
+            return text
+
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error summarizing past entry: %s", e)
+            return self._create_fallback_summary(journal_entry)
         except Exception as e:
-            logger.error(f"Error summarizing past entry: {e}")
+            logger.error(f"Error summarizing past entry: {e}", exc_info=True)
             return self._create_fallback_summary(journal_entry)
     
     # Private helper methods
@@ -390,19 +415,21 @@ Summary:"""
         user_context: Optional[Dict[str, Any]] = None
     ) -> str:
         """Generate empathetic, contextual response using Gemini."""
-        if not self.model:
+        if not self.client.is_available:
             return "I hear you. Tell me more about how you're feeling."
-        
+
         try:
             # Build context string
             context_str = self._build_user_context_string(user_context)
-            
+
             # Create conversation context
-            conversation_context = "\n".join([
-                f"{msg['role'].capitalize()}: {msg['content']}"
-                for msg in conversation_history[-5:]  # Last 5 messages for context
-            ])
-            
+            conversation_context = "\n".join(
+                [
+                    f"{msg['role'].capitalize()}: {msg['content']}"
+                    for msg in conversation_history[-5:]  # Last 5 messages for context
+                ]
+            )
+
             # Build prompt
             prompt = f"""{self.SYSTEM_PROMPT_TEMPLATE.format(user_context=context_str)}
 
@@ -419,20 +446,20 @@ What we've gathered so far:
 Respond warmly and naturally. If you have enough information (mood and at least some context about their day), gently suggest summarizing and saving. Otherwise, ask a follow-up question to learn more.
 
 Response:"""
-            
-            response = self.model.generate_content(prompt)
-            
-            try:
-                return response.text.strip()
-            except:
-                if response.candidates and len(response.candidates) > 0:
-                    candidate = response.candidates[0]
-                    if candidate.content and candidate.content.parts:
-                        return ''.join([part.text for part in candidate.content.parts if hasattr(part, 'text')]).strip()
+            response = await self.client.generate_content(prompt)
+            text = extract_text_from_response(response)
+            if not text:
                 return "Thank you for sharing. How else are you feeling today?"
-            
+            return text
+
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error generating wellness response: %s", e)
+            return (
+                "I appreciate you sharing that with me. I'm having some trouble responding right now, "
+                "but you can keep telling me about your day."
+            )
         except Exception as e:
-            logger.error(f"Error generating response: {e}")
+            logger.error(f"Error generating response: {e}", exc_info=True)
             return "I appreciate you sharing that with me. Is there anything else you'd like to tell me about your day?"
     
     def _extract_mood(self, text: str) -> Optional[int]:

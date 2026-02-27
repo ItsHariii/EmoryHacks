@@ -18,21 +18,66 @@ import {
 } from '../types';
 import { invalidateNutritionCache } from '../utils/cacheInvalidation';
 
+const ACCESS_TOKEN_KEY = 'auth_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+
 // Helper for secure token storage that works on all platforms
 const getAuthToken = async (): Promise<string | null> => {
   if (Platform.OS === 'web') {
-    return await AsyncStorage.getItem('auth_token');
+    return await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
   } else {
-    return await SecureStore.getItemAsync('auth_token');
+    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  }
+};
+
+const getRefreshToken = async (): Promise<string | null> => {
+  if (Platform.OS === 'web') {
+    return await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+  } else {
+    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  }
+};
+
+const setAuthToken = async (token: string | null): Promise<void> => {
+  if (!token) {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
+    } else {
+      await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
+    }
+    return;
+  }
+
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, token);
+  }
+};
+
+const setRefreshToken = async (token: string | null): Promise<void> => {
+  if (!token) {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+    } else {
+      await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+    }
+    return;
+  }
+
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(REFRESH_TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token);
   }
 };
 
 const deleteAuthToken = async (): Promise<void> => {
-  if (Platform.OS === 'web') {
-    await AsyncStorage.removeItem('auth_token');
-  } else {
-    await SecureStore.deleteItemAsync('auth_token');
-  }
+  await setAuthToken(null);
+};
+
+const deleteRefreshToken = async (): Promise<void> => {
+  await setRefreshToken(null);
 };
 
 // Base API configuration
@@ -54,6 +99,7 @@ api.interceptors.request.use(
   async (config) => {
     const token = await getAuthToken();
     if (token) {
+      config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -63,16 +109,70 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
+let isRefreshing = false;
+let refreshPromise: Promise<void> | null = null;
+
+// Response interceptor for error handling and token refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      // Token expired, clear storage and redirect to login
-      await deleteAuthToken();
-      await AsyncStorage.removeItem('user_data');
-      // You can emit an event here to update auth context
+    const originalRequest = error.config || {};
+
+    const status = error.response?.status;
+    const url: string | undefined = originalRequest.url;
+
+    const isAuthPath =
+      url?.includes('/auth/login') ||
+      url?.includes('/auth/register') ||
+      url?.includes('/auth/refresh');
+
+    if (status === 401 && !isAuthPath && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        if (!isRefreshing) {
+          isRefreshing = true;
+          refreshPromise = (async () => {
+            const refreshToken = await getRefreshToken();
+            if (!refreshToken) {
+              throw new Error('No refresh token available');
+            }
+
+            const response = await api.post('/auth/refresh', {
+              refresh_token: refreshToken,
+            });
+
+            const { access_token, refresh_token: newRefreshToken } = response.data;
+
+            await setAuthToken(access_token);
+            if (newRefreshToken) {
+              await setRefreshToken(newRefreshToken);
+            }
+          })();
+
+          await refreshPromise;
+        } else if (refreshPromise) {
+          await refreshPromise;
+        }
+
+        isRefreshing = false;
+        refreshPromise = null;
+
+        // Retry the original request with the new token
+        return api(originalRequest);
+      } catch (refreshError) {
+        isRefreshing = false;
+        refreshPromise = null;
+
+        // Refresh failed - clear tokens and user data
+        await deleteAuthToken();
+        await deleteRefreshToken();
+        await AsyncStorage.removeItem('user_data');
+
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -114,6 +214,13 @@ export const authAPI = {
 
   logout: async () => {
     await api.post('/auth/logout');
+  },
+
+  refresh: async (refreshToken: string) => {
+    const response = await api.post('/auth/refresh', {
+      refresh_token: refreshToken,
+    });
+    return response.data;
   },
 };
 

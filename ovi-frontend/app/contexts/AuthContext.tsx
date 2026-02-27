@@ -16,7 +16,7 @@ const secureStorage = {
       await SecureStore.setItemAsync(key, value);
     }
   },
-  
+
   async getItem(key: string): Promise<string | null> {
     if (Platform.OS === 'web') {
       return await AsyncStorage.getItem(key);
@@ -24,7 +24,7 @@ const secureStorage = {
       return await SecureStore.getItemAsync(key);
     }
   },
-  
+
   async deleteItem(key: string): Promise<void> {
     if (Platform.OS === 'web') {
       await AsyncStorage.removeItem(key);
@@ -57,6 +57,7 @@ interface AuthContextType {
   register: (data: RegistrationData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,12 +86,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const token = await secureStorage.getItem('auth_token');
       const userData = await AsyncStorage.getItem('user_data');
-      
+
       if (token && userData) {
-        setUser(JSON.parse(userData));
+        // Verify token is still valid by fetching current user
+        try {
+          // We need to set the token in axios headers manually here since the interceptor 
+          // might not have picked it up yet or we want to be explicit
+          const userProfile = await userAPI.getCurrentUser();
+          setUser(userProfile);
+          // Update stored user data with fresh data
+          await AsyncStorage.setItem('user_data', JSON.stringify(userProfile));
+        } catch (error) {
+          console.log('Token validation failed, logging out');
+          // Token invalid or expired
+          await logout();
+        }
+      } else {
+        // No token or user data, ensure clean state
+        await logout();
       }
     } catch (error) {
       console.error('Error checking auth state:', error);
+      await logout();
     } finally {
       setLoading(false);
     }
@@ -99,11 +116,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login(email, password);
-      const { access_token } = response;
-      
+      const { access_token, refresh_token } = response;
+
       // Store the token
       await secureStorage.setItem('auth_token', access_token);
-      
+      if (refresh_token) {
+        await secureStorage.setItem('refresh_token', refresh_token);
+      }
+
       // Fetch user profile after login
       const userProfile = await userAPI.getCurrentUser();
       await AsyncStorage.setItem('user_data', JSON.stringify(userProfile));
@@ -118,7 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Register the user with all the data
       const userResponse = await authAPI.register(data);
-      
+
       // After registration, log them in to get a token
       await login(data.email, data.password);
     } catch (error) {
@@ -129,13 +149,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await authAPI.logout();
+      // Try to call logout API, but don't block local cleanup if it fails
+      try {
+        await authAPI.logout();
+      } catch (e) {
+        console.log('Logout API call failed, proceeding with local cleanup');
+      }
+
       await secureStorage.deleteItem('auth_token');
+      await secureStorage.deleteItem('refresh_token');
       await AsyncStorage.removeItem('user_data');
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
-      throw error;
+      // Ensure local state is cleared even if storage fails
+      setUser(null);
     }
   };
 
@@ -150,6 +178,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshToken = async () => {
+    try {
+      const existingRefreshToken = await secureStorage.getItem('refresh_token');
+      if (!existingRefreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await authAPI.refresh(existingRefreshToken);
+      const { access_token, refresh_token: newRefreshToken } = response;
+
+      await secureStorage.setItem('auth_token', access_token);
+      if (newRefreshToken) {
+        await secureStorage.setItem('refresh_token', newRefreshToken);
+      }
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      // If refresh fails, log the user out to ensure a clean state
+      await logout();
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -157,6 +207,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshUser,
+    refreshToken,
   };
 
   return (

@@ -37,7 +37,7 @@ class TestAuth:
         """Test successful user registration."""
         user_data = {
             "email": "newuser@example.com",
-            "password": "newpassword123",
+            "password": "NewPassword123",
             "first_name": "New",
             "last_name": "User"
         }
@@ -52,7 +52,7 @@ class TestAuth:
         """Test registration with duplicate email."""
         user_data = {
             "email": test_user.email,
-            "password": "password123",
+            "password": "Password123",
             "first_name": "Duplicate",
             "last_name": "User"
         }

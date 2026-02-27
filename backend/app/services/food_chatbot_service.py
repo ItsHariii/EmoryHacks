@@ -6,93 +6,103 @@ It extracts food items from questions, gathers nutrition data, and provides
 pregnancy-specific advice using Google Gemini.
 """
 
-import os
 import logging
-import google.generativeai as genai
-from typing import Dict, Any, List
-from fastapi import HTTPException
+from typing import Any, Dict, List
 
 from app.services.usda_service import usda_service
+from app.services.ai_client import (
+    food_gemini_client,
+    AIServiceUnavailable,
+    AIRequestFailed,
+    AITimeoutError,
+    extract_text_from_response,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class FoodChatbotService:
     """Service for handling food nutrition chatbot conversations."""
-    
-    def __init__(self):
-        self.api_key = os.getenv('GEMINI_FOOD_API_KEY')
-        self.model = None
-        
-        logger.info(f"Initializing FoodChatbotService...")
-        logger.info(f"GEMINI_API_KEY present: {bool(self.api_key)}")
-        if self.api_key:
-            logger.info(f"API Key: {self.api_key[:20]}...{self.api_key[-10:]}")
-        
-        if self.api_key:
-            try:
-                genai.configure(api_key=self.api_key)
-                # Use Gemini 2.5 Flash for fast responses
-                self.model = genai.GenerativeModel('gemini-2.5-flash')
-                logger.info("✅ Food Chatbot Service initialized with Gemini 2.5 Flash")
-            except Exception as e:
-                logger.error(f"❌ Error initializing Gemini for chatbot: {e}")
-                self.model = None
-        else:
-            logger.warning("❌ GEMINI_API_KEY not found - chatbot will be disabled")
+
+    def __init__(self) -> None:
+        self.client = food_gemini_client
+
+        logger.info("Initializing FoodChatbotService...")
+        logger.info("Gemini food client configured: %s", bool(self.client.is_configured))
+        if not self.client.is_configured:
+            logger.warning(
+                "GEMINI_FOOD_API_KEY/GEMINI_API_KEY not configured - nutrition chatbot will be disabled."
+            )
 
     async def ask_question(self, question: str, user_context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Ask a pregnancy nutrition question and get an AI-powered response.
-        
+
         Args:
             question: User's question about food/nutrition
             user_context: Optional user context (trimester, allergies, etc.)
-        
+
         Returns:
             Dict with answer, nutrition_data, and sources
         """
-        if not self.model:
+        if not self.client.is_available:
             return {
-                "answer": "I'm sorry, but the chatbot service is currently unavailable. Please check your API configuration.",
+                "answer": (
+                    "I'm sorry, but the nutrition chatbot is currently unavailable. "
+                    "Please try again later or use the manual nutrition search."
+                ),
                 "nutrition_data": {},
                 "sources": [],
-                "error": "service_unavailable"
+                "error": "service_unavailable",
             }
-        
+
         try:
             # Step 1: Extract food items from the question
             food_items = await self._extract_food_items(question)
-            logger.info(f"Extracted food items: {food_items}")
-            
+            logger.info("Extracted food items from question: %s", food_items)
+
             # Step 2: Gather nutrition data from USDA
             nutrition_data = await self._gather_nutrition_data(food_items)
-            
+
             # Step 3: Generate response with Gemini
             answer = await self._generate_response(question, nutrition_data, user_context)
-            
+
             return {
                 "answer": answer,
                 "nutrition_data": nutrition_data,
                 "food_items": food_items,
-                "sources": ["USDA FoodData Central", "Google Gemini AI"]
+                "sources": ["USDA FoodData Central", "Google Gemini AI"],
             }
-            
-        except Exception as e:
-            logger.error(f"Error in ask_question: {e}", exc_info=True)
+
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error in ask_question: %s", e, exc_info=True)
             return {
-                "answer": f"I apologize, but I encountered an error: {str(e)}. Please try rephrasing your question.",
+                "answer": (
+                    "I'm having trouble reaching the nutrition assistant right now. "
+                    "Please try again in a bit or use the manual nutrition search."
+                ),
                 "nutrition_data": {},
                 "sources": [],
-                "error": str(e)
+                "error": "ai_unavailable",
+            }
+        except Exception as e:
+            logger.error("Unexpected error in ask_question: %s", e, exc_info=True)
+            return {
+                "answer": (
+                    "I apologize, but I encountered an unexpected error. "
+                    "Please try rephrasing your question or use the manual nutrition search."
+                ),
+                "nutrition_data": {},
+                "sources": [],
+                "error": str(e),
             }
 
     async def _extract_food_items(self, question: str) -> List[str]:
         """Extract food item names from the user's question."""
-        if not self.model:
+        if not self.client.is_available:
             # Fallback: return the question as a single food item
             return [question]
-        
+
         try:
             prompt = f"""Extract ONLY the food item names from this question. Return them as a comma-separated list.
 If no specific foods are mentioned, return an empty list.
@@ -100,31 +110,20 @@ If no specific foods are mentioned, return an empty list.
 Question: "{question}"
 
 Food items (comma-separated):"""
-            
-            response = self.model.generate_content(prompt)
-            
-            # Handle new response format
-            try:
-                text = response.text.strip()
-            except:
-                # Fallback to parts accessor
-                if response.candidates and len(response.candidates) > 0:
-                    candidate = response.candidates[0]
-                    if candidate.content and candidate.content.parts:
-                        text = ''.join([part.text for part in candidate.content.parts if hasattr(part, 'text')]).strip()
-                    else:
-                        text = ''
-                else:
-                    text = ''
-            
+            response = await self.client.generate_content(prompt)
+            text = extract_text_from_response(response)
+
             if not text or text.lower() in ['none', 'empty', '']:
                 return []
-            
+
             food_items = [item.strip() for item in text.split(',') if item.strip()]
             return food_items[:3]  # Limit to 3 items for performance
-            
+
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error extracting food items: %s", e)
+            return []
         except Exception as e:
-            logger.error(f"Error extracting food items: {e}")
+            logger.error("Error extracting food items: %s", e, exc_info=True)
             return []
 
     async def _gather_nutrition_data(self, food_items: List[str]) -> Dict[str, Any]:
@@ -192,13 +191,13 @@ Food items (comma-separated):"""
         user_context: Dict[str, Any] = None
     ) -> str:
         """Generate a pregnancy-focused response using Gemini."""
-        if not self.model:
-            return "Chatbot service is unavailable."
-        
+        if not self.client.is_available:
+            return "The nutrition assistant is currently unavailable. Please try again later."
+
         try:
             # Build context from nutrition data
             context_parts = []
-            
+
             if nutrition_data:
                 context_parts.append("Nutrition data from USDA:")
                 for food, data in nutrition_data.items():
@@ -208,26 +207,26 @@ Food items (comma-separated):"""
                         context_parts.append(f"  - Protein: {data.get('protein', 'N/A')}g")
                         context_parts.append(f"  - Carbs: {data.get('carbs', 'N/A')}g")
                         context_parts.append(f"  - Fat: {data.get('fat', 'N/A')}g")
-                        
+
                         key_nutrients = data.get('key_nutrients', {})
                         if any(key_nutrients.values()):
-                            context_parts.append(f"  - Key pregnancy nutrients:")
+                            context_parts.append("  - Key pregnancy nutrients:")
                             if key_nutrients.get('calcium'):
                                 context_parts.append(f"    • Calcium: {key_nutrients['calcium']}mg")
                             if key_nutrients.get('iron'):
                                 context_parts.append(f"    • Iron: {key_nutrients['iron']}mg")
                             if key_nutrients.get('folate'):
                                 context_parts.append(f"    • Folate: {key_nutrients['folate']}mcg")
-            
+
             context = "\n".join(context_parts) if context_parts else "No specific nutrition data available."
-            
+
             # Add user context
             user_info = ""
             if user_context:
                 trimester = user_context.get('trimester')
                 if trimester:
                     user_info = f"\nUser is in trimester {trimester} of pregnancy."
-            
+
             # Create pregnancy-focused prompt
             prompt = f"""You are Ovi, a friendly and knowledgeable pregnancy nutrition assistant. 
 Your role is to provide helpful, accurate, and empathetic advice about food and nutrition during pregnancy.
@@ -249,23 +248,28 @@ If the question is about food safety, be clear about what's safe, what to limit,
 If nutrition data is available, reference specific nutrients that are beneficial during pregnancy.
 
 Response:"""
-            
-            response = self.model.generate_content(prompt)
-            
-            # Handle new response format
-            try:
-                return response.text.strip()
-            except:
-                # Fallback to parts accessor
-                if response.candidates and len(response.candidates) > 0:
-                    candidate = response.candidates[0]
-                    if candidate.content and candidate.content.parts:
-                        return ''.join([part.text for part in candidate.content.parts if hasattr(part, 'text')]).strip()
-                return "I apologize, but I'm having trouble generating a response right now. Please try again."
-            
+
+            response = await self.client.generate_content(prompt)
+            text = extract_text_from_response(response)
+            if not text:
+                return (
+                    "I apologize, but I'm having trouble generating a response right now. "
+                    "Please try again or use the manual nutrition tools in the app."
+                )
+            return text
+
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error generating nutrition response: %s", e)
+            return (
+                "I apologize, but the nutrition assistant is temporarily unavailable. "
+                "Please try again later or use the manual nutrition tools in the app."
+            )
         except Exception as e:
-            logger.error(f"Error generating response: {e}")
-            return "I apologize, but I'm having trouble generating a response right now. Please try again."
+            logger.error("Error generating nutrition response: %s", e, exc_info=True)
+            return (
+                "I apologize, but I'm having trouble generating a response right now. "
+                "Please try again or use the manual nutrition tools in the app."
+            )
 
 
 # Singleton instance

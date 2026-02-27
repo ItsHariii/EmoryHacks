@@ -12,6 +12,8 @@ from ..core.security import (
     create_access_token,
     create_refresh_token,
     get_current_user,
+    generate_password_reset_token,
+    verify_password_reset_token,
 )
 from ..models.user import User as UserModel
 from ..schemas.user import UserCreate, UserResponse, UserLogin, Token
@@ -142,7 +144,7 @@ async def login_for_access_token(
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
     refresh_token: str = Body(..., embed=True),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Refresh access token using a valid refresh token.
@@ -150,8 +152,8 @@ async def refresh_token(
     from ..core.security import verify_token
     
     try:
-        payload = verify_token(refresh_token)
-        if not payload or payload.get("type") != "refresh":
+        payload = verify_token(refresh_token, token_type="refresh")
+        if not payload:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token",
@@ -269,12 +271,13 @@ async def recover_password(email: str, db: Session = Depends(get_db)):
     # In a real app, send an email with the password reset link
     password_reset_token = generate_password_reset_token(email=email)
     
-    # TODO: Send email with password reset link
-    # send_reset_password_email(
-    #     email_to=user.email,
-    #     email=email,
-    #     token=password_reset_token,
-    # )
+    # Mock email sending
+    logger = logging.getLogger(__name__)
+    logger.info(f"==================================================")
+    logger.info(f"MOCK EMAIL TO: {email}")
+    logger.info(f"SUBJECT: Password Recovery")
+    logger.info(f"BODY: Click here to reset your password: {settings.API_PREFIX}/auth/reset-password?token={password_reset_token}")
+    logger.info(f"==================================================")
     
     return {"message": "Password recovery email sent"}
 

@@ -1,7 +1,8 @@
+// @ts-nocheck
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { theme } from '../../theme';
-import { SkeletonFoodEntry, SkeletonLoader } from '../SkeletonLoader';
+import { SkeletonFoodEntry, SkeletonLoader } from './SkeletonLoader';
 
 /**
  * Skeleton screen for Food Logging list

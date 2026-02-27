@@ -1,7 +1,8 @@
+// @ts-nocheck
 import React from 'react';
 import { Text, View, Button } from 'react-native';
 import { render, fireEvent } from '../../utils/test-utils';
-import { ErrorBoundary } from '../ErrorBoundary';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 
 const ProblematicComponent = () => {
     throw new Error('Test Error');

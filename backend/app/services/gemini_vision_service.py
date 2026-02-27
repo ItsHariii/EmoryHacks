@@ -7,35 +7,38 @@ This service uses Google's Gemini AI to analyze food photos and extract:
 - Ingredients (for safety checks)
 """
 
-import os
-import logging
-from typing import Dict, Optional
-import google.generativeai as genai
-from PIL import Image
 import io
 import json
+import logging
 import re
+from typing import Dict, Optional
+
+from PIL import Image
+
+from app.schemas.food import FoodPhotoAIAnalysisResult
+from app.services.ai_client import (
+    vision_gemini_client,
+    AIServiceUnavailable,
+    AIRequestFailed,
+    AITimeoutError,
+    extract_text_from_response,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class GeminiVisionService:
     """Service for analyzing food photos using Google Gemini AI."""
-    
+
     def __init__(self):
-        self.api_key = os.getenv('GEMINI_FOOD_API_KEY')
-        if not self.api_key:
-            logger.warning("GEMINI_API_KEY not set - photo analysis will be disabled")
-            self.model = None
-            return
-        
-        try:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
-            logger.info("Gemini AI Vision service initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini AI: {e}")
-            self.model = None
+        self.client = vision_gemini_client
+        logger.info(
+            "Initializing GeminiVisionService (configured=%s)", bool(self.client.is_configured)
+        )
+        if not self.client.is_configured:
+            logger.warning(
+                "GEMINI_FOOD_API_KEY/GEMINI_API_KEY not set - photo analysis will be disabled"
+            )
     
     async def analyze_food_image(
         self, 
@@ -52,7 +55,7 @@ class GeminiVisionService:
         Returns:
             Dict with food identification results
         """
-        if not self.model:
+        if not self.client.is_available:
             return {
                 "success": False,
                 "error": "Gemini AI service not available",
@@ -66,20 +69,27 @@ class GeminiVisionService:
             
             # Create prompt
             prompt = self._create_analysis_prompt(user_context)
-            
+
             # Call Gemini API
-            response = self.model.generate_content([prompt, image])
-            
-            # Parse response
-            result = self._parse_response(response.text)
-            
+            response = await self.client.generate_content([prompt, image])
+            response_text = extract_text_from_response(response)
+
+            # Parse and validate response
+            result = self._parse_response(response_text)
+
             if result.get("success"):
                 logger.info(f"Successfully analyzed food image: {result.get('food_name')} ({result.get('confidence')}% confidence)")
             
             return result
-            
+        except (AIServiceUnavailable, AIRequestFailed, AITimeoutError) as e:
+            logger.error("Gemini error analyzing food image: %s", e)
+            return {
+                "success": False,
+                "error": "Gemini AI service temporarily unavailable",
+                "error_type": "service_unavailable",
+            }
         except Exception as e:
-            logger.error(f"Error analyzing food image: {str(e)}")
+            logger.error(f"Error analyzing food image: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -130,7 +140,7 @@ Important:
         return base_prompt
     
     def _parse_response(self, response_text: str) -> Dict:
-        """Parse Gemini response into structured data."""
+        """Parse Gemini response into structured, validated data."""
         try:
             # Extract JSON from response (handle markdown code blocks)
             json_match = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
@@ -140,32 +150,16 @@ Important:
                 # Try to find JSON object directly
                 json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
                 json_str = json_match.group(0) if json_match else response_text
-            
-            data = json.loads(json_str)
-            
-            # Validate required fields
-            required_fields = ['food_name', 'confidence']
-            for field in required_fields:
-                if field not in data:
-                    raise ValueError(f"Missing required field: {field}")
-            
-            # Ensure confidence is a number
-            if not isinstance(data['confidence'], (int, float)):
-                data['confidence'] = 50  # Default if invalid
-            
-            # Ensure ingredients is a list
-            if 'ingredients' not in data or not isinstance(data['ingredients'], list):
-                data['ingredients'] = []
-            
-            # Ensure pregnancy_concerns is a list
-            if 'pregnancy_concerns' not in data or not isinstance(data['pregnancy_concerns'], list):
-                data['pregnancy_concerns'] = []
-            
-            # Add success flag
-            data['success'] = True
-            
+
+            raw_data = json.loads(json_str)
+
+            # Validate and normalize using Pydantic schema
+            validated = FoodPhotoAIAnalysisResult.model_validate(raw_data)
+            data = validated.model_dump()
+            data["success"] = True
+
             return data
-            
+
         except json.JSONDecodeError as e:
             logger.error(f"JSON parsing error: {str(e)}")
             return {

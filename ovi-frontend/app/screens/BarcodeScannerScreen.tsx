@@ -1,27 +1,58 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Animated } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner';
-import { ScanningOverlay } from '../components/ScanningOverlay';
-import { ProductConfirmModal } from '../components/ProductConfirmModal';
-import { ProductNotFoundModal } from '../components/ProductNotFoundModal';
-import { CameraPermissionScreen } from '../components/CameraPermissionScreen';
+import { ScanningOverlay } from '../components/camera/ScanningOverlay';
+import { ProductConfirmModal } from '../components/modals/ProductConfirmModal';
+import { ProductNotFoundModal } from '../components/modals/ProductNotFoundModal';
+import { CameraPermissionScreen } from '../components/camera/CameraPermissionScreen';
 import { MealType } from '../types';
+import type { FoodStackParamList } from '../types/navigation';
 
-type BarcodeScannerScreenRouteProp = RouteProp<
-  { BarcodeScannerScreen: { mealType?: MealType } },
-  'BarcodeScannerScreen'
+const LoadingOverlay: React.FC = () => {
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.6, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  return (
+    <View style={styles.loadingOverlay}>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Animated.Text style={[styles.loadingText, { opacity: pulse }]}>
+          Looking up product...
+        </Animated.Text>
+      </View>
+    </View>
+  );
+};
+
+type BarcodeScannerScreenNavigationProp = StackNavigationProp<
+  FoodStackParamList,
+  'BarcodeScanner'
 >;
 
+type BarcodeScannerScreenRouteProp = RouteProp<FoodStackParamList, 'BarcodeScanner'>;
+
 export const BarcodeScannerScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<BarcodeScannerScreenNavigationProp>();
+  const insets = useSafeAreaInsets();
   const route = useRoute<BarcodeScannerScreenRouteProp>();
   const mealType = route.params?.mealType || 'snack';
 
   const [permission, requestPermission] = useCameraPermissions();
-  
+
   const {
     scanned,
     loading,
@@ -100,18 +131,16 @@ export const BarcodeScannerScreen: React.FC = () => {
       <ScanningOverlay />
 
       {/* Cancel Button */}
-      <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+      <TouchableOpacity
+        style={[styles.cancelButton, { top: insets.top + 10 }]}
+        onPress={handleCancel}
+      >
         <Text style={styles.cancelButtonText}>Cancel</Text>
       </TouchableOpacity>
 
       {/* Loading Indicator */}
       {loading && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>Looking up product...</Text>
-          </View>
-        </View>
+        <LoadingOverlay />
       )}
 
       {/* Product Confirmation Modal */}
@@ -139,33 +168,36 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     position: 'absolute',
-    top: 50,
-    left: theme.spacing.lg,
-    backgroundColor: 'rgba(128, 0, 0, 0.8)',
+    left: theme.layout.screenPadding,
+    backgroundColor: theme.colors.cameraOverlay,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.full,
+    ...theme.shadows.sm,
   },
   cancelButtonText: {
     color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
+    fontWeight: theme.fontWeight.bold,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingContainer: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
     padding: theme.spacing.xl,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.xl,
     alignItems: 'center',
+    minWidth: 200,
+    ...theme.shadows.card,
   },
   loadingText: {
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.primary,
+    fontWeight: theme.fontWeight.medium,
   },
 });

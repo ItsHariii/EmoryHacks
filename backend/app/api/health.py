@@ -1,7 +1,7 @@
 """Health check endpoints for monitoring and load balancers."""
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import text
-from typing import Dict, Any
+from typing import Any, Dict
 import time
 import httpx
 
@@ -13,10 +13,18 @@ router = APIRouter()
 logger = get_logger("api.health")
 
 
-@router.get("/", tags=["Health"])
+@router.get("", tags=["Health"])
 async def basic_health_check():
-    """Basic health check endpoint."""
-    return {"status": "healthy", "timestamp": time.time()}
+    """Basic health check endpoint.
+
+    Intended for lightweight liveness-style checks by load balancers.
+    Does not touch external dependencies.
+    """
+    return {
+        "status": "healthy",
+        "timestamp": time.time(),
+        "environment": settings.ENVIRONMENT,
+    }
 
 
 @router.get("/detailed", tags=["Health"])
@@ -98,23 +106,90 @@ async def detailed_health_check():
 
 
 @router.get("/ready", tags=["Health"])
-async def readiness_check():
-    """Readiness check for Kubernetes."""
+async def readiness_check(check_external: bool = Query(False, description="Also check external APIs when true.")):
+    """Readiness check for Kubernetes and load balancers.
+
+    - Always verifies database connectivity.
+    - Optionally verifies external APIs when `check_external=true`.
+    """
+    checks: Dict[str, Any] = {}
+    overall_healthy = True
+
+    # Database readiness
+    db_start = time.time()
     try:
-        # Check database connection
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
-        
-        return {"status": "ready"}
+        checks["database"] = {
+            "status": "healthy",
+            "response_time_ms": round((time.time() - db_start) * 1000, 2),
+        }
     except Exception as e:
-        logger.error(f"Readiness check failed: {e}")
+        checks["database"] = {
+            "status": "unhealthy",
+            "error": str(e),
+        }
+        overall_healthy = False
+        logger.error(f"Readiness check database failed: {e}")
+
+    # Optional external API checks (reusing detailed endpoints)
+    if check_external:
+        external_apis = [
+            ("spoonacular", "https://api.spoonacular.com/"),
+            ("usda", "https://api.nal.usda.gov/fdc/v1/"),
+        ]
+
+        for api_name, api_url in external_apis:
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    start_time = time.time()
+                    response = await client.get(api_url)
+                    response_time = (time.time() - start_time) * 1000
+
+                    if response.status_code < 500:
+                        checks[api_name] = {
+                            "status": "healthy",
+                            "response_time_ms": round(response_time, 2),
+                        }
+                    else:
+                        checks[api_name] = {
+                            "status": "degraded",
+                            "response_time_ms": round(response_time, 2),
+                            "status_code": response.status_code,
+                        }
+                # Mild degradation from external APIs does not mark overall readiness unhealthy
+            except Exception as e:
+                checks[api_name] = {
+                    "status": "unhealthy",
+                    "error": str(e),
+                }
+                logger.warning(f"Readiness external API check failed for {api_name}: {e}")
+
+    if not overall_healthy:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"status": "not ready", "error": str(e)}
+            detail={
+                "status": "not ready",
+                "checks": checks,
+                "environment": settings.ENVIRONMENT,
+            },
         )
+
+    return {
+        "status": "ready",
+        "environment": settings.ENVIRONMENT,
+        "checks": checks,
+    }
 
 
 @router.get("/live", tags=["Health"])
 async def liveness_check():
-    """Liveness check for Kubernetes."""
-    return {"status": "alive", "timestamp": time.time()}
+    """Liveness check for Kubernetes.
+
+    Cheap endpoint that only confirms the application process is running.
+    """
+    return {
+        "status": "alive",
+        "timestamp": time.time(),
+        "environment": settings.ENVIRONMENT,
+    }

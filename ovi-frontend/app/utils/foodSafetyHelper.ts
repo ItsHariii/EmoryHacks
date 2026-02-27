@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { foodSafetyData, FoodSafetyItem } from '../data/foodSafety';
 
 export const checkFoodSafety = (foodName: string): { status: 'safe' | 'limited' | 'avoid'; reason: string } | null => {

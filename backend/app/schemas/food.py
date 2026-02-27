@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, date
 from enum import Enum
 
@@ -45,8 +45,10 @@ class FoodUpdate(BaseModel):
     safety_notes: Optional[str] = None
     fdc_id: Optional[str] = None
 
+from uuid import UUID as UUIDType
+
 class FoodResponse(FoodBase):
-    id: str
+    id: Union[str, UUIDType]
     created_at: datetime
     updated_at: datetime
 
@@ -104,6 +106,7 @@ class FoodLogResponse(FoodLogBase):
     created_at: datetime
     updated_at: datetime
     food: FoodResponse
+    quantity: float = 1.0
     
     # Computed fields for clarity
     total_amount: Optional[float] = None
@@ -161,3 +164,37 @@ class DailyNutrition(BaseSchema):
                 nutrient = food.nutrients[nutrient_name]
                 current_value = getattr(self, field, 0)
                 setattr(self, field, current_value + (nutrient['amount'] * multiplier * quantity))
+
+
+class FoodPhotoAIAnalysisResult(BaseModel):
+    """
+    Schema for normalized AI output from food photo analysis (Gemini Vision).
+
+    This is intentionally focused on the AI's perception of the image, not the
+    final USDA/DB-backed `Food` model.
+    """
+
+    food_name: str = Field(..., min_length=1, description="Primary, searchable food name")
+    portion_size: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description="Estimated portion size (numeric)",
+    )
+    portion_unit: Optional[str] = Field(
+        default="g",
+        description="Unit for portion size (e.g. g, oz, cup)",
+    )
+    ingredients: List[str] = Field(
+        default_factory=list,
+        description="List of visible or inferred ingredients",
+    )
+    confidence: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Model confidence in identification (0-100)",
+    )
+    pregnancy_concerns: List[str] = Field(
+        default_factory=list,
+        description="High-level pregnancy safety concerns detected by the model",
+    )

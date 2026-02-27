@@ -17,6 +17,8 @@ jest.mock('../../store/useNutritionStore', () => ({
         targets: { calories: 2500, macros: { protein_g: 150, carbs_g: 300, fat_g: 80 } },
         loading: false,
         refreshNutrition: jest.fn(),
+        fetchDailySummary: jest.fn(),
+        fetchTargets: jest.fn(),
     }),
 }));
 
@@ -38,6 +40,14 @@ jest.mock('../../hooks/useMicronutrientCalculator', () => ({
     useMicronutrientCalculator: () => [],
 }));
 
+jest.mock('../../utils/greeting', () => ({
+    getGreeting: () => 'Hello',
+    getGreetingEmoji: () => '👋',
+}));
+
+const mockNavigation = {
+    navigate: jest.fn(),
+};
 jest.mock('../../hooks/useCelebrations', () => ({
     useCelebrations: () => ({
         celebrate: jest.fn(),
@@ -53,11 +63,14 @@ jest.mock('../../services/api', () => ({
 
 describe('DashboardScreen', () => {
     it('renders correctly', async () => {
-        const { getByText } = render(<DashboardScreen />);
+        const { getByTestId, findByText, debug } = render(<DashboardScreen />);
+        debug();
+        const greeting = getByTestId('dashboard-greeting');
+        expect(greeting).toBeTruthy();
+        expect(greeting.props.children).toContain('Hello');
+        expect(greeting.props.children).toContain('Test');
 
-        await waitFor(() => {
-            expect(getByText('Hello, Test!')).toBeTruthy();
-            expect(getByText("Today's Macronutrients")).toBeTruthy();
-        });
+        const summary = await findByText(/Today's Nutrition/);
+        expect(summary).toBeTruthy();
     });
 });

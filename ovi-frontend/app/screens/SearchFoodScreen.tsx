@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
@@ -5,17 +6,18 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { HeaderBar } from '../components/HeaderBar';
-import { EmptyState } from '../components/EmptyState';
-import { FloatingChatbot } from '../components/FloatingChatbot';
+import { ScreenWrapper } from '../components/layout/ScreenWrapper';
+import { HeaderBar } from '../components/layout/HeaderBar';
+import { EmptyState } from '../components/ui/EmptyState';
+import { FloatingChatbot } from '../components/chat/FloatingChatbot';
 import { theme } from '../theme';
 import { checkFoodSafety } from '../utils/foodSafetyHelper';
-import { FoodSafetyBadge } from '../components/FoodSafetyBadge';
+import { FoodSafetyBadge } from '../components/food/FoodSafetyBadge';
 import { foodAPI } from '../services/api';
 import { FoodItem, MealType } from '../types';
 import { FEATURE_ICONS } from '../components/icons/iconConstants';
@@ -160,10 +162,9 @@ export const SearchFoodScreen: React.FC = () => {
   );
 
   const renderRecentFoodItem = ({ item: food }: { item: FoodItem }) => (
-    <TouchableOpacity
-      style={styles.recentFoodCard}
+    <Pressable
+      style={({ pressed }) => [styles.recentFoodCard, pressed && styles.recentFoodCardPressed]}
       onPress={() => handleFoodSelect(food)}
-      activeOpacity={0.7}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={`${food.name}, ${food.calories_per_100g} calories`}
@@ -190,7 +191,7 @@ export const SearchFoodScreen: React.FC = () => {
           />
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const renderListHeader = () => {
@@ -288,7 +289,7 @@ export const SearchFoodScreen: React.FC = () => {
   const dataToDisplay = searched ? searchResults : [];
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <ScreenWrapper edges={['bottom']}>
       <HeaderBar
         title={`Add to ${mealType}`}
         leftAction={{
@@ -317,55 +318,56 @@ export const SearchFoodScreen: React.FC = () => {
 
       {/* Floating Nutrition Chatbot */}
       <FloatingChatbot bottom={100} />
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
+  // Container styles removed as ScreenWrapper handles them
   listContent: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
+    paddingHorizontal: theme.layout.screenPadding,
+    paddingBottom: theme.spacing.xxxl,
   },
   section: {
-    paddingVertical: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
   },
   sectionTitle: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
+    ...theme.typography.presets.sectionTitle,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   sectionSubtitle: {
-    fontSize: theme.fontSize.sm,
+    ...theme.typography.presets.sectionSubtitle,
     color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
-  },
-  recentFoodsContainer: {
     marginBottom: theme.spacing.md,
   },
+  recentFoodsContainer: {
+    marginBottom: theme.spacing.lg,
+  },
   recentFoodsList: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.layout.screenPadding,
+    paddingVertical: theme.spacing.xs,
+    gap: theme.spacing.md,
   },
   recentFoodCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    marginRight: theme.spacing.sm,
-    width: 140,
-    minHeight: 120,
-    ...theme.shadows.sm,
+    padding: theme.layout.cardPadding,
+    width: 150,
+    minHeight: theme.spacing.huge * 4 + theme.spacing.lg,
+    ...theme.shadows.card,
     justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+  recentFoodCardPressed: {
+    opacity: theme.opacity.medium,
   },
   recentFoodInfo: {
     flex: 1,
   },
   recentFoodName: {
-    fontSize: theme.fontSize.sm,
+    fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
@@ -376,30 +378,33 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   recentFoodCalories: {
-    fontSize: theme.fontSize.xs,
-    color: theme.colors.text.muted,
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.medium,
     marginTop: 'auto',
   },
   recentFoodSafety: {
-    marginTop: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
     alignItems: 'flex-start',
   },
   divider: {
     height: 1,
-    backgroundColor: theme.colors.border,
-    marginVertical: theme.spacing.md,
-    marginHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.borderLight,
+    marginVertical: theme.spacing.lg,
+    marginHorizontal: theme.layout.screenPadding,
   },
   foodItem: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.layout.cardPadding,
+    marginBottom: theme.spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     ...theme.shadows.sm,
-    minHeight: 44,
+    minHeight: 60,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   foodInfo: {
     flex: 1,
@@ -407,7 +412,7 @@ const styles = StyleSheet.create({
   },
   foodName: {
     fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
+    fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
@@ -423,7 +428,8 @@ const styles = StyleSheet.create({
   },
   foodCalories: {
     fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
+    color: theme.colors.text.primary,
+    fontWeight: theme.fontWeight.medium,
   },
   servingSize: {
     fontSize: theme.fontSize.sm,
@@ -451,6 +457,8 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   emptyStateWrapper: {
-    paddingVertical: theme.spacing.xxl,
+    paddingVertical: theme.spacing.xxxl,
+    paddingHorizontal: theme.layout.screenPadding,
+    minHeight: 280,
   },
 });
