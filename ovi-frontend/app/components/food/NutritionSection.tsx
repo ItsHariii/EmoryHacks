@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import Svg, { Circle, G, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, G } from 'react-native-svg';
 import { theme } from '../../theme';
 import { MacronutrientCard } from './MacronutrientCard';
 import { SkeletonMacroCard } from '../skeletons/SkeletonLoader';
@@ -25,13 +25,24 @@ export const NutritionSection: React.FC<NutritionSectionProps> = ({ opacity, tra
 
     if (!summary || !targets) return null;
 
-    // Calorie Progress
-    const caloriePercentage = Math.min((summary.total_calories / targets.calories) * 100, 100);
-    const size = 150;
-    const strokeWidth = 18;
-    const radius = (size - strokeWidth) / 2;
-    const circumference = radius * 2 * Math.PI;
-    const strokeDashoffset = circumference - (caloriePercentage / 100) * circumference;
+    // Progress percentages (capped at 100)
+    const caloriePct = Math.min((summary.total_calories / targets.calories) * 100, 100);
+    const proteinPct = Math.min(((summary.protein_g || 0) / targets.macros.protein_g) * 100, 100);
+    const carbsPct = Math.min(((summary.carbs_g || 0) / targets.macros.carbs_g) * 100, 100);
+    const fatPct = Math.min(((summary.fat_g || 0) / targets.macros.fat_g) * 100, 100);
+
+    const size = 160;
+    const center = size / 2;
+    const strokeWidth = 5;
+    const gap = 3;
+    // 4 concentric rings from outer to inner
+    const radii = [72, 64, 56, 48];
+    const ringColors = [
+      theme.colors.primary,           // Calories - red/coral
+      '#FF9E80',                      // Protein - peach
+      '#BCAAA4',                      // Carbs - beige
+      theme.colors.secondaryLavender, // Fat - lavender
+    ];
 
     return (
         <Animated.View
@@ -46,45 +57,47 @@ export const NutritionSection: React.FC<NutritionSectionProps> = ({ opacity, tra
             <Text style={styles.sectionTitle}>Today's Nutrition</Text>
 
             <View style={styles.cardContent}>
-                {/* Left Side: Calorie Ring */}
+                {/* Left Side: 4 concentric rings (Apple Fitness style) */}
                 <View style={styles.ringContainer}>
-                    {/* Svg temporarily commented out to isolate error */}
-                    {/* 
-                    <Svg width={size} height={size}>
-                        <Defs>
-                            <LinearGradient id="ringGradient" x1="0" y1="0" x2="1" y2="1">
-                                <Stop offset="0" stopColor="#FFD6C9" />
-                                <Stop offset="1" stopColor="#DCD6FF" />
-                            </LinearGradient>
-                        </Defs>
-                        <G rotation="-90" origin={`${size / 2}, ${size / 2}`}>
-                            <Circle
-                                cx={size / 2}
-                                cy={size / 2}
-                                r={radius}
-                                stroke="#F5F5F5"
-                                strokeWidth={strokeWidth}
-                                fill="transparent"
-                            />
-                            <Circle
-                                cx={size / 2}
-                                cy={size / 2}
-                                r={radius}
-                                stroke="url(#ringGradient)"
-                                strokeWidth={strokeWidth}
-                                fill="transparent"
-                                strokeDasharray={circumference}
-                                strokeDashoffset={strokeDashoffset}
-                                strokeLinecap="round"
-                            />
-                        </G>
-                    </Svg>
-                    */}
-                    <View style={styles.ringTextContainer}>
-                        <Text style={styles.calorieValue}>{Math.round(summary.total_calories)}</Text>
-                        <Text style={styles.calorieLabel}>kcal eaten</Text>
+                    <View style={[styles.ringWrapper, { width: size, height: size }]}>
+                        <Svg width={size} height={size}>
+                            <G rotation="-90" origin={`${center}, ${center}`}>
+                                {radii.map((r, i) => {
+                                  const circumference = r * 2 * Math.PI;
+                                  const pcts = [caloriePct, proteinPct, carbsPct, fatPct];
+                                  const offset = circumference - (pcts[i] / 100) * circumference;
+                                  return (
+                                    <React.Fragment key={i}>
+                                      <Circle
+                                        cx={center}
+                                        cy={center}
+                                        r={r}
+                                        stroke={theme.colors.borderLight}
+                                        strokeWidth={strokeWidth}
+                                        fill="transparent"
+                                      />
+                                      <Circle
+                                        cx={center}
+                                        cy={center}
+                                        r={r}
+                                        stroke={ringColors[i]}
+                                        strokeWidth={strokeWidth}
+                                        fill="transparent"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={offset}
+                                        strokeLinecap="round"
+                                      />
+                                    </React.Fragment>
+                                  );
+                                })}
+                            </G>
+                        </Svg>
+                        <View style={styles.ringTextContainer} pointerEvents="none">
+                            <Text style={styles.calorieValue}>{Math.round(summary.total_calories)}</Text>
+                            <Text style={styles.calorieLabel}>kcal</Text>
+                        </View>
                     </View>
-                    <Text style={styles.dailyGoal}>Daily Goal: {targets.calories} kcal</Text>
+                    <Text style={styles.dailyGoal}>Goal: {targets.calories} kcal</Text>
                 </View>
 
                 {/* Right Side: Macros */}
@@ -119,11 +132,10 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.xxl,
     },
     sectionTitle: {
-        fontSize: 20,
-        fontWeight: '700',
+        ...theme.typography.presets.sectionTitle,
         color: theme.colors.text.primary,
-        marginBottom: 16,
-        marginLeft: 4,
+        marginBottom: theme.spacing.lg,
+        marginLeft: theme.spacing.xs,
     },
     cardContent: {
         flexDirection: 'row',
@@ -136,17 +148,17 @@ const styles = StyleSheet.create({
     ringContainer: {
         flex: 1.2,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         paddingRight: 20,
         borderRightWidth: 1,
         borderRightColor: '#F0F0F0',
+        minHeight: 160,
+    },
+    ringWrapper: {
+        position: 'relative',
     },
     ringTextContainer: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 24, // Adjust for daily goal text space
+        ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
         alignItems: 'center',
     },

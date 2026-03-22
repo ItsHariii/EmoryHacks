@@ -1,13 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BarChart } from 'react-native-gifted-charts';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { MicronutrientData } from '../types';
 import { MICRONUTRIENT_ICONS, ICON_COLORS, ICON_BACKGROUNDS } from '../icons/iconConstants';
-import { createFadeInSlideUpAnimation, ANIMATION_CONFIG } from '../../utils/animations';
+import { createFadeInSlideUpAnimation, ANIMATION_CONFIG, createProgressFillAnimation } from '../../utils/animations';
 import { Card } from '../ui/Card';
 
 interface MicronutrientChartProps {
@@ -15,13 +13,23 @@ interface MicronutrientChartProps {
   onNutrientPress?: (nutrient: MicronutrientData) => void;
 }
 
+const getProgressColor = (percent: number) => {
+  if (percent >= 90) return theme.colors.success;
+  if (percent >= 70) return theme.colors.warning;
+  return theme.colors.error;
+};
+
+const getIconName = (name: string) => {
+  const key = name.toLowerCase().replace(/\s+/g, '_');
+  return MICRONUTRIENT_ICONS[key] || 'nutrition';
+};
+
 export const MicronutrientChart: React.FC<MicronutrientChartProps> = ({
   nutrients,
   onNutrientPress
 }) => {
   const [selectedNutrient, setSelectedNutrient] = useState<MicronutrientData | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const screenWidth = Dimensions.get('window').width;
 
   const handleNutrientPress = (nutrient: MicronutrientData) => {
     setSelectedNutrient(nutrient);
@@ -34,78 +42,90 @@ export const MicronutrientChart: React.FC<MicronutrientChartProps> = ({
     setTimeout(() => setSelectedNutrient(null), 300);
   };
 
-  // Get low nutrients (below 70% of target)
   const lowNutrients = nutrients.filter(n => n.percentOfTarget < 70);
-
-  // Prepare data for BarChart
-  const barData = nutrients.map((nutrient) => {
-    const percent = Math.min(nutrient.percentOfTarget, 100);
-    let barColor = theme.colors.primary;
-    let gradientColor = theme.colors.primaryLight;
-
-    if (percent >= 90) {
-      barColor = theme.colors.success;
-      gradientColor = '#4ADE80'; // success light
-    } else if (percent >= 70) {
-      barColor = theme.colors.warning;
-      gradientColor = '#FDE047'; // warning light
-    } else {
-      barColor = theme.colors.error;
-      gradientColor = '#F87171'; // error light
-    }
-
-    return {
-      value: percent,
-      label: nutrient.name.split(' ')[0], // Shorten label
-      frontColor: barColor,
-      gradientColor: gradientColor,
-      spacing: 20,
-      labelTextStyle: { color: theme.colors.text.secondary, fontSize: 10 },
-      onPress: () => handleNutrientPress(nutrient),
-      topLabelComponent: () => (
-        <Text style={{ color: theme.colors.text.primary, fontSize: 10, marginBottom: 4 }}>
-          {Math.round(percent)}%
-        </Text>
-      ),
-    };
-  });
 
   return (
     <View style={styles.container}>
-      {/* Chart */}
-      <View style={styles.chartContainer}>
-        <BarChart
-          data={barData}
-          barWidth={32}
-          spacing={24}
-          roundedTop
-          roundedBottom
-          hideRules
-          xAxisThickness={0}
-          yAxisThickness={0}
-          yAxisTextStyle={{ color: theme.colors.text.secondary }}
-          noOfSections={4}
-          maxValue={100}
-          isAnimated
-          animationDuration={800}
-          showGradient
-          gradientColor={'#FFEEFE'} // Default gradient, overridden by data
-          frontColor={theme.colors.primary} // Default color, overridden by data
-        />
+      {/* Grid of nutrient cards */}
+      <View style={styles.grid}>
+        {nutrients.map((nutrient, index) => (
+          <NutrientCard
+            key={nutrient.name}
+            nutrient={nutrient}
+            onPress={() => handleNutrientPress(nutrient)}
+          />
+        ))}
       </View>
 
-      {/* Low Nutrient Suggestions */}
       {lowNutrients.length > 0 && (
         <LowNutrientSuggestions nutrients={lowNutrients} />
       )}
 
-      {/* Nutrient Detail Modal */}
       <NutrientDetailModal
         visible={modalVisible}
         nutrient={selectedNutrient}
         onClose={handleCloseModal}
       />
     </View>
+  );
+};
+
+/**
+ * Compact nutrient card with icon, progress bar, and tap-to-expand
+ */
+const NutrientCard: React.FC<{
+  nutrient: MicronutrientData;
+  onPress: () => void;
+}> = ({ nutrient, onPress }) => {
+  const percent = Math.min(nutrient.percentOfTarget, 100);
+  const barColor = getProgressColor(percent);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    createProgressFillAnimation(progressAnim, percent).start();
+  }, [percent]);
+
+  return (
+    <TouchableOpacity
+      style={styles.nutrientCard}
+      onPress={onPress}
+      activeOpacity={0.8}
+      accessibilityLabel={`${nutrient.name}: ${Math.round(percent)}% of target`}
+      accessibilityRole="button"
+    >
+      <View style={styles.nutrientCardHeader}>
+        <View style={[styles.iconWrapper, { backgroundColor: ICON_BACKGROUNDS.cream }]}>
+          <MaterialCommunityIcons
+            name={getIconName(nutrient.name) as any}
+            size={18}
+            color={ICON_COLORS.accent}
+          />
+        </View>
+        <Text style={styles.nutrientName} numberOfLines={1}>{nutrient.name}</Text>
+      </View>
+      <View style={styles.progressRow}>
+        <View style={styles.progressTrack}>
+          <Animated.View
+            style={[
+              styles.progressFill,
+              {
+                width: progressAnim.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: ['0%', '100%'],
+                }),
+                backgroundColor: barColor,
+              },
+            ]}
+          />
+        </View>
+        <Text style={[styles.percentText, { color: barColor }]}>
+          {Math.round(percent)}%
+        </Text>
+      </View>
+      <Text style={styles.currentTarget}>
+        {nutrient.current.toFixed(1)} / {nutrient.target.toFixed(1)} {nutrient.unit}
+      </Text>
+    </TouchableOpacity>
   );
 };
 
@@ -218,11 +238,6 @@ const NutrientDetailModal: React.FC<NutrientDetailModalProps> = ({
     if (percent >= 90) return theme.colors.success;
     if (percent >= 70) return theme.colors.warning;
     return theme.colors.error;
-  };
-
-  const getIconName = (name: string) => {
-    const key = name.toLowerCase().replace(/\s+/g, '_');
-    return MICRONUTRIENT_ICONS[key] || 'nutrition';
   };
 
   return (
@@ -341,10 +356,67 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
-  chartContainer: {
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  nutrientCard: {
+    flex: 1,
+    minWidth: '45%',
+    maxWidth: '48%',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    ...theme.shadows.sm,
+  },
+  nutrientCardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: theme.spacing.md,
-    marginLeft: -20, // Offset for left padding of chart
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.xs,
+  },
+  iconWrapper: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nutrientName: {
+    flex: 1,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: 4,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: theme.colors.borderLight,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  percentText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    minWidth: 36,
+    textAlign: 'right',
+  },
+  currentTarget: {
+    fontSize: 10,
+    color: theme.colors.text.secondary,
   },
   sectionTitle: {
     fontSize: theme.fontSize.lg,

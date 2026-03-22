@@ -520,3 +520,14 @@ export function getAnimationPath(week: number): string {
     const keyframe = getAnimationKeyframe(week);
     return `week_${keyframe.toString().padStart(2, '0')}`;
 }
+
+/**
+ * Map pregnancy week (4-40) to Ovi stage (1-24).
+ * Divides the 37 weeks evenly across all 24 stage images.
+ */
+export function getOviStage(week: number): number {
+    if (week < 4) return 1;
+    if (week > 40) return 24;
+    const stage = Math.round(((week - 4) / 36) * 23) + 1;
+    return Math.min(24, Math.max(1, stage));
+}

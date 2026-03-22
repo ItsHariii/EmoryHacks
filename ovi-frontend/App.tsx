@@ -4,6 +4,13 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
+import {
+  useFonts,
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+} from '@expo-google-fonts/dm-sans';
 import { AuthProvider } from './app/contexts/AuthContext';
 import { ToastProvider } from './app/components/ui/ToastProvider';
 import { ErrorBoundary } from './app/components/ui/ErrorBoundary';
@@ -107,6 +114,7 @@ function MainTabs() {
         component={JournalStack}
         options={{
           tabBarLabel: 'Journal',
+          headerShown: false, // Use custom header in JournalScreen
         }}
       />
       <Tab.Screen
@@ -303,6 +311,13 @@ function AppNavigator() {
 export default function App() {
   const navigationRef = useRef<any>(null);
 
+  const [fontsLoaded, fontError] = useFonts({
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
+  });
+
   useEffect(() => {
     // Set up notification listener for handling notification taps
     if (navigationRef.current) {
@@ -310,6 +325,14 @@ export default function App() {
       return () => subscription.remove();
     }
   }, []);
+
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.text.inverse} />
+      </View>
+    );
+  }
 
   return (
     <ErrorBoundary>

@@ -1,9 +1,10 @@
 // @ts-nocheck
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
 import { SafetyTag } from './SafetyTag';
 import { FoodEntry } from '../types';
+import { Card } from '../ui/Card';
 
 interface FoodEntryCardProps {
   entry: FoodEntry;
@@ -13,10 +14,14 @@ interface FoodEntryCardProps {
 
 export const FoodEntryCard: React.FC<FoodEntryCardProps> = ({ entry, onEdit, onDelete }) => {
   return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => onEdit?.(entry)}
-      activeOpacity={0.7}
+    <Card
+      padding="lg"
+      margin="sm"
+      borderRadius="card"
+      shadow="card"
+      onPress={onEdit ? () => onEdit(entry) : undefined}
+      accessibilityRole="button"
+      accessibilityLabel={onEdit ? `Edit ${entry.food_name}` : entry.food_name}
     >
       <View style={styles.header}>
         <View style={styles.foodInfo}>
@@ -48,18 +53,11 @@ export const FoodEntryCard: React.FC<FoodEntryCardProps> = ({ entry, onEdit, onD
           <SafetyTag status={entry.safety_status} size="small" />
         </View>
       )}
-    </TouchableOpacity>
+    </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    ...theme.shadows.sm,
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -10,6 +10,7 @@ from sqlalchemy.pool import QueuePool
 import logging
 from sqlalchemy.orm import Session, scoped_session
 from sqlalchemy.exc import SQLAlchemyError
+from fastapi import HTTPException
 
 from app.core.config import settings  # Use absolute import for stability
 
@@ -75,6 +76,9 @@ def get_db() -> Generator[Session, None, None]:
     db = SessionScoped()
     try:
         yield db
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         logger.error(f"Database error: {str(e)}")

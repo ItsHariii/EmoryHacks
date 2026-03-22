@@ -3,6 +3,10 @@
 # dependencies
 node_modules/
 
+# bg removal script
+.venv-bg/
+.cache/
+
 # Expo
 .expo/
 dist/

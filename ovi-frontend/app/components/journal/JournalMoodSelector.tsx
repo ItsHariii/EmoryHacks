@@ -3,8 +3,8 @@ import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../theme';
-import { IconBadge } from './icons/IconBadge';
-import { MOOD_ICONS, ICON_COLORS, ICON_BACKGROUNDS } from './icons/iconConstants';
+import { IconBadge } from '../icons/IconBadge';
+import { MOOD_ICONS, ICON_COLORS, ICON_BACKGROUNDS } from '../icons/iconConstants';
 
 interface JournalMoodSelectorProps {
   value: number | null;

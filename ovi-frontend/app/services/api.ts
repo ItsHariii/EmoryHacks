@@ -413,8 +413,9 @@ export const journalAPI = {
       if (endDate) params.end_date = endDate;
 
       const response = await api.get('/journal/entries', { params });
-      // Backend returns { entries: [...], total: number }
-      return response.data.entries || response.data;
+      // Backend returns { entries: [...], total: number }; normalize to always return an array
+      const raw = response.data?.entries ?? response.data;
+      return Array.isArray(raw) ? raw : [];
     } catch (error: any) {
       if (error.response?.data?.detail) {
         throw new Error(error.response.data.detail);

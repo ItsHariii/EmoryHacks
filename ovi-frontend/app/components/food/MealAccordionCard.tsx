@@ -122,10 +122,10 @@ export const MealAccordionCard: React.FC<MealAccordionCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.card,
     marginBottom: theme.spacing.md,
-    ...theme.shadows.md,
+    ...theme.shadows.card,
   },
   header: {
     flexDirection: 'row',

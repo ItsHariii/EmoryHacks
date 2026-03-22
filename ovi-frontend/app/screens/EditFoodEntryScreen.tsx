@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: theme.layout.screenPadding,
-    paddingBottom: theme.spacing.xxxl,
+    paddingBottom: 100, // Extra space to clear floating tab bar (70px height + 20px margin)
   },
   foodInfo: {
     backgroundColor: theme.colors.surface,

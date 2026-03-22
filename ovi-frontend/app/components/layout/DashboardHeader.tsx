@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     greeting: {
+        fontFamily: theme.typography.fontFamily.bold,
         fontSize: theme.typography.fontSize.xxl,
         fontWeight: theme.typography.fontWeight.bold,
         color: theme.colors.text.primary,
@@ -113,6 +114,7 @@ const styles = StyleSheet.create({
         fontSize: theme.typography.fontSize.xl,
     },
     subtitle: {
+        fontFamily: theme.typography.fontFamily.medium,
         fontSize: theme.typography.fontSize.sm,
         color: theme.colors.text.secondary,
         marginTop: theme.spacing.xs,

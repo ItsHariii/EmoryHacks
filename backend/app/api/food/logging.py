@@ -7,6 +7,7 @@ from datetime import datetime, date as date_type
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.services.nutrition_calculator_service import NutritionCalculatorService
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -233,7 +234,7 @@ async def get_food_logs(
         try:
             filter_date = datetime.strptime(date, "%Y-%m-%d").date()
             query = query.filter(
-                db.func.date(FoodLog.consumed_at) == filter_date
+                func.date(FoodLog.consumed_at) == filter_date
             )
         except ValueError:
             raise HTTPException(
@@ -390,7 +391,7 @@ async def get_daily_summary(
         .filter(
             FoodLog.user_id == current_user.id,
             FoodLog.deleted_at.is_(None),
-            db.func.date(FoodLog.consumed_at) == target_date
+            func.date(FoodLog.consumed_at) == target_date
         )
         .all()
     )
@@ -434,8 +435,8 @@ async def get_weekly_summary(
         .filter(
             FoodLog.user_id == current_user.id,
             FoodLog.deleted_at.is_(None),
-            db.func.date(FoodLog.consumed_at) >= start_date,
-            db.func.date(FoodLog.consumed_at) <= end_date
+            func.date(FoodLog.consumed_at) >= start_date,
+            func.date(FoodLog.consumed_at) <= end_date
         )
         .order_by(FoodLog.consumed_at)
         .all()

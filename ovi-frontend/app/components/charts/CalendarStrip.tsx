@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -7,8 +7,11 @@ import {
     ScrollView,
     TouchableOpacity,
     Dimensions,
+    NativeSyntheticEvent,
+    NativeScrollEvent,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 
@@ -16,12 +19,12 @@ interface CalendarStripProps {
     selectedDate: Date;
     onDateSelect: (date: Date) => void;
     daysBack?: number;
-    /** After this many ms with a non-today date selected, auto-snap back to today (0 = disabled). Default 4000. */
+    /** After this many ms with a non-today date selected or after scroll-only inactivity, auto-snap back to today (0 = disabled). Default 5000. */
     snapBackToTodayAfterMs?: number;
 }
 
-const DATE_ITEM_WIDTH = 55;
-const DATE_ITEM_MARGIN = 8;
+const DATE_ITEM_WIDTH = 60;
+const DATE_ITEM_MARGIN = 12;
 const FULL_ITEM_WIDTH = DATE_ITEM_WIDTH + DATE_ITEM_MARGIN;
 
 const isSameDay = (d1: Date, d2: Date) => {
@@ -38,15 +41,30 @@ const getTodayAtMidnight = () => {
     return d;
 };
 
+const padLeft = (screenWidth: number) => (screenWidth - FULL_ITEM_WIDTH) / 2;
+
+const getScrollXForIndex = (index: number, screenWidth: number) => {
+    const pad = padLeft(screenWidth);
+    return pad + index * FULL_ITEM_WIDTH + FULL_ITEM_WIDTH / 2 - screenWidth / 2;
+};
+
+const getCenteredIndexFromScrollX = (scrollX: number, screenWidth: number) => {
+    const pad = padLeft(screenWidth);
+    const raw = (scrollX + screenWidth / 2 - pad - FULL_ITEM_WIDTH / 2) / FULL_ITEM_WIDTH;
+    return Math.round(raw);
+};
+
 export const CalendarStrip: React.FC<CalendarStripProps> = ({
     selectedDate,
     onDateSelect,
     daysBack = 14,
-    snapBackToTodayAfterMs = 4000,
+    snapBackToTodayAfterMs = 5000,
 }) => {
     const scrollViewRef = useRef<ScrollView>(null);
     const screenWidth = Dimensions.get('window').width;
     const snapBackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scrollInactivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const userTappedDateRef = useRef(false);
 
     // Generate dates
     const dates = React.useMemo(() => {
@@ -64,18 +82,22 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
     }, [daysBack]);
 
     // Scroll to selected date on mount or update
+    const scrollToDateIndex = useCallback((index: number) => {
+        if (scrollViewRef.current && index >= 0 && index < dates.length) {
+            const x = getScrollXForIndex(index, screenWidth);
+            const maxScroll = dates.length * FULL_ITEM_WIDTH + 2 * padLeft(screenWidth) - screenWidth;
+            scrollViewRef.current.scrollTo({ x: Math.max(0, Math.min(x, maxScroll)), animated: true });
+        }
+    }, [dates.length, screenWidth]);
+
     useEffect(() => {
         const index = dates.findIndex(d => isSameDay(d, selectedDate));
         if (index !== -1 && scrollViewRef.current) {
-            // Center the selected item
-            const x = (index * FULL_ITEM_WIDTH) - (screenWidth / 2) + (FULL_ITEM_WIDTH / 2);
-            setTimeout(() => {
-                scrollViewRef.current?.scrollTo({ x: Math.max(0, x), animated: true });
-            }, 100);
+            setTimeout(() => scrollToDateIndex(index), 100);
         }
-    }, [selectedDate, dates, screenWidth]);
+    }, [selectedDate, dates, screenWidth, scrollToDateIndex]);
 
-    // Auto snap back to today after delay when a non-today date is selected
+    // Auto snap back to today after delay when a non-today date is selected (user tapped)
     useEffect(() => {
         const today = getTodayAtMidnight();
         const selectedIsToday = isSameDay(selectedDate, today);
@@ -90,6 +112,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 
         snapBackTimeoutRef.current = setTimeout(() => {
             snapBackTimeoutRef.current = null;
+            userTappedDateRef.current = false;
             onDateSelect(getTodayAtMidnight());
         }, snapBackToTodayAfterMs);
 
@@ -101,10 +124,54 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
         };
     }, [selectedDate, snapBackToTodayAfterMs, onDateSelect]);
 
+    // Cleanup scroll inactivity timeout on unmount
+    useEffect(() => () => {
+        if (scrollInactivityTimeoutRef.current) {
+            clearTimeout(scrollInactivityTimeoutRef.current);
+            scrollInactivityTimeoutRef.current = null;
+        }
+    }, []);
+
+    // Scroll-based inactivity snap-back: when user scrolls without tapping, snap to today after delay
+    const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        if (snapBackToTodayAfterMs <= 0 || userTappedDateRef.current) return;
+
+        const scrollX = e.nativeEvent.contentOffset.x;
+        const centeredIndex = Math.max(0, Math.min(getCenteredIndexFromScrollX(scrollX, screenWidth), dates.length - 1));
+        const centeredDate = dates[centeredIndex];
+        const today = getTodayAtMidnight();
+
+        if (scrollInactivityTimeoutRef.current) {
+            clearTimeout(scrollInactivityTimeoutRef.current);
+            scrollInactivityTimeoutRef.current = null;
+        }
+
+        if (isSameDay(centeredDate, today)) return;
+
+        scrollInactivityTimeoutRef.current = setTimeout(() => {
+            scrollInactivityTimeoutRef.current = null;
+            const todayIndex = dates.findIndex(d => isSameDay(d, today));
+            if (todayIndex !== -1) scrollToDateIndex(todayIndex);
+        }, snapBackToTodayAfterMs);
+    }, [dates, screenWidth, snapBackToTodayAfterMs, scrollToDateIndex]);
+
     const handleDatePress = (date: Date) => {
         Haptics.selectionAsync();
+        userTappedDateRef.current = true;
+        if (scrollInactivityTimeoutRef.current) {
+            clearTimeout(scrollInactivityTimeoutRef.current);
+            scrollInactivityTimeoutRef.current = null;
+        }
         onDateSelect(date);
     };
+
+    const handleTodayPress = useCallback(() => {
+        Haptics.selectionAsync();
+        userTappedDateRef.current = false;
+        onDateSelect(getTodayAtMidnight());
+        const todayIndex = dates.findIndex(d => isSameDay(d, getTodayAtMidnight()));
+        if (todayIndex !== -1) scrollToDateIndex(todayIndex);
+    }, [dates, onDateSelect, scrollToDateIndex]);
 
     const formatDate = (date: Date) => {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -124,10 +191,15 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
                 decelerationRate="fast"
                 snapToInterval={FULL_ITEM_WIDTH}
                 snapToAlignment="center"
+                onScroll={handleScroll}
+                scrollEventThrottle={100}
             >
                 {dates.map((date, index) => {
                     const { dayName, dayNumber } = formatDate(date);
+                    const isToday = isSameDay(date, getTodayAtMidnight());
                     const isSelected = isSameDay(date, selectedDate);
+                    const isTodaySelected = isToday && isSelected;
+                    const isOtherDateSelected = isSelected && !isToday;
 
                     return (
                         <TouchableOpacity
@@ -136,7 +208,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
                             onPress={() => handleDatePress(date)}
                             activeOpacity={0.8}
                         >
-                            {isSelected ? (
+                            {isTodaySelected ? (
                                 <LinearGradient
                                     colors={theme.gradients.magicalGlow}
                                     style={[styles.dateItem, styles.selectedDateItem]}
@@ -149,6 +221,16 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
                                         <Text style={styles.oviText}>OVI</Text>
                                     </View>
                                 </LinearGradient>
+                            ) : isOtherDateSelected ? (
+                                <LinearGradient
+                                    colors={theme.gradients.lavenderGlow}
+                                    style={[styles.dateItem, styles.otherSelectedDateItem]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                >
+                                    <Text style={[styles.dayName, styles.otherSelectedText]}>{dayName}</Text>
+                                    <Text style={[styles.dayNumber, styles.otherSelectedText]}>{dayNumber}</Text>
+                                </LinearGradient>
                             ) : (
                                 <View style={styles.dateItem}>
                                     <Text style={styles.dayName}>{dayName}</Text>
@@ -158,6 +240,16 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
                         </TouchableOpacity>
                     );
                 })}
+                {!isSameDay(selectedDate, getTodayAtMidnight()) && (
+                    <TouchableOpacity
+                        style={styles.todayButton}
+                        onPress={handleTodayPress}
+                        activeOpacity={0.8}
+                    >
+                        <MaterialCommunityIcons name="calendar-today" size={20} color={theme.colors.primary} />
+                        <Text style={styles.todayButtonText}>Today</Text>
+                    </TouchableOpacity>
+                )}
             </ScrollView>
         </View>
     );
@@ -165,13 +257,13 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        height: 100,
+        height: 110,
         backgroundColor: 'transparent',
     },
     contentContainer: {
         paddingHorizontal: (Dimensions.get('window').width - FULL_ITEM_WIDTH) / 2,
         alignItems: 'center',
-        paddingVertical: theme.spacing.md,
+        paddingVertical: theme.spacing.lg,
     },
     touchable: {
         marginRight: DATE_ITEM_MARGIN,
@@ -179,7 +271,8 @@ const styles = StyleSheet.create({
     },
     dateItem: {
         width: DATE_ITEM_WIDTH,
-        height: 85,
+        minHeight: 88,
+        height: 88,
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: theme.borderRadius.xl,
@@ -191,6 +284,11 @@ const styles = StyleSheet.create({
         // Gradient background handles color
         transform: [{ scale: 1.1 }],
         ...theme.shadows.glowLavender,
+    },
+    otherSelectedDateItem: {
+        transform: [{ scale: 1.05 }],
+        borderWidth: 2,
+        borderColor: theme.colors.accent,
     },
     dayName: {
         fontSize: theme.typography.fontSize.xs,
@@ -207,6 +305,9 @@ const styles = StyleSheet.create({
     selectedText: {
         color: theme.colors.primary,
     },
+    otherSelectedText: {
+        color: theme.colors.accent,
+    },
     oviBadge: {
         backgroundColor: 'rgba(255, 255, 255, 0.5)',
         paddingHorizontal: 6,
@@ -217,5 +318,24 @@ const styles = StyleSheet.create({
         fontSize: 8,
         fontWeight: '800',
         color: theme.colors.primary,
+    },
+    todayButton: {
+        width: 56,
+        minHeight: 88,
+        height: 88,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: theme.borderRadius.xl,
+        backgroundColor: theme.colors.surface,
+        borderWidth: 1,
+        borderColor: theme.colors.borderLight,
+        marginLeft: DATE_ITEM_MARGIN,
+        ...theme.shadows.sm,
+    },
+    todayButtonText: {
+        fontSize: 10,
+        fontWeight: theme.typography.fontWeight.semibold,
+        color: theme.colors.primary,
+        marginTop: 4,
     },
 });

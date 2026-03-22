@@ -18,6 +18,7 @@ import { SimpleDatePicker } from '../components/ui/SimpleDatePicker';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Button } from '../components/ui/Button';
 import { JournalListSkeleton } from '../components/skeletons';
+import { useToast } from '../components/ui/ToastProvider';
 import { theme } from '../theme';
 import { journalAPI } from '../services/api';
 import { JournalEntry } from '../types';
@@ -30,6 +31,7 @@ interface JournalScreenProps {
 const MOOD_EMOJIS = ['', '😢', '😟', '😐', '🙂', '😊'];
 
 export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
+  const { showToast } = useToast();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,10 +54,12 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
       const endDateStr = endDate ? endDate.toISOString().split('T')[0] : undefined;
 
       const data = await journalAPI.getJournalEntries(startDateStr, endDateStr);
-      setEntries(data);
+      setEntries(Array.isArray(data) ? data : []);
     } catch (err: any) {
-      setError(err.message || 'Failed to load journal entries');
-      Alert.alert('Error', err.message || 'Failed to load journal entries');
+      const message = err.message || 'Could not load journal entries';
+      setError(message);
+      setEntries([]);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -275,7 +279,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <ScreenWrapper edges={['bottom']}>
+      <ScreenWrapper edges={['top', 'bottom']}>
         <HeaderBar
           title="My Journal"
           subtitle="Loading your entries..."
@@ -300,7 +304,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <ScreenWrapper edges={['bottom']}>
+    <ScreenWrapper edges={['top', 'bottom']}>
       <HeaderBar
         title="My Journal"
         subtitle={getFilterSubtitle()}

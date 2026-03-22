@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Image, Animated, AccessibilityInfo } from 'react-native';
-import { getAnimationPath, getWeekData, getAnimationKeyframe } from '../../constants/fetusDevelopment';
+import { getOviStage, getWeekData } from '../../constants/fetusDevelopment';
 
 interface FetusDevelopmentAnimationProps {
     week: number;
@@ -17,19 +17,32 @@ const SIZE_CONFIG = {
     large: { width: 300, height: 300 },
 };
 
-// Placeholder images mapping - will be replaced with actual Lottie animations
-const FETUS_IMAGES: Record<string, any> = {
-    week_04: require('../../../assets/animations/fetus/week_04.png'),
-    week_08: require('../../../assets/animations/fetus/week_08.png'),
-    week_12: require('../../../assets/animations/fetus/week_12.png'),
-    week_16: require('../../../assets/animations/fetus/week_16.png'),
-    week_20: require('../../../assets/animations/fetus/week_20.png'),
-    week_24: require('../../../assets/animations/fetus/week_24.png'),
-    week_28: require('../../../assets/animations/fetus/week_28.png'),
-    // Fallback for weeks without specific images
-    week_32: require('../../../assets/animations/fetus/week_28.png'),
-    week_36: require('../../../assets/animations/fetus/week_28.png'),
-    week_40: require('../../../assets/animations/fetus/week_28.png'),
+// Ovi stages: 24 development images mapped evenly across pregnancy weeks 4-40
+const OVI_STAGES: Record<number, any> = {
+    1: require('../../../assets/Ovi_stages/1.png'),
+    2: require('../../../assets/Ovi_stages/2.png'),
+    3: require('../../../assets/Ovi_stages/3.png'),
+    4: require('../../../assets/Ovi_stages/4.png'),
+    5: require('../../../assets/Ovi_stages/5.png'),
+    6: require('../../../assets/Ovi_stages/6.png'),
+    7: require('../../../assets/Ovi_stages/7.png'),
+    8: require('../../../assets/Ovi_stages/8.png'),
+    9: require('../../../assets/Ovi_stages/9.png'),
+    10: require('../../../assets/Ovi_stages/10.png'),
+    11: require('../../../assets/Ovi_stages/11.png'),
+    12: require('../../../assets/Ovi_stages/12.png'),
+    13: require('../../../assets/Ovi_stages/13.png'),
+    14: require('../../../assets/Ovi_stages/14.png'),
+    15: require('../../../assets/Ovi_stages/15.png'),
+    16: require('../../../assets/Ovi_stages/16.png'),
+    17: require('../../../assets/Ovi_stages/17.png'),
+    18: require('../../../assets/Ovi_stages/18.png'),
+    19: require('../../../assets/Ovi_stages/19.png'),
+    20: require('../../../assets/Ovi_stages/20.png'),
+    21: require('../../../assets/Ovi_stages/21.png'),
+    22: require('../../../assets/Ovi_stages/22.png'),
+    23: require('../../../assets/Ovi_stages/23.png'),
+    24: require('../../../assets/Ovi_stages/24.png'),
 };
 
 /**
@@ -56,15 +69,9 @@ export const FetusDevelopmentAnimation: React.FC<FetusDevelopmentAnimationProps>
     const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
     const weekData = getWeekData(week);
-    const animationKey = getAnimationPath(week);
+    const oviStage = getOviStage(week);
     const dimensions = SIZE_CONFIG[size];
-
-    // Calculate growth factor based on distance from keyframe
-    // If we are at week 13 and keyframe is 12, we grow by 3%
-    // If we are at week 15 and keyframe is 16, we shrink by 3% (interpolate towards it)
-    const baseWeek = getAnimationKeyframe(week);
-    const weeksDifference = week - baseWeek;
-    const growthFactor = 1 + (weeksDifference * 0.03);
+    const imageSource = OVI_STAGES[oviStage] ?? OVI_STAGES[12];
 
     // Check accessibility settings
     useEffect(() => {
@@ -143,14 +150,13 @@ export const FetusDevelopmentAnimation: React.FC<FetusDevelopmentAnimationProps>
                         opacity: fadeAnim,
                         transform: [
                             { translateY: reduceMotion ? 0 : floatAnim },
-                            { scale: growthFactor },
                             { scale: reduceMotion ? 1 : scaleAnim },
                         ],
                     },
                 ]}
             >
                 <Image
-                    source={FETUS_IMAGES[animationKey] || FETUS_IMAGES.week_20}
+                    source={imageSource}
                     style={[styles.image, { width: dimensions.width, height: dimensions.height }]}
                     resizeMode="contain"
                 />

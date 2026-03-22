@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     cardContainer: {
         padding: theme.layout.cardPadding,
         borderRadius: theme.borderRadius.card,
-        ...theme.shadows.card,
+        ...theme.shadows.lg,
         borderWidth: 1,
         borderColor: theme.colors.borderLight,
         overflow: 'hidden',

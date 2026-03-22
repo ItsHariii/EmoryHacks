@@ -289,7 +289,7 @@ export const SearchFoodScreen: React.FC = () => {
   const dataToDisplay = searched ? searchResults : [];
 
   return (
-    <ScreenWrapper edges={['bottom']}>
+    <ScreenWrapper edges={['top', 'bottom']}>
       <HeaderBar
         title={`Add to ${mealType}`}
         leftAction={{

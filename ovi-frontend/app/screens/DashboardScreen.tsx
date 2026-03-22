@@ -19,7 +19,7 @@ import { NutritionSection } from '../components/food/NutritionSection';
 import { BabyThisWeekCard } from '../components/pregnancy/BabyThisWeekCard';
 import { MicronutrientChart } from '../components/charts/MicronutrientChart';
 import { WeekTransitionModal } from '../components/pregnancy/WeekTransitionAnimation';
-import { NutritionDetailsModal } from '../components/modals/NutritionDetailsModal';
+import { NutritionDetailsModal, NutritionBreakdownModal } from '../components/modals';
 import { Toast } from '../components/ui/Toast';
 import { EmptyState } from '../components/ui/EmptyState';
 import { DashboardSkeleton } from '../components/skeletons';
@@ -93,6 +93,7 @@ export const DashboardScreen: React.FC = () => {
 
   // Modal state
   const [showNutritionModal, setShowNutritionModal] = useState(false);
+  const [showNutritionBreakdownModal, setShowNutritionBreakdownModal] = useState(false);
 
   // Animation values
   const pregnancyOpacity = useRef(new Animated.Value(0)).current;
@@ -113,38 +114,42 @@ export const DashboardScreen: React.FC = () => {
   // Scroll position for header animation
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // Fetch journal entry for selected date
-  const fetchJournalForDate = async (date: Date) => {
+  // Fetch journal entry for selected date (never throws so refresh still succeeds)
+  const fetchJournalForDate = async (date: Date): Promise<void> => {
     try {
-      // Adjust for timezone offset to ensure we get the correct local date string
       const offset = date.getTimezoneOffset() * 60000;
       const localDate = new Date(date.getTime() - offset);
       const dateString = localDate.toISOString().split('T')[0];
 
       const entries = await journalAPI.getJournalEntries(dateString, dateString);
-      if (entries && entries.length > 0) {
-        setTodayJournalEntry(entries[0]);
-      } else {
-        setTodayJournalEntry(null);
-      }
+      setTodayJournalEntry(entries?.length > 0 ? entries[0] : null);
     } catch (err: any) {
-      console.error('Error fetching journal entry:', err);
+      // Silently ignore journal fetch failures in UI; they’re usually auth/connection blips.
+      // In development you can temporarily re-enable this log if you’re debugging the API:
+      // if (__DEV__) console.warn('Error fetching journal entry:', err);
       setTodayJournalEntry(null);
     }
   };
 
-  // Load all data
+  // Load all data (journal failure does not fail the whole load)
   const loadAllData = async (date: Date = selectedDate) => {
     const offset = date.getTimezoneOffset() * 60000;
     const localDate = new Date(date.getTime() - offset);
     const dateString = localDate.toISOString().split('T')[0];
 
-    await Promise.all([
+    const results = await Promise.allSettled([
       fetchProfile(),
       fetchDailySummary(dateString),
       fetchTargets(),
       fetchJournalForDate(date),
     ]);
+    const rejected = results.filter((r) => r.status === 'rejected');
+    if (rejected.length > 0 && rejected.length === results.length) {
+      throw new Error('Failed to load dashboard data');
+    }
+    if (rejected.length > 0) {
+      rejected.forEach((r) => r.status === 'rejected' && console.warn('Dashboard load item failed:', r.reason));
+    }
   };
 
   // Pull to refresh
@@ -259,7 +264,7 @@ export const DashboardScreen: React.FC = () => {
         <CalendarStrip
           selectedDate={selectedDate}
           onDateSelect={handleDateSelect}
-          snapBackToTodayAfterMs={4000}
+          snapBackToTodayAfterMs={5000}
         />
       </View>
 
@@ -277,6 +282,15 @@ export const DashboardScreen: React.FC = () => {
         )}
         scrollEventThrottle={16}
       >
+        {/* Today in week X – first scan anchor */}
+        {pregnancyInfo?.week != null && (
+          <View style={styles.todayInWeekRow}>
+            <Text style={styles.todayInWeekText}>
+              Today in week {pregnancyInfo.week}
+            </Text>
+          </View>
+        )}
+
         {/* Pregnancy Week Display */}
         {pregnancyLoading && !pregnancyInfo ? (
           <View style={styles.pregnancySection}>
@@ -301,13 +315,13 @@ export const DashboardScreen: React.FC = () => {
         ) : null}
 
 
-        {/* Macronutrients Section - Clickable for details */}
+        {/* Macronutrients Section - Clickable for breakdown */}
         <TouchableOpacity
           activeOpacity={0.9}
-          onPress={() => setShowNutritionModal(true)}
+          onPress={() => setShowNutritionBreakdownModal(true)}
           accessible={true}
-          accessibilityLabel="View nutrition details"
-          accessibilityHint="Double tap to see detailed nutrition guidelines"
+          accessibilityLabel="View nutrition breakdown"
+          accessibilityHint="Double tap to see food breakdown and macro sources"
         >
           <NutritionSection opacity={macroOpacity} translateY={macroTranslateY} />
         </TouchableOpacity>
@@ -451,11 +465,24 @@ export const DashboardScreen: React.FC = () => {
         )
       }
 
-      {/* Nutrition Details Modal */}
+      {/* Nutrition Details Modal (info/guidelines) */}
       <NutritionDetailsModal
         visible={showNutritionModal}
         onClose={() => setShowNutritionModal(false)}
         targets={targets}
+      />
+
+      {/* Nutrition Breakdown Modal (calories/macros expansion) */}
+      <NutritionBreakdownModal
+        visible={showNutritionBreakdownModal}
+        onClose={() => setShowNutritionBreakdownModal(false)}
+        date={selectedDate}
+        summary={summary}
+        targets={targets}
+        onOpenInfoGuide={() => {
+          setShowNutritionBreakdownModal(false);
+          setShowNutritionModal(true);
+        }}
       />
     </ScreenWrapper>
   );
@@ -487,14 +514,24 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     paddingHorizontal: 0,
   },
+  todayInWeekRow: {
+    paddingHorizontal: theme.layout.screenPadding,
+    marginBottom: theme.spacing.sm,
+  },
+  todayInWeekText: {
+    ...theme.typography.presets.sectionTitle,
+    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamily.semibold,
+  },
   pregnancySection: {
     paddingHorizontal: theme.layout.screenPadding,
     paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.sectionSpacing,
   },
   section: {
     backgroundColor: theme.colors.surface,
     marginHorizontal: theme.layout.screenPadding,
+    marginTop: theme.spacing.sectionTitleTop,
     marginBottom: theme.spacing.sectionSpacing,
     padding: theme.layout.cardPadding,
     borderRadius: theme.borderRadius.card,
@@ -503,9 +540,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderLight,
   },
   sectionTitle: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.bold,
+    ...theme.typography.presets.sectionTitle,
     color: theme.colors.text.primary,
+    marginTop: 0,
     marginBottom: theme.spacing.sectionTitleBottom,
   },
   sectionSubtitle: {

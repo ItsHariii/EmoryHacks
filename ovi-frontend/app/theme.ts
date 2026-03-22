@@ -152,13 +152,14 @@ export const theme = {
     },
   },
 
-  // Typography System
+  // Typography System – DM Sans (loaded via expo-font in App.tsx)
   typography: {
     fontFamily: {
-      regular: 'System',
-      medium: 'System',
-      bold: 'System',
-      serif: 'System',
+      regular: 'DMSans_400Regular',
+      medium: 'DMSans_500Medium',
+      bold: 'DMSans_700Bold',
+      semibold: 'DMSans_600SemiBold',
+      serif: 'DMSans_400Regular',
     },
     fontSize: {
       xs: 12,
@@ -193,51 +194,60 @@ export const theme = {
       wide: 0.5,
       wider: 1,
     },
-    // Named presets for consistent text styling
+    // Named presets for consistent text styling (fontFamily matches loaded DM Sans weights)
     presets: {
       heading1: {
+        fontFamily: 'DMSans_700Bold',
         fontSize: 48,
         fontWeight: '700' as const,
         lineHeight: 52,
         letterSpacing: -1,
       },
       heading2: {
+        fontFamily: 'DMSans_700Bold',
         fontSize: 24,
         fontWeight: '700' as const,
         lineHeight: 30,
         letterSpacing: -0.5,
       },
       heading3: {
+        fontFamily: 'DMSans_600SemiBold',
         fontSize: 20,
         fontWeight: '600' as const,
         lineHeight: 26,
       },
       body: {
+        fontFamily: 'DMSans_400Regular',
         fontSize: 16,
         fontWeight: '400' as const,
         lineHeight: 24,
       },
       bodyLarge: {
+        fontFamily: 'DMSans_400Regular',
         fontSize: 18,
         fontWeight: '400' as const,
         lineHeight: 26,
       },
       caption: {
+        fontFamily: 'DMSans_400Regular',
         fontSize: 14,
         fontWeight: '400' as const,
         lineHeight: 20,
       },
       captionBold: {
+        fontFamily: 'DMSans_600SemiBold',
         fontSize: 14,
         fontWeight: '600' as const,
         lineHeight: 20,
       },
       sectionTitle: {
+        fontFamily: 'DMSans_700Bold',
         fontSize: 18,
         fontWeight: '700' as const,
         lineHeight: 24,
       },
       sectionSubtitle: {
+        fontFamily: 'DMSans_500Medium',
         fontSize: 14,
         fontWeight: '500' as const,
         lineHeight: 20,
