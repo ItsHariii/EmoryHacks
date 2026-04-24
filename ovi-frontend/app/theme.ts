@@ -1,76 +1,82 @@
 export const theme = {
   colors: {
-    // Primary Colors - Soft Red/Pink
-    primary: '#D65A5A', // Softer Red
-    primaryDark: '#B04040',
-    primaryLight: '#FF8F8F',
-    primarySoft: 'rgba(214, 90, 90, 0.1)',
-    primaryGlow: 'rgba(214, 90, 90, 0.25)',
+    // Primary Colors - Terracotta (warm editorial)
+    primary: '#B84C3F', // deep terracotta
+    primaryDark: '#8F3A31',
+    primaryLight: '#F4E4DF', // warm tint wash (replaces bright pink)
+    primarySoft: 'rgba(184, 76, 63, 0.10)',
+    primaryGlow: 'rgba(184, 76, 63, 0.20)',
 
-    // Secondary Colors - Soft Pastels
-    secondary: '#FFD6C9', // Peach
+    // Secondary Colors - Soft Pastels (kept for compatibility)
+    secondary: '#FFD6C9',
     secondaryPeach: '#FFD6C9',
-    secondaryLavender: '#DCD6FF', // Lavender
+    secondaryLavender: '#DCD6FF',
     secondaryPeachLight: '#FFF0E6',
     secondaryLavenderLight: '#F2F0FF',
 
-    // Neutrals
-    background: '#FFF5F2', // Warm Cream Background
-    backgroundDark: '#F9EBE6',
+    // Neutrals - Warm bone palette
+    background: '#F6F1EA', // warm bone canvas
+    backgroundDark: '#EFE7DC', // secondary surface
     surface: '#FFFFFF',
     surfaceHighlight: '#FFFFFF',
     surfaceTint: 'rgba(255, 255, 255, 0.6)',
-    border: '#F0E6E0',
-    borderLight: '#F7F0EB',
-    borderDark: '#E6D6CE',
+    border: '#E8DFD2', // hairline on bone
+    borderLight: '#F0E8DC', // lighter hairline on white
+    borderDark: '#D9CEBF',
 
     // Accents
-    accent: '#A8D5BA', // Soft Green
-    accentGold: '#FFE5A0', // Soft Gold
-    accentGoldLight: '#FFF5D6',
-    accentGreenLight: '#E6F5EB',
+    accent: '#8A9A7B', // muted sage (kept for non-primary accents)
+    accentLight: '#F5EAD7', // warm ochre tint (legacy alias for accentGoldLight)
+    accentGold: '#D19B4E', // warm ochre
+    accentGoldLight: '#F5EAD7',
+    accentGreenLight: '#E9EEE2',
+    secondaryLight: '#EFE7DC', // warm bone tint (legacy alias)
 
-    // Text Colors
+    // Text Colors - warm ink
     text: {
-      primary: '#4A3B32', // Dark Brown/Grey
-      secondary: '#8C7B70', // Muted Brown
-      muted: '#B0A096',
-      light: '#D6C6BC',
+      primary: '#2B221B', // deep ink
+      secondary: '#6A5D52', // inkSoft
+      muted: '#9C8E80', // inkMute
+      light: '#D9CEBF', // inkLine
       inverse: '#FFFFFF',
-      link: '#D65A5A',
+      link: '#B84C3F',
       onPrimary: '#FFFFFF',
-      onSecondary: '#4A3B32',
+      onSecondary: '#2B221B',
     },
 
     // Semantic Colors
-    success: '#A8D5BA', // Soft Green
-    successDark: '#86B396',
-    warning: '#FFE5A0', // Soft Gold
-    warningDark: '#E6CC8A',
-    error: '#D65A5A', // Soft Red
-    errorLight: '#FF8F8F',
-    info: '#DCD6FF', // Soft Lavender
+    success: '#6F8C6F', // muted sage green
+    successDark: '#4F6148',
+    warning: '#C69348', // warm amber
+    warningDark: '#A07835',
+    error: '#C0392B',
+    errorLight: '#E88080',
+    info: '#DCD6FF',
     infoDark: '#B8B0E6',
+    notification: '#B84C3F',
 
     // Safety Status Colors
-    safe: '#A8D5BA',
-    safeBg: 'rgba(168, 213, 186, 0.15)',
-    limited: '#FFE5A0',
-    limitedBg: 'rgba(255, 229, 160, 0.15)',
-    avoid: '#D65A5A',
-    avoidBg: 'rgba(214, 90, 90, 0.1)',
+    safe: '#8A9A7B',
+    safeBg: 'rgba(138, 154, 123, 0.15)',
+    limited: '#D19B4E',
+    limitedBg: 'rgba(209, 155, 78, 0.15)',
+    avoid: '#B84C3F',
+    avoidBg: 'rgba(184, 76, 63, 0.10)',
 
-    // Macro Card Colors
-    macroProtein: '#FFD6C9', // Peach
-    macroProteinBg: '#FFF0E6',
-    macroCarbs: '#E6D6CE', // Taupe/Beige
-    macroCarbsBg: '#F7F0EB',
-    macroFats: '#DCD6FF', // Lavender
-    macroFatsBg: '#F2F0FF',
+    // Macro progress fill — cohesive earth tri-tone
+    macroProtein: '#B84C3F', // terracotta (anchors to brand)
+    macroCarbs:   '#D19B4E', // warm ochre
+    macroFats:    '#8A9A7B', // muted sage
 
     // Button & UI
     secondaryButtonText: '#4A3B32', // For outline/secondary buttons
     cameraOverlay: 'rgba(0, 0, 0, 0.6)', // Camera overlay background
+    // Third-party brand colors (Google OAuth button)
+    googleBorderColor: '#747775',
+    googleTextColor: '#1F1F1F',
+    // Glassmorphism tab bar surface
+    surfaceGlass: 'rgba(255, 255, 255, 0.92)',
+    surfaceGlassBorder: 'rgba(255, 255, 255, 0.5)',
 
     // Overlay & Effects
     shadow: 'rgba(74, 59, 50, 0.08)', // Brownish shadow
@@ -82,25 +88,24 @@ export const theme = {
     shimmer: 'rgba(255, 255, 255, 0.5)',
   },
 
-  // Gradient Presets - Enhanced for Pastel Aesthetic
+  // Gradient Presets — kept for API compatibility but all flat (no visible gradient)
   gradients: {
-    primary: ['#FF9A9E', '#FECFEF'] as const, // Pink/Rose
-    primaryReverse: ['#FECFEF', '#FF9A9E'] as const,
-    header: ['#FFF5F2', '#FFD6C9'] as const,
-    headerReverse: ['#FFD6C9', '#FFF5F2'] as const,
-    babyCard: ['#FFD6C9', '#DCD6FF'] as const, // Peach to Lavender
-    babyCardReverse: ['#DCD6FF', '#FFD6C9'] as const,
-    nutritionRing: ['#FFD6C9', '#DCD6FF'] as const,
-    surface: ['#FFFFFF', '#FFF5F2'] as const,
-    magicalGlow: ['#DCD6FF', '#FFD6C9'] as const,
-    peachGlow: ['#FFD6C9', '#FFF0E6'] as const,
-    lavenderGlow: ['#DCD6FF', '#F2F0FF'] as const,
-    warmBackground: ['#FFF5F2', '#F9EBE6'] as const,
-    sunset: ['#FFD6C9', '#FECFEF', '#DCD6FF'] as const,
-    // New gradients for progress bars
-    protein: ['#FFD6C9', '#FFB09C'] as const,
-    carbs: ['#E6D6CE', '#D6C6BC'] as const,
-    fats: ['#DCD6FF', '#B8B0E6'] as const,
+    primary: ['#B84C3F', '#B84C3F'] as const,
+    primaryReverse: ['#B84C3F', '#B84C3F'] as const,
+    header: ['#F6F1EA', '#F6F1EA'] as const,
+    headerReverse: ['#F6F1EA', '#F6F1EA'] as const,
+    babyCard: ['#EFE7DC', '#EFE7DC'] as const,
+    babyCardReverse: ['#EFE7DC', '#EFE7DC'] as const,
+    nutritionRing: ['#EFE7DC', '#EFE7DC'] as const,
+    surface: ['#FFFFFF', '#FFFFFF'] as const,
+    magicalGlow: ['#EFE7DC', '#EFE7DC'] as const,
+    peachGlow: ['#F4E4DF', '#F4E4DF'] as const,
+    lavenderGlow: ['#EFE7DC', '#EFE7DC'] as const,
+    warmBackground: ['#F6F1EA', '#F6F1EA'] as const,
+    sunset: ['#F4E4DF', '#EFE7DC', '#E9EEE2'] as const,
+    protein: ['#B84C3F', '#B84C3F'] as const,
+    carbs: ['#D19B4E', '#D19B4E'] as const,
+    fats: ['#8A9A7B', '#8A9A7B'] as const,
   },
 
   // Glassmorphism Presets
@@ -152,14 +157,20 @@ export const theme = {
     },
   },
 
-  // Typography System – DM Sans (loaded via expo-font in App.tsx)
+  // Typography System — Instrument Sans (body) + Fraunces (display)
   typography: {
     fontFamily: {
-      regular: 'DMSans_400Regular',
-      medium: 'DMSans_500Medium',
-      bold: 'DMSans_700Bold',
-      semibold: 'DMSans_600SemiBold',
-      serif: 'DMSans_400Regular',
+      regular: 'InstrumentSans_400Regular',
+      medium: 'InstrumentSans_500Medium',
+      bold: 'InstrumentSans_700Bold',
+      semibold: 'InstrumentSans_600SemiBold',
+      // Display serif (Fraunces) — for headings, wordmark, editorial moments
+      display: 'Fraunces_400Regular',
+      displayItalic: 'Fraunces_400Regular_Italic',
+      displayLight: 'Fraunces_300Light',
+      displayMediumItalic: 'Fraunces_500Medium_Italic',
+      // Legacy alias
+      serif: 'InstrumentSans_400Regular',
     },
     fontSize: {
       xs: 12,
@@ -194,60 +205,60 @@ export const theme = {
       wide: 0.5,
       wider: 1,
     },
-    // Named presets for consistent text styling (fontFamily matches loaded DM Sans weights)
+    // Named presets for consistent text styling
     presets: {
       heading1: {
-        fontFamily: 'DMSans_700Bold',
+        fontFamily: 'InstrumentSans_700Bold',
         fontSize: 48,
         fontWeight: '700' as const,
         lineHeight: 52,
         letterSpacing: -1,
       },
       heading2: {
-        fontFamily: 'DMSans_700Bold',
+        fontFamily: 'InstrumentSans_700Bold',
         fontSize: 24,
         fontWeight: '700' as const,
         lineHeight: 30,
         letterSpacing: -0.5,
       },
       heading3: {
-        fontFamily: 'DMSans_600SemiBold',
+        fontFamily: 'InstrumentSans_600SemiBold',
         fontSize: 20,
         fontWeight: '600' as const,
         lineHeight: 26,
       },
       body: {
-        fontFamily: 'DMSans_400Regular',
+        fontFamily: 'InstrumentSans_400Regular',
         fontSize: 16,
         fontWeight: '400' as const,
         lineHeight: 24,
       },
       bodyLarge: {
-        fontFamily: 'DMSans_400Regular',
+        fontFamily: 'InstrumentSans_400Regular',
         fontSize: 18,
         fontWeight: '400' as const,
         lineHeight: 26,
       },
       caption: {
-        fontFamily: 'DMSans_400Regular',
+        fontFamily: 'InstrumentSans_400Regular',
         fontSize: 14,
         fontWeight: '400' as const,
         lineHeight: 20,
       },
       captionBold: {
-        fontFamily: 'DMSans_600SemiBold',
+        fontFamily: 'InstrumentSans_600SemiBold',
         fontSize: 14,
         fontWeight: '600' as const,
         lineHeight: 20,
       },
       sectionTitle: {
-        fontFamily: 'DMSans_700Bold',
+        fontFamily: 'InstrumentSans_700Bold',
         fontSize: 18,
         fontWeight: '700' as const,
         lineHeight: 24,
       },
       sectionSubtitle: {
-        fontFamily: 'DMSans_500Medium',
+        fontFamily: 'InstrumentSans_500Medium',
         fontSize: 14,
         fontWeight: '500' as const,
         lineHeight: 20,

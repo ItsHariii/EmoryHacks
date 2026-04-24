@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { createProgressFillAnimation } from '../../utils/animations';
 
@@ -10,71 +9,48 @@ interface MacronutrientCardProps {
   current: number;
   target: number;
   unit: string;
-  color?: string;
 }
 
-// Refined Pastel Themes matching the new aesthetic
-const THEMES = {
-  protein: {
-    bg: '#FFF8F6', // Very light warm peach
-    barBg: '#FFE4D6',
-    fill: ['#FFBCA0', '#FF9E80'], // Soft Peach/Orange
-    label: '#D65A5A', // Matching primary color
-  },
-  carbs: {
-    bg: '#F9F7F2', // Warm beige
-    barBg: '#EFEBE0',
-    fill: ['#D7CCC8', '#BCAAA4'], // Soft Brown/Beige
-    label: '#8D6E63',
-  },
-  fat: {
-    bg: '#F8F7FF', // Very light lavender
-    barBg: '#EDE7F6',
-    fill: ['#D1C4E9', '#B39DDB'], // Soft Purple
-    label: '#7E57C2',
-  },
-  calories: {
-    bg: '#FFF5F5',
-    barBg: '#FFEBEE',
-    fill: ['#EF9A9A', '#E57373'],
-    label: '#C62828',
-  },
+// Unified coral family — same hue, three weights, all sourced from theme
+const MACRO_FILL = {
+  protein:  theme.colors.macroProtein,
+  carbs:    theme.colors.macroCarbs,
+  fat:      theme.colors.macroFats,
+  calories: theme.colors.primary,
 };
 
 const DISPLAY_NAMES = {
   calories: 'Calories',
-  protein: 'Protein',
-  carbs: 'Carbs',
-  fat: 'Fats',
+  protein:  'Protein',
+  carbs:    'Carbs',
+  fat:      'Fats',
 };
 
-export const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
+const MacronutrientCardComponent: React.FC<MacronutrientCardProps> = ({
   name,
   current,
   target,
   unit,
 }) => {
   const progressAnim = useRef(new Animated.Value(0)).current;
-  const percentage = Math.min((current / target) * 100, 100);
-
-  const themeColors = THEMES[name] || THEMES.calories;
+  const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+  const fillColor = MACRO_FILL[name] ?? MACRO_FILL.calories;
 
   useEffect(() => {
     createProgressFillAnimation(progressAnim, percentage).start();
   }, [percentage]);
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.bg }]}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.label, { color: themeColors.label }]}>
-          {DISPLAY_NAMES[name]}
-        </Text>
-        <Text style={[styles.value, { color: themeColors.label }]}>
-          {Math.round(current)}g
+        <Text style={styles.label}>{DISPLAY_NAMES[name]}</Text>
+        <Text style={styles.value}>
+          {Math.round(current)}{unit}
+          <Text style={styles.target}> / {Math.round(target)}{unit}</Text>
         </Text>
       </View>
 
-      <View style={[styles.track, { backgroundColor: themeColors.barBg }]}>
+      <View style={styles.track}>
         <Animated.View
           style={[
             styles.fill,
@@ -83,16 +59,10 @@ export const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
                 inputRange: [0, 100],
                 outputRange: ['0%', '100%'],
               }),
+              backgroundColor: fillColor,
             },
           ]}
-        >
-          <LinearGradient
-            colors={themeColors.fill}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.gradient}
-          />
-        </Animated.View>
+        />
       </View>
     </View>
   );
@@ -100,39 +70,45 @@ export const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    marginBottom: 10,
-    width: '100%',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surface,
+    marginBottom: theme.spacing.xs,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
     alignItems: 'center',
+    marginBottom: theme.spacing.xs,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
   },
   value: {
-    fontSize: 12,
-    fontWeight: '600',
-    opacity: 0.8,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
+  },
+  target: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.muted,
   },
   track: {
-    height: 10, // Slightly thinner for elegance but still substantial
-    borderRadius: 8,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: theme.colors.borderLight,
     overflow: 'hidden',
-    width: '100%',
   },
   fill: {
     height: '100%',
-    borderRadius: 8,
-  },
-  gradient: {
-    flex: 1,
+    borderRadius: 3,
   },
 });
+
+export const MacronutrientCard = React.memo(MacronutrientCardComponent);

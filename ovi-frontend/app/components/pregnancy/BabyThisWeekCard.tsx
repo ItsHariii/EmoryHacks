@@ -1,8 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FetusDevelopmentAnimation } from './FetusDevelopmentAnimation';
 import { theme } from '../../theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -13,43 +12,19 @@ interface BabyThisWeekCardProps {
     milestones: string[];
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export const BabyThisWeekCard: React.FC<BabyThisWeekCardProps> = ({
     week,
     sizeComparison,
     milestones,
 }) => {
     const navigation = useNavigation();
-
-    // Animation values
-    const glowPulseAnim = useRef(new Animated.Value(1)).current;
     const floatAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Glow pulse animation
-        const pulseAnimation = Animated.loop(
-            Animated.sequence([
-                Animated.timing(glowPulseAnim, {
-                    toValue: 1.1,
-                    duration: 3000,
-                    useNativeDriver: true,
-                    easing: Easing.inOut(Easing.ease),
-                }),
-                Animated.timing(glowPulseAnim, {
-                    toValue: 1,
-                    duration: 3000,
-                    useNativeDriver: true,
-                    easing: Easing.inOut(Easing.ease),
-                }),
-            ])
-        );
-
-        // Floating animation for fetus
-        const floatAnimation = Animated.loop(
+        const float = Animated.loop(
             Animated.sequence([
                 Animated.timing(floatAnim, {
-                    toValue: -5,
+                    toValue: -4,
                     duration: 3500,
                     useNativeDriver: true,
                     easing: Easing.inOut(Easing.quad),
@@ -62,78 +37,54 @@ export const BabyThisWeekCard: React.FC<BabyThisWeekCardProps> = ({
                 }),
             ])
         );
-
-        pulseAnimation.start();
-        floatAnimation.start();
+        float.start();
+        return () => float.stop();
     }, []);
 
-    const handlePress = () => {
-        (navigation as any).navigate('Baby');
-    };
+    // Derive trimester from week
+    const trimester = week <= 13 ? 'First Trimester' : week <= 27 ? 'Second Trimester' : 'Third Trimester';
 
     return (
         <TouchableOpacity
             activeOpacity={0.95}
-            onPress={handlePress}
+            onPress={() => (navigation as any).navigate('Baby')}
             accessible={true}
             accessibilityLabel={`View baby development for week ${week}`}
         >
-            <View style={styles.cardContainer}>
-                {/* Base Gradient */}
-                <LinearGradient
-                    colors={theme.gradients.babyCard}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={StyleSheet.absoluteFill}
-                />
-
-                <View style={styles.header}>
-                    <Text style={styles.title}>Your Baby This Week</Text>
-                    <View style={styles.weekBadge}>
-                        <Text style={styles.weekText}>Week {week}</Text>
+            <View style={styles.card}>
+                {/* Horizontal layout: image well | copy */}
+                <View style={styles.row}>
+                    {/* Image well — fixed width, contained, no overflow */}
+                    <View style={styles.imageWell}>
+                        <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
+                            <FetusDevelopmentAnimation week={week} size="small" />
+                        </Animated.View>
                     </View>
-                </View>
 
-                <View style={styles.content}>
-                    {/* Fetus Animation */}
-                    <Animated.View
-                        style={[
-                            styles.animationContainer,
-                            { transform: [{ translateY: floatAnim }] }
-                        ]}
-                    >
-                        <Animated.View
-                            style={[
-                                styles.glowEffect,
-                                { transform: [{ scale: glowPulseAnim }] }
-                            ]}
-                        />
-                        <FetusDevelopmentAnimation week={week} size="medium" />
-                    </Animated.View>
+                    {/* Divider */}
+                    <View style={styles.wellDivider} />
 
-                    {/* Info Section */}
-                    <View style={styles.infoContainer}>
-                        <View style={styles.sizeComparisonChip}>
-                            <MaterialCommunityIcons
-                                name="food-apple" // Changed to apple as per image example
-                                size={16}
-                                color={theme.colors.error}
-                            />
-                            <Text style={styles.sizeComparison}>
-                                Like an {sizeComparison}
+                    {/* Copy */}
+                    <View style={styles.textColumn}>
+                        <Text style={styles.metaLabel} numberOfLines={1}>
+                            Week {week} · {trimester}
+                        </Text>
+                        <Text style={styles.headline}>
+                            Your baby is{'\n'}
+                            <Text style={styles.headlineItalic}>
+                                the size of a {sizeComparison}
                             </Text>
-                        </View>
-
-                        <View style={styles.milestonesContainer}>
-                            {milestones.slice(0, 2).map((milestone, index) => (
-                                <View key={index} style={styles.milestoneItem}>
+                        </Text>
+                        <View style={styles.statsRow}>
+                            {milestones.slice(0, 1).map((m, i) => (
+                                <View key={i} style={styles.statItem}>
                                     <MaterialCommunityIcons
-                                        name={index === 0 ? "heart-pulse" : "foot-print"}
-                                        size={14}
-                                        color={theme.colors.primaryDark}
+                                        name="heart-outline"
+                                        size={12}
+                                        color={theme.colors.text.muted}
                                     />
-                                    <Text style={styles.milestoneText} numberOfLines={1}>
-                                        {milestone}
+                                    <Text style={styles.statText} numberOfLines={2}>
+                                        {m}
                                     </Text>
                                 </View>
                             ))}
@@ -146,84 +97,69 @@ export const BabyThisWeekCard: React.FC<BabyThisWeekCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-    cardContainer: {
-        padding: theme.layout.cardPadding,
+    card: {
+        backgroundColor: theme.colors.surface,
         borderRadius: theme.borderRadius.card,
-        ...theme.shadows.lg,
-        borderWidth: 1,
-        borderColor: theme.colors.borderLight,
+        borderWidth: 0.5,
+        borderColor: theme.colors.border,
+        ...theme.shadows.card,
         overflow: 'hidden',
-        minHeight: 180,
     },
-    header: {
+    row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        alignItems: 'stretch',
+    },
+    imageWell: {
+        width: 128,
+        flexShrink: 0,
+        backgroundColor: theme.colors.backgroundDark,
         alignItems: 'center',
-        marginBottom: theme.spacing.lg,
-    },
-    title: {
-        ...theme.typography.presets.sectionTitle,
-        color: theme.colors.text.primary,
-    },
-    weekBadge: {
-        ...theme.glass.warm.style,
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.xs,
-        borderRadius: theme.borderRadius.md,
-    },
-    weekText: {
-        ...theme.typography.presets.captionBold,
-        fontSize: theme.typography.fontSize.xs,
-        color: theme.colors.text.primary,
-    },
-    content: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: theme.spacing.xl,
-    },
-    animationContainer: {
-        width: 80,
-        height: 80,
         justifyContent: 'center',
-        alignItems: 'center',
+        paddingVertical: 16,
     },
-    glowEffect: {
-        position: 'absolute',
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-        ...theme.shadows.glow,
+    wellDivider: {
+        width: 0.5,
+        backgroundColor: theme.colors.border,
     },
-    infoContainer: {
+    textColumn: {
         flex: 1,
-        gap: theme.spacing.md,
+        padding: 18,
+        gap: 6,
+        minWidth: 0,
     },
-    sizeComparisonChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: theme.spacing.sm,
-        ...theme.glass.warm.style,
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.sm,
-        borderRadius: theme.borderRadius.lg,
-        alignSelf: 'flex-start',
+    metaLabel: {
+        fontFamily: theme.typography.fontFamily.semibold,
+        fontSize: 10,
+        color: theme.colors.text.muted,
+        textTransform: 'uppercase',
+        letterSpacing: 1.2,
     },
-    sizeComparison: {
-        ...theme.typography.presets.captionBold,
+    headline: {
+        fontFamily: theme.typography.fontFamily.display,
+        fontSize: 20,
+        fontWeight: '400',
         color: theme.colors.text.primary,
+        letterSpacing: -0.4,
+        lineHeight: 24,
     },
-    milestonesContainer: {
-        gap: theme.spacing.sm,
+    headlineItalic: {
+        fontFamily: theme.typography.fontFamily.displayItalic,
+        fontStyle: 'italic',
     },
-    milestoneItem: {
+    statsRow: {
+        marginTop: 4,
+        gap: 4,
+    },
+    statItem: {
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: theme.spacing.sm,
+        alignItems: 'flex-start',
+        gap: 5,
     },
-    milestoneText: {
-        ...theme.typography.presets.caption,
+    statText: {
+        fontFamily: theme.typography.fontFamily.regular,
+        fontSize: 11,
         color: theme.colors.text.secondary,
         flex: 1,
+        lineHeight: 16,
     },
 });

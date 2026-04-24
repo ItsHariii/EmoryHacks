@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { supabase } from './supabase';
 import {
   FoodItem,
   FoodEntry,
@@ -20,6 +21,7 @@ import { invalidateNutritionCache } from '../utils/cacheInvalidation';
 
 const ACCESS_TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
+const AUTH_PROVIDER_KEY = 'auth_provider';
 
 // Helper for secure token storage that works on all platforms
 const getAuthToken = async (): Promise<string | null> => {
@@ -35,6 +37,14 @@ const getRefreshToken = async (): Promise<string | null> => {
     return await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
   } else {
     return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+  }
+};
+
+const getAuthProvider = async (): Promise<string | null> => {
+  if (Platform.OS === 'web') {
+    return await AsyncStorage.getItem(AUTH_PROVIDER_KEY);
+  } else {
+    return await SecureStore.getItemAsync(AUTH_PROVIDER_KEY);
   }
 };
 
@@ -80,6 +90,47 @@ const deleteRefreshToken = async (): Promise<void> => {
   await setRefreshToken(null);
 };
 
+const deleteAuthProvider = async (): Promise<void> => {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.removeItem(AUTH_PROVIDER_KEY);
+  } else {
+    await SecureStore.deleteItemAsync(AUTH_PROVIDER_KEY);
+  }
+};
+
+// Sanitize backend error messages to avoid leaking internals to the UI.
+const SAFE_DETAIL_PATTERNS = [
+  /invalid (email|password|credentials)/i,
+  /email (already|not) (registered|found|exists)/i,
+  /account.*locked/i,
+  /too many (requests|attempts)/i,
+  /food not found/i,
+  /journal entry not found/i,
+  /could not (save|create|update|delete)/i,
+];
+
+const UNSAFE_PATTERNS = [
+  /database/i,
+  /column/i,
+  /table/i,
+  /query/i,
+  /sqlalchemy/i,
+  /traceback/i,
+  /exception/i,
+];
+
+export function sanitizeApiError(error: any, fallback = 'Something went wrong. Please try again.'): string {
+  const detail: string = error?.response?.data?.detail || error?.message || '';
+  if (!detail) return fallback;
+  const isSafe = SAFE_DETAIL_PATTERNS.some(p => p.test(detail));
+  const isUnsafe = UNSAFE_PATTERNS.some(p => p.test(detail));
+  if (isSafe && !isUnsafe) return detail;
+  if (isUnsafe) return fallback;
+  // Short messages without internal jargon are fine to surface
+  if (detail.length < 120 && !isUnsafe) return detail;
+  return fallback;
+}
+
 // Base API configuration
 // Automatically detect emulator vs physical device
 import { getApiBaseUrl } from '../config/env';
@@ -110,11 +161,23 @@ api.interceptors.request.use(
 );
 
 let isRefreshing = false;
+let refreshFailed = false;
 let refreshPromise: Promise<void> | null = null;
+
+const clearTokens = async () => {
+  await deleteAuthToken();
+  await deleteRefreshToken();
+  await deleteAuthProvider();
+  await AsyncStorage.removeItem('user_data');
+};
 
 // Response interceptor for error handling and token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // A successful response resets the refresh-failed flag
+    refreshFailed = false;
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config || {};
 
@@ -129,6 +192,12 @@ api.interceptors.response.use(
     if (status === 401 && !isAuthPath && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      // If a previous refresh attempt already failed this session, bail immediately
+      if (refreshFailed) {
+        await clearTokens();
+        return Promise.reject(error);
+      }
+
       try {
         if (!isRefreshing) {
           isRefreshing = true;
@@ -138,22 +207,35 @@ api.interceptors.response.use(
               throw new Error('No refresh token available');
             }
 
-            const response = await api.post('/auth/refresh', {
-              refresh_token: refreshToken,
-            });
+            const provider = await getAuthProvider();
+            if (provider === 'supabase') {
+              const { data, error } = await supabase.auth.refreshSession({
+                refresh_token: refreshToken,
+              });
+              if (error) throw error;
+              if (!data.session?.access_token) {
+                throw new Error('Supabase refresh missing access token');
+              }
+              await setAuthToken(data.session.access_token);
+              if (data.session.refresh_token) {
+                await setRefreshToken(data.session.refresh_token);
+              }
+            } else {
+              const response = await api.post('/auth/refresh', {
+                refresh_token: refreshToken,
+              });
 
-            const { access_token, refresh_token: newRefreshToken } = response.data;
+              const { access_token, refresh_token: newRefreshToken } = response.data;
 
-            await setAuthToken(access_token);
-            if (newRefreshToken) {
-              await setRefreshToken(newRefreshToken);
+              await setAuthToken(access_token);
+              if (newRefreshToken) {
+                await setRefreshToken(newRefreshToken);
+              }
             }
           })();
-
-          await refreshPromise;
-        } else if (refreshPromise) {
-          await refreshPromise;
         }
+
+        await refreshPromise;
 
         isRefreshing = false;
         refreshPromise = null;
@@ -162,12 +244,11 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
+        refreshFailed = true;
         refreshPromise = null;
 
-        // Refresh failed - clear tokens and user data
-        await deleteAuthToken();
-        await deleteRefreshToken();
-        await AsyncStorage.removeItem('user_data');
+        // Refresh failed — clear all tokens so the app can prompt re-login
+        await clearTokens();
 
         return Promise.reject(refreshError);
       }
@@ -236,6 +317,14 @@ export const userAPI = {
     last_name: string;
     due_date: string;
     babies: number;
+    pre_pregnancy_weight: number;
+    height: number;
+    current_weight: number;
+    blood_type: string;
+    allergies: string[];
+    conditions: string[];
+    dietary_preferences: string;
+    onboarding_completed: boolean;
   }>) => {
     const response = await api.patch('/users/me', updates);
     return response.data;
@@ -399,10 +488,7 @@ export const journalAPI = {
       const response = await api.post('/journal/entries', entryData);
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to create journal entry');
+      throw new Error(sanitizeApiError(error, 'Failed to create journal entry'));
     }
   },
 
@@ -417,10 +503,7 @@ export const journalAPI = {
       const raw = response.data?.entries ?? response.data;
       return Array.isArray(raw) ? raw : [];
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to fetch journal entries');
+      throw new Error(sanitizeApiError(error, 'Failed to fetch journal entries'));
     }
   },
 
@@ -429,10 +512,7 @@ export const journalAPI = {
       const response = await api.get(`/journal/entries/${entryId}`);
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to fetch journal entry');
+      throw new Error(sanitizeApiError(error, 'Failed to fetch journal entry'));
     }
   },
 
@@ -444,10 +524,7 @@ export const journalAPI = {
       const response = await api.put(`/journal/entries/${entryId}`, updates);
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to update journal entry');
+      throw new Error(sanitizeApiError(error, 'Failed to update journal entry'));
     }
   },
 
@@ -455,10 +532,7 @@ export const journalAPI = {
     try {
       await api.delete(`/journal/entries/${entryId}`);
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to delete journal entry');
+      throw new Error(sanitizeApiError(error, 'Failed to delete journal entry'));
     }
   },
 
@@ -478,10 +552,7 @@ export const journalAPI = {
       });
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to send chat message');
+      throw new Error(sanitizeApiError(error, 'Failed to send chat message'));
     }
   },
 
@@ -500,10 +571,7 @@ export const journalAPI = {
       });
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to save conversation');
+      throw new Error(sanitizeApiError(error, 'Failed to save conversation'));
     }
   },
 
@@ -512,10 +580,7 @@ export const journalAPI = {
       const response = await api.get(`/journal/chat/history/${date}`);
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to fetch chat history');
+      throw new Error(sanitizeApiError(error, 'Failed to fetch chat history'));
     }
   },
 
@@ -524,10 +589,7 @@ export const journalAPI = {
       const response = await api.post('/journal/weight', { weight, date });
       return response.data;
     } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
-      }
-      throw new Error('Failed to log weight');
+      throw new Error(sanitizeApiError(error, 'Failed to log weight'));
     }
   },
 };

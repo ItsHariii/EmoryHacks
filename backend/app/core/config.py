@@ -1,4 +1,4 @@
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings
 from enum import Enum
 from typing import List, Union, Optional
@@ -13,7 +13,7 @@ class Environment(str, Enum):
 class Settings(BaseSettings):
     # Application
     APP_NAME: str = "Ovi Pregnancy Nutrition API"
-    DEBUG: bool = True
+    DEBUG: bool = False
     VERSION: str = "0.1.0"
     API_PREFIX: str = "/api"
     ENVIRONMENT: Environment = Environment.DEV
@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     TOKEN_AUDIENCE: str = "ovi-client"
     TOKEN_ISSUER: str = "ovi.api"
+    # Legacy email/password auth (Phase 3: set to false to rely fully on Supabase).
+    LEGACY_AUTH_ENABLED: bool = Field(default=True, env="LEGACY_AUTH_ENABLED")
     
     # Database & security
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
@@ -77,6 +79,29 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str = Field(..., env="SUPABASE_URL")
     SUPABASE_KEY: SecretStr = Field(..., env="SUPABASE_KEY")
+    # Supabase Auth JWT verification.
+    # Primary path: HS256 using the project's shared JWT secret (default for
+    # Supabase projects whose current key is "Legacy HS256 (Shared Secret)").
+    # Secondary path: JWKS (RS256/ES256) for projects that have enabled
+    # asymmetric JWT Keys. JWKS endpoint requires the project's anon apikey.
+    SUPABASE_JWT_SECRET: Optional[SecretStr] = Field(default=None, env="SUPABASE_JWT_SECRET")
+    SUPABASE_JWKS_URL: Optional[str] = Field(default=None, env="SUPABASE_JWKS_URL")
+    SUPABASE_JWT_ISSUER: Optional[str] = Field(default=None, env="SUPABASE_JWT_ISSUER")
+    SUPABASE_JWT_AUDIENCE: str = Field(default="authenticated", env="SUPABASE_JWT_AUDIENCE")
+
+    @field_validator("SUPABASE_JWKS_URL", mode="before")
+    @classmethod
+    def default_supabase_jwks_url(cls, v):
+        if v:
+            return v
+        return None
+
+    @field_validator("SUPABASE_JWT_ISSUER", mode="before")
+    @classmethod
+    def default_supabase_jwt_issuer(cls, v):
+        if v:
+            return v
+        return None
 
     # External APIs
     USDA_API_KEY: str = ""
@@ -94,6 +119,13 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: SecretStr) -> SecretStr:
+        if len(v.get_secret_value()) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters")
+        return v
+
     @field_validator("LOG_LEVEL")
     @classmethod
     def validate_log_level(cls, v: str) -> str:
@@ -101,6 +133,22 @@ class Settings(BaseSettings):
         if v.upper() not in valid_levels:
             raise ValueError(f"LOG_LEVEL must be one of {valid_levels}")
         return v.upper()
+
+    @model_validator(mode='after')
+    def validate_production_api_keys(self) -> 'Settings':
+        if self.ENVIRONMENT == Environment.PROD:
+            missing = []
+            if not self.GEMINI_FOOD_API_KEY:
+                missing.append("GEMINI_FOOD_API_KEY")
+            if not self.GEMINI_CHATBOT_API_KEY:
+                missing.append("GEMINI_CHATBOT_API_KEY")
+            if not self.USDA_API_KEY:
+                missing.append("USDA_API_KEY")
+            if not self.SPOONACULAR_API_KEY:
+                missing.append("SPOONACULAR_API_KEY")
+            if missing:
+                raise ValueError(f"Missing required API keys for production: {', '.join(missing)}")
+        return self
 
     # API Documentation
     DOCS_URL: str = "/docs"

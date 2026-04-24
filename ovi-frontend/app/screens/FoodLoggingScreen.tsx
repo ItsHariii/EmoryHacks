@@ -11,7 +11,6 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { theme } from '../theme';
 import { MealAccordionCard } from '../components/food/MealAccordionCard';
@@ -151,15 +150,10 @@ export const FoodLoggingScreen: React.FC = () => {
     return (
       <ScreenWrapper edges={['bottom']} backgroundColor={theme.colors.background}>
         <View style={styles.header}>
-          <LinearGradient
-            colors={theme.gradients.header}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
           <View style={styles.headerContent}>
             <View>
-              <Text style={styles.title}>Food Log</Text>
+              <Text style={styles.titleKicker}>Food</Text>
+              <Text style={styles.title}>Log</Text>
               <Text style={styles.subtitle}>Loading your meals...</Text>
             </View>
           </View>
@@ -179,24 +173,20 @@ export const FoodLoggingScreen: React.FC = () => {
         }
       >
         <View style={styles.header}>
-          <LinearGradient
-            colors={theme.gradients.header}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
           <View style={styles.headerContent}>
             <View>
-              <Text style={styles.title}>Food Log</Text>
-              <Text style={styles.subtitle}>{formatDateLabel(selectedDate)}</Text>
+              <Text style={styles.titleKicker}>{formatDateLabel(selectedDate).toUpperCase()}</Text>
+              <Text style={styles.title}>
+                Food <Text style={styles.titleItalic}>log</Text>
+              </Text>
             </View>
             <View style={styles.headerActions}>
               <TouchableOpacity style={styles.searchButton} onPress={handleSearchFood} activeOpacity={0.8}>
-                <MaterialCommunityIcons name="magnify" size={theme.iconSize.lg} color={theme.colors.primary} />
+                <MaterialCommunityIcons name="magnify" size={theme.iconSize.lg} color={theme.colors.text.primary} />
                 <Text style={styles.scanButtonText}>Search</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.scanButton} onPress={handleScanBarcode} testID="scan-button" activeOpacity={0.8}>
-                <MaterialCommunityIcons name="barcode-scan" size={theme.iconSize.lg} color={theme.colors.primary} />
+                <MaterialCommunityIcons name="barcode-scan" size={theme.iconSize.lg} color={theme.colors.text.primary} />
                 <Text style={styles.scanButtonText}>Scan</Text>
               </TouchableOpacity>
             </View>
@@ -289,27 +279,40 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Extra padding for floating tab bar
   },
   header: {
-    overflow: 'hidden',
     padding: theme.layout.screenPadding,
     paddingTop: 60,
-    borderBottomLeftRadius: theme.borderRadius.xxl,
-    borderBottomRightRadius: theme.borderRadius.xxl,
-    ...theme.shadows.md,
+    backgroundColor: theme.colors.background,
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+  },
+  titleKicker: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: theme.colors.text.muted,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
   title: {
-    ...theme.typography.presets.heading2,
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 28,
+    fontWeight: '400',
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    letterSpacing: -0.8,
+    lineHeight: 30,
+  },
+  titleItalic: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
   },
   subtitle: {
-    ...theme.typography.presets.body,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 14,
     color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
+    marginTop: 4,
   },
   headerActions: {
     flexDirection: 'row',

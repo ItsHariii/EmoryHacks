@@ -16,8 +16,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash."""
+def verify_password(plain_password: str, hashed_password: Optional[str]) -> bool:
+    """Verify a password against a hash. Social-login users may have no local hash."""
+    if not hashed_password:
+        return False
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
@@ -153,50 +155,119 @@ def get_current_user(
     )
     
     try:
-        # Verify and decode the token as an access token
+        # 1) Try legacy local JWT (current behavior)
         payload = verify_token(token, token_type="access")
-        if not payload:
-            logger.error("Invalid token: Verification failed")
+        if payload:
+            user_id = payload.get("sub")
+            if not user_id:
+                logger.error("Token missing 'sub' claim")
+                raise credentials_exception
+
+            import uuid
+
+            try:
+                user_uuid = uuid.UUID(user_id)
+            except ValueError:
+                logger.error(f"Invalid UUID format for user_id: {user_id}")
+                raise credentials_exception
+
+            user = db.query(UserModel).filter(UserModel.id == user_uuid).first()
+            if not user:
+                logger.error(f"User not found for ID: {user_id}")
+                raise credentials_exception
+
+            return user
+
+        # 2) Try Supabase JWT (new behavior)
+        from .supabase_jwt import verify_supabase_access_token, extract_supabase_identity
+        supa_payload = verify_supabase_access_token(token)
+        # Guard: both verification paths failed — reject the request.
+        if not payload and not supa_payload:
+            logger.error("Invalid token: legacy + Supabase verification both failed")
             raise credentials_exception
-            
-        # Extract user ID from subject claim
-        user_id = payload.get("sub")
-        if not user_id:
-            logger.error("Token missing 'sub' claim")
+        if not supa_payload:
+            logger.error("Invalid token: legacy + Supabase verification failed")
             raise credentials_exception
-            
-        # Get database session if not provided
-        # if db is None:
-        #     from .database import SessionScoped
-        #     db = SessionScoped()
-            
-        # Get user from database
-        import uuid
-        try:
-            user_uuid = uuid.UUID(user_id)
-        except ValueError:
-            logger.error(f"Invalid UUID format for user_id: {user_id}")
+
+        supabase_user_id, email, raw = extract_supabase_identity(supa_payload)
+        if not supabase_user_id:
+            logger.error("Supabase token missing 'sub' claim")
             raise credentials_exception
-            
-        user = db.query(UserModel).filter(UserModel.id == user_uuid).first()
+
+        # Lookup by supabase_user_id first, then optionally link by email.
+        user = (
+            db.query(UserModel)
+            .filter(UserModel.supabase_user_id == str(supabase_user_id))
+            .first()
+        )
+        if not user and email:
+            user = db.query(UserModel).filter(UserModel.email == email).first()
+            if user:
+                if user.supabase_user_id and user.supabase_user_id != str(supabase_user_id):
+                    # Prevent accidental merges if the same email appears under a different Supabase identity.
+                    logger.warning(
+                        "Supabase linking conflict: email already linked to different Supabase user_id"
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Account linking conflict. This email is already linked to a different social-login identity.",
+                    )
+                if not user.supabase_user_id:
+                    user.supabase_user_id = str(supabase_user_id)
+                    user.is_verified = True
+                    db.add(user)
+                    db.commit()
+                    db.refresh(user)
+
+        # Auto-provision local user if missing.
         if not user:
-            logger.error(f"User not found for ID: {user_id}")
-            raise credentials_exception
-            
+            from datetime import date, timedelta
+
+            # Best-effort names from token metadata (provider-specific).
+            user_meta = raw.get("user_metadata") or {}
+            first_name = None
+            last_name = None
+            if isinstance(user_meta, dict):
+                first_name = user_meta.get("first_name") or user_meta.get("given_name")
+                last_name = user_meta.get("last_name") or user_meta.get("family_name")
+
+            # Some providers put full name in "name"
+            full_name = None
+            if isinstance(user_meta, dict):
+                full_name = user_meta.get("name")
+            if full_name and (not first_name and not last_name):
+                parts = str(full_name).split()
+                if parts:
+                    first_name = parts[0]
+                    last_name = " ".join(parts[1:]) if len(parts) > 1 else None
+
+            # due_date is required by schema today; default to ~9 months out.
+            due_date = date.today() + timedelta(days=270)
+
+            # Only mark verified if Supabase confirmed email verification
+            email_verified = bool(raw.get("email_verified") or raw.get("email_confirmed_at"))
+
+            user = UserModel(
+                email=email or f"{supabase_user_id}@supabase.local",
+                password_hash=None,
+                supabase_user_id=str(supabase_user_id),
+                first_name=first_name,
+                last_name=last_name,
+                due_date=due_date,
+                babies=1,
+                is_verified=email_verified,
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
         return user
-        
+
     except HTTPException:
         raise
-    except JWTError as e:
-        logger.error(f"JWT validation error: {str(e)}", exc_info=True)
-        raise credentials_exception
     except Exception as e:
         logger.error(f"Unexpected error in get_current_user: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise credentials_exception
 
 def generate_password_reset_token(email: str) -> str:
     """Generate a password reset token."""

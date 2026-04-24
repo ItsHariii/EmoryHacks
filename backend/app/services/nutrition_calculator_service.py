@@ -105,10 +105,12 @@ class NutritionCalculatorService:
         if food.serving_unit.lower() not in ['g', 'gram', 'grams']:
             food_base_grams = self.convert_to_base_units(food.serving_size, food.serving_unit, food)
         
-        # Avoid division by zero
-        if food_base_grams == 0:
-            logger.error(f"Food base grams is 0 for food {food.name}, using 100g as default")
-            food_base_grams = 100.0
+        # serving_size should never be 0; a zero value means the food record is corrupt.
+        if food_base_grams <= 0:
+            raise ValueError(
+                f"Invalid serving_size={food.serving_size!r} for food '{food.name}' (id={food.id}). "
+                "serving_size must be greater than 0."
+            )
         
         # Calculate multiplier: (user_serving_grams / food_base_grams) * quantity
         multiplier = (user_serving_grams / food_base_grams) * quantity
@@ -131,12 +133,6 @@ class NutritionCalculatorService:
         Returns:
             Dictionary containing calculated nutrition values
         """
-        print(f"\n{'='*60}")
-        print(f"🔍 MICRONUTRIENT FIX ACTIVE - Calculating nutrition for {food.name}")
-        print(f"   Food has {len(food.micronutrients) if food.micronutrients else 0} micronutrients in database")
-        print(f"{'='*60}\n")
-        logger.info(f"🔍 MICRONUTRIENT FIX ACTIVE - Calculating nutrition for {food.name}")
-        logger.info(f"   Food has {len(food.micronutrients) if food.micronutrients else 0} micronutrients in database")
         try:
             # Normalize serving information
             serving_size, serving_unit = self.normalize_serving_info(food, user_serving_size, user_serving_unit)

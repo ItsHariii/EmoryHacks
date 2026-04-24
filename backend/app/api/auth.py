@@ -16,10 +16,17 @@ from ..core.security import (
     verify_password_reset_token,
 )
 from ..models.user import User as UserModel
-from ..schemas.user import UserCreate, UserResponse, UserLogin, Token
+from ..schemas.user import UserCreate, UserResponse, UserLogin, Token, LinkSupabaseRequest, LinkSupabaseResponse
 from ..core.config import settings
 
 router = APIRouter()
+
+def _legacy_auth_guard():
+    if not settings.LEGACY_AUTH_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="Legacy email/password auth has been deprecated. Please sign in with Google/Apple.",
+        )
 
 @router.options("/register")
 async def register_options():
@@ -34,6 +41,7 @@ async def register_user(
     """
     Register a new user.
     """
+    _legacy_auth_guard()
     # Start a transaction
     try:
         # Check if user already exists
@@ -63,7 +71,8 @@ async def register_user(
             current_weight=user_in.current_weight,
             allergies=user_in.allergies,
             conditions=user_in.conditions,
-            dietary_preferences=user_in.dietary_preferences
+            dietary_preferences=user_in.dietary_preferences,
+            onboarding_completed=True,
         )
         
         db.add(db_user)
@@ -102,6 +111,7 @@ async def login_for_access_token(
     """
     OAuth2 compatible token login, get an access token for future requests.
     """
+    _legacy_auth_guard()
     try:
         # Find user by email
         user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
@@ -149,6 +159,7 @@ async def refresh_token(
     """
     Refresh access token using a valid refresh token.
     """
+    _legacy_auth_guard()
     from ..core.security import verify_token
     
     try:
@@ -257,11 +268,75 @@ async def logout(
     """
     return {"message": "Successfully logged out"}
 
+
+@router.post("/link-supabase", response_model=LinkSupabaseResponse)
+async def link_supabase_identity(
+    payload: LinkSupabaseRequest,
+    current_user: UserModel = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Link the currently authenticated local account to a Supabase Auth identity.
+
+    Intended for migrations/merges: user signs in with legacy email/password, then
+    completes a Supabase social login and sends the Supabase access token here.
+    """
+    from ..core.supabase_jwt import verify_supabase_access_token, extract_supabase_identity
+
+    supa_payload = verify_supabase_access_token(payload.supabase_access_token)
+    if not supa_payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Supabase access token",
+        )
+
+    supabase_user_id, email, _raw = extract_supabase_identity(supa_payload)
+    if not supabase_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Supabase token missing subject",
+        )
+
+    # For safety, require email match when we have both emails.
+    if email and current_user.email and email.lower() != current_user.email.lower():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Supabase email does not match current account email",
+        )
+
+    # If another local user is already linked to this Supabase identity, block.
+    existing = (
+        db.query(UserModel)
+        .filter(UserModel.supabase_user_id == str(supabase_user_id))
+        .first()
+    )
+    if existing and existing.id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This Supabase identity is already linked to another account",
+        )
+
+    # If current user is already linked, ensure it's consistent.
+    if current_user.supabase_user_id and current_user.supabase_user_id != str(supabase_user_id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Current account is already linked to a different Supabase identity",
+        )
+
+    current_user.supabase_user_id = str(supabase_user_id)
+    current_user.is_verified = True
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+
+    return LinkSupabaseResponse(linked=True, supabase_user_id=current_user.supabase_user_id)
+
 @router.post("/password-recovery/{email}")
 async def recover_password(email: str, db: Session = Depends(get_db)):
     """
     Password Recovery
     """
+    _legacy_auth_guard()
     user = db.query(UserModel).filter(UserModel.email == email).first()
     
     if not user:
@@ -290,6 +365,7 @@ async def reset_password(
     """
     Reset password
     """
+    _legacy_auth_guard()
     email = verify_password_reset_token(token)
     if not email:
         raise HTTPException(

@@ -12,28 +12,23 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 
 interface CalendarStripProps {
     selectedDate: Date;
     onDateSelect: (date: Date) => void;
     daysBack?: number;
-    /** After this many ms with a non-today date selected or after scroll-only inactivity, auto-snap back to today (0 = disabled). Default 5000. */
     snapBackToTodayAfterMs?: number;
 }
 
-const DATE_ITEM_WIDTH = 60;
-const DATE_ITEM_MARGIN = 12;
+const DATE_ITEM_WIDTH = 56;
+const DATE_ITEM_MARGIN = 10;
 const FULL_ITEM_WIDTH = DATE_ITEM_WIDTH + DATE_ITEM_MARGIN;
 
-const isSameDay = (d1: Date, d2: Date) => {
-    return (
-        d1.getDate() === d2.getDate() &&
-        d1.getMonth() === d2.getMonth() &&
-        d1.getFullYear() === d2.getFullYear()
-    );
-};
+const isSameDay = (d1: Date, d2: Date) =>
+    d1.getDate() === d2.getDate() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getFullYear() === d2.getFullYear();
 
 const getTodayAtMidnight = () => {
     const d = new Date();
@@ -66,22 +61,18 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
     const scrollInactivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const userTappedDateRef = useRef(false);
 
-    // Generate dates
     const dates = React.useMemo(() => {
         const result = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
-        // Show 2 weeks back and 1 week forward
         for (let i = -7; i <= daysBack; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() - i);
             result.unshift(date);
         }
-        return result.reverse(); // Show past to future left to right
+        return result.reverse();
     }, [daysBack]);
 
-    // Scroll to selected date on mount or update
     const scrollToDateIndex = useCallback((index: number) => {
         if (scrollViewRef.current && index >= 0 && index < dates.length) {
             const x = getScrollXForIndex(index, screenWidth);
@@ -97,59 +88,35 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
         }
     }, [selectedDate, dates, screenWidth, scrollToDateIndex]);
 
-    // Auto snap back to today after delay when a non-today date is selected (user tapped)
     useEffect(() => {
         const today = getTodayAtMidnight();
         const selectedIsToday = isSameDay(selectedDate, today);
-
         if (snapBackToTodayAfterMs <= 0 || selectedIsToday) {
-            if (snapBackTimeoutRef.current) {
-                clearTimeout(snapBackTimeoutRef.current);
-                snapBackTimeoutRef.current = null;
-            }
+            if (snapBackTimeoutRef.current) clearTimeout(snapBackTimeoutRef.current);
             return;
         }
-
         snapBackTimeoutRef.current = setTimeout(() => {
-            snapBackTimeoutRef.current = null;
             userTappedDateRef.current = false;
             onDateSelect(getTodayAtMidnight());
         }, snapBackToTodayAfterMs);
-
         return () => {
-            if (snapBackTimeoutRef.current) {
-                clearTimeout(snapBackTimeoutRef.current);
-                snapBackTimeoutRef.current = null;
-            }
+            if (snapBackTimeoutRef.current) clearTimeout(snapBackTimeoutRef.current);
         };
     }, [selectedDate, snapBackToTodayAfterMs, onDateSelect]);
 
-    // Cleanup scroll inactivity timeout on unmount
     useEffect(() => () => {
-        if (scrollInactivityTimeoutRef.current) {
-            clearTimeout(scrollInactivityTimeoutRef.current);
-            scrollInactivityTimeoutRef.current = null;
-        }
+        if (scrollInactivityTimeoutRef.current) clearTimeout(scrollInactivityTimeoutRef.current);
     }, []);
 
-    // Scroll-based inactivity snap-back: when user scrolls without tapping, snap to today after delay
     const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
         if (snapBackToTodayAfterMs <= 0 || userTappedDateRef.current) return;
-
         const scrollX = e.nativeEvent.contentOffset.x;
         const centeredIndex = Math.max(0, Math.min(getCenteredIndexFromScrollX(scrollX, screenWidth), dates.length - 1));
         const centeredDate = dates[centeredIndex];
         const today = getTodayAtMidnight();
-
-        if (scrollInactivityTimeoutRef.current) {
-            clearTimeout(scrollInactivityTimeoutRef.current);
-            scrollInactivityTimeoutRef.current = null;
-        }
-
+        if (scrollInactivityTimeoutRef.current) clearTimeout(scrollInactivityTimeoutRef.current);
         if (isSameDay(centeredDate, today)) return;
-
         scrollInactivityTimeoutRef.current = setTimeout(() => {
-            scrollInactivityTimeoutRef.current = null;
             const todayIndex = dates.findIndex(d => isSameDay(d, today));
             if (todayIndex !== -1) scrollToDateIndex(todayIndex);
         }, snapBackToTodayAfterMs);
@@ -158,10 +125,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
     const handleDatePress = (date: Date) => {
         Haptics.selectionAsync();
         userTappedDateRef.current = true;
-        if (scrollInactivityTimeoutRef.current) {
-            clearTimeout(scrollInactivityTimeoutRef.current);
-            scrollInactivityTimeoutRef.current = null;
-        }
+        if (scrollInactivityTimeoutRef.current) clearTimeout(scrollInactivityTimeoutRef.current);
         onDateSelect(date);
     };
 
@@ -175,10 +139,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 
     const formatDate = (date: Date) => {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        return {
-            dayName: days[date.getDay()],
-            dayNumber: date.getDate(),
-        };
+        return { dayName: days[date.getDay()], dayNumber: date.getDate() };
     };
 
     return (
@@ -199,7 +160,7 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
                     const isToday = isSameDay(date, getTodayAtMidnight());
                     const isSelected = isSameDay(date, selectedDate);
                     const isTodaySelected = isToday && isSelected;
-                    const isOtherDateSelected = isSelected && !isToday;
+                    const isOtherSelected = isSelected && !isToday;
 
                     return (
                         <TouchableOpacity
@@ -207,46 +168,43 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
                             style={styles.touchable}
                             onPress={() => handleDatePress(date)}
                             activeOpacity={0.8}
+                            accessibilityLabel={`${dayName} ${dayNumber}${isToday ? ', today' : ''}${isSelected ? ', selected' : ''}`}
+                            accessibilityRole="button"
                         >
-                            {isTodaySelected ? (
-                                <LinearGradient
-                                    colors={theme.gradients.magicalGlow}
-                                    style={[styles.dateItem, styles.selectedDateItem]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 1 }}
-                                >
-                                    <Text style={[styles.dayName, styles.selectedText]}>{dayName}</Text>
-                                    <Text style={[styles.dayNumber, styles.selectedText]}>{dayNumber}</Text>
-                                    <View style={styles.oviBadge}>
-                                        <Text style={styles.oviText}>OVI</Text>
-                                    </View>
-                                </LinearGradient>
-                            ) : isOtherDateSelected ? (
-                                <LinearGradient
-                                    colors={theme.gradients.lavenderGlow}
-                                    style={[styles.dateItem, styles.otherSelectedDateItem]}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 1 }}
-                                >
-                                    <Text style={[styles.dayName, styles.otherSelectedText]}>{dayName}</Text>
-                                    <Text style={[styles.dayNumber, styles.otherSelectedText]}>{dayNumber}</Text>
-                                </LinearGradient>
-                            ) : (
-                                <View style={styles.dateItem}>
-                                    <Text style={styles.dayName}>{dayName}</Text>
-                                    <Text style={styles.dayNumber}>{dayNumber}</Text>
-                                </View>
-                            )}
+                            <View style={[
+                                styles.dateItem,
+                                isTodaySelected && styles.dateItemTodaySelected,
+                                isOtherSelected && styles.dateItemOtherSelected,
+                                isToday && !isSelected && styles.dateItemTodayUnselected,
+                            ]}>
+                                <Text style={[
+                                    styles.dayName,
+                                    isTodaySelected && styles.textOnPrimary,
+                                    isOtherSelected && styles.textSelectedAccent,
+                                ]}>
+                                    {dayName}
+                                </Text>
+                                <Text style={[
+                                    styles.dayNumber,
+                                    isTodaySelected && styles.textOnPrimary,
+                                    isOtherSelected && styles.textSelectedAccent,
+                                ]}>
+                                    {dayNumber}
+                                </Text>
+                            </View>
                         </TouchableOpacity>
                     );
                 })}
+
                 {!isSameDay(selectedDate, getTodayAtMidnight()) && (
                     <TouchableOpacity
                         style={styles.todayButton}
                         onPress={handleTodayPress}
                         activeOpacity={0.8}
+                        accessibilityLabel="Go to today"
+                        accessibilityRole="button"
                     >
-                        <MaterialCommunityIcons name="calendar-today" size={20} color={theme.colors.primary} />
+                        <MaterialCommunityIcons name="calendar-today" size={18} color={theme.colors.text.secondary} />
                         <Text style={styles.todayButtonText}>Today</Text>
                     </TouchableOpacity>
                 )}
@@ -257,85 +215,72 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        height: 110,
-        backgroundColor: 'transparent',
+        height: 96,
+        backgroundColor: theme.colors.background,
     },
     contentContainer: {
         paddingHorizontal: (Dimensions.get('window').width - FULL_ITEM_WIDTH) / 2,
         alignItems: 'center',
-        paddingVertical: theme.spacing.lg,
+        paddingVertical: theme.spacing.md,
     },
     touchable: {
         marginRight: DATE_ITEM_MARGIN,
-        ...theme.shadows.sm,
     },
     dateItem: {
         width: DATE_ITEM_WIDTH,
-        minHeight: 88,
-        height: 88,
+        height: 72,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: theme.borderRadius.xl,
+        borderRadius: theme.borderRadius.lg,
         backgroundColor: theme.colors.surface,
         borderWidth: 1,
         borderColor: theme.colors.borderLight,
+        gap: 2,
     },
-    selectedDateItem: {
-        // Gradient background handles color
-        transform: [{ scale: 1.1 }],
-        ...theme.shadows.glowLavender,
+    dateItemTodaySelected: {
+        backgroundColor: theme.colors.text.primary,
+        borderColor: theme.colors.text.primary,
+        ...theme.shadows.sm,
     },
-    otherSelectedDateItem: {
-        transform: [{ scale: 1.05 }],
+    dateItemOtherSelected: {
+        backgroundColor: theme.colors.surface,
         borderWidth: 2,
-        borderColor: theme.colors.accent,
+        borderColor: theme.colors.text.primary,
+    },
+    dateItemTodayUnselected: {
+        borderColor: theme.colors.border,
     },
     dayName: {
+        fontFamily: theme.typography.fontFamily.medium,
         fontSize: theme.typography.fontSize.xs,
         color: theme.colors.text.secondary,
-        marginBottom: 4,
-        fontWeight: theme.typography.fontWeight.medium,
     },
     dayNumber: {
+        fontFamily: theme.typography.fontFamily.bold,
         fontSize: theme.typography.fontSize.xl,
-        fontWeight: theme.typography.fontWeight.bold,
         color: theme.colors.text.primary,
-        marginBottom: 4,
     },
-    selectedText: {
-        color: theme.colors.primary,
+    textOnPrimary: {
+        color: theme.colors.text.inverse,
     },
-    otherSelectedText: {
-        color: theme.colors.accent,
-    },
-    oviBadge: {
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 8,
-    },
-    oviText: {
-        fontSize: 8,
-        fontWeight: '800',
-        color: theme.colors.primary,
+    textSelectedAccent: {
+        color: theme.colors.text.primary,
     },
     todayButton: {
-        width: 56,
-        minHeight: 88,
-        height: 88,
+        width: 52,
+        height: 72,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: theme.borderRadius.xl,
+        borderRadius: theme.borderRadius.lg,
         backgroundColor: theme.colors.surface,
         borderWidth: 1,
         borderColor: theme.colors.borderLight,
         marginLeft: DATE_ITEM_MARGIN,
-        ...theme.shadows.sm,
+        gap: 4,
     },
     todayButtonText: {
+        fontFamily: theme.typography.fontFamily.semibold,
         fontSize: 10,
-        fontWeight: theme.typography.fontWeight.semibold,
-        color: theme.colors.primary,
-        marginTop: 4,
+        color: theme.colors.text.secondary,
     },
 });

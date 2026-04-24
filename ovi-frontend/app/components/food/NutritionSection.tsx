@@ -12,8 +12,8 @@ interface NutritionSectionProps {
     translateY: Animated.Value;
 }
 
-export const NutritionSection: React.FC<NutritionSectionProps> = ({ opacity, translateY }) => {
-    const { summary, targets, loading } = useNutritionStore();
+const NutritionSectionComponent: React.FC<NutritionSectionProps> = ({ opacity, translateY }) => {
+    const { summary, targets, loading, error } = useNutritionStore();
 
     if (loading && !summary) {
         return (
@@ -23,85 +23,87 @@ export const NutritionSection: React.FC<NutritionSectionProps> = ({ opacity, tra
         );
     }
 
+    if (error && !summary) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.sectionTitle}>Today's Nutrition</Text>
+                <View style={styles.errorCard}>
+                    <Text style={styles.errorText}>Could not load nutrition data. Pull down to retry.</Text>
+                </View>
+            </View>
+        );
+    }
+
     if (!summary || !targets) return null;
 
-    // Progress percentages (capped at 100)
-    const caloriePct = Math.min((summary.total_calories / targets.calories) * 100, 100);
-    const proteinPct = Math.min(((summary.protein_g || 0) / targets.macros.protein_g) * 100, 100);
-    const carbsPct = Math.min(((summary.carbs_g || 0) / targets.macros.carbs_g) * 100, 100);
-    const fatPct = Math.min(((summary.fat_g || 0) / targets.macros.fat_g) * 100, 100);
+    const caloriePct = targets.calories > 0
+        ? Math.min((summary.total_calories / targets.calories) * 100, 100)
+        : 0;
 
-    const size = 160;
-    const center = size / 2;
-    const strokeWidth = 5;
-    const gap = 3;
-    // 4 concentric rings from outer to inner
-    const radii = [72, 64, 56, 48];
-    const ringColors = [
-      theme.colors.primary,           // Calories - red/coral
-      '#FF9E80',                      // Protein - peach
-      '#BCAAA4',                      // Carbs - beige
-      theme.colors.secondaryLavender, // Fat - lavender
-    ];
+    // Single calorie ring geometry
+    const SIZE = 140;
+    const CENTER = SIZE / 2;
+    const STROKE = 12;
+    const RADIUS = (SIZE - STROKE) / 2;
+    const CIRCUMFERENCE = RADIUS * 2 * Math.PI;
+    const offset = CIRCUMFERENCE - (caloriePct / 100) * CIRCUMFERENCE;
 
     return (
         <Animated.View
             style={[
                 styles.container,
-                {
-                    opacity,
-                    transform: [{ translateY }],
-                },
+                { opacity, transform: [{ translateY }] },
             ]}
         >
             <Text style={styles.sectionTitle}>Today's Nutrition</Text>
 
-            <View style={styles.cardContent}>
-                {/* Left Side: 4 concentric rings (Apple Fitness style) */}
-                <View style={styles.ringContainer}>
-                    <View style={[styles.ringWrapper, { width: size, height: size }]}>
-                        <Svg width={size} height={size}>
-                            <G rotation="-90" origin={`${center}, ${center}`}>
-                                {radii.map((r, i) => {
-                                  const circumference = r * 2 * Math.PI;
-                                  const pcts = [caloriePct, proteinPct, carbsPct, fatPct];
-                                  const offset = circumference - (pcts[i] / 100) * circumference;
-                                  return (
-                                    <React.Fragment key={i}>
-                                      <Circle
-                                        cx={center}
-                                        cy={center}
-                                        r={r}
-                                        stroke={theme.colors.borderLight}
-                                        strokeWidth={strokeWidth}
-                                        fill="transparent"
-                                      />
-                                      <Circle
-                                        cx={center}
-                                        cy={center}
-                                        r={r}
-                                        stroke={ringColors[i]}
-                                        strokeWidth={strokeWidth}
-                                        fill="transparent"
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={offset}
-                                        strokeLinecap="round"
-                                      />
-                                    </React.Fragment>
-                                  );
-                                })}
+            <View style={styles.card}>
+                {/* Calorie ring */}
+                <View style={styles.ringColumn}>
+                    <View style={{ width: SIZE, height: SIZE }}>
+                        <Svg width={SIZE} height={SIZE}>
+                            <G rotation="-90" origin={`${CENTER}, ${CENTER}`}>
+                                {/* Track */}
+                                <Circle
+                                    cx={CENTER}
+                                    cy={CENTER}
+                                    r={RADIUS}
+                                    stroke={theme.colors.borderLight}
+                                    strokeWidth={STROKE}
+                                    fill="transparent"
+                                />
+                                {/* Fill */}
+                                <Circle
+                                    cx={CENTER}
+                                    cy={CENTER}
+                                    r={RADIUS}
+                                    stroke={theme.colors.primary}
+                                    strokeWidth={STROKE}
+                                    fill="transparent"
+                                    strokeDasharray={CIRCUMFERENCE}
+                                    strokeDashoffset={offset}
+                                    strokeLinecap="round"
+                                />
                             </G>
                         </Svg>
-                        <View style={styles.ringTextContainer} pointerEvents="none">
-                            <Text style={styles.calorieValue}>{Math.round(summary.total_calories)}</Text>
-                            <Text style={styles.calorieLabel}>kcal</Text>
+                        <View style={styles.ringCenter} pointerEvents="none">
+                            <Text style={styles.calorieValue}>
+                                {Math.round(summary.total_calories)}
+                            </Text>
+                            <Text style={styles.calorieUnit}>kcal</Text>
                         </View>
                     </View>
-                    <Text style={styles.dailyGoal}>Goal: {targets.calories} kcal</Text>
+
+                    <View style={styles.goalPill}>
+                        <Text style={styles.goalText}>Goal: {targets.calories}</Text>
+                    </View>
                 </View>
 
-                {/* Right Side: Macros */}
-                <View style={styles.macrosContainer}>
+                {/* Divider */}
+                <View style={styles.divider} />
+
+                {/* Macro rows */}
+                <View style={styles.macrosColumn}>
                     <MacronutrientCard
                         name="protein"
                         current={summary.protein_g || 0}
@@ -132,62 +134,82 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.xxl,
     },
     sectionTitle: {
-        ...theme.typography.presets.sectionTitle,
+        fontFamily: theme.typography.fontFamily.display,
+        fontSize: theme.typography.fontSize.lg,
+        fontWeight: '400',
         color: theme.colors.text.primary,
         marginBottom: theme.spacing.lg,
         marginLeft: theme.spacing.xs,
+        letterSpacing: -0.3,
     },
-    cardContent: {
+    card: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
-        borderRadius: 28,
-        padding: 24,
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.borderRadius.card,
+        borderWidth: 0.5,
+        borderColor: theme.colors.border,
+        padding: theme.spacing.xl,
         ...theme.shadows.card,
         alignItems: 'center',
+        gap: theme.spacing.xl,
     },
-    ringContainer: {
-        flex: 1.2,
+    ringColumn: {
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingRight: 20,
-        borderRightWidth: 1,
-        borderRightColor: '#F0F0F0',
-        minHeight: 160,
+        gap: theme.spacing.sm,
+        flexShrink: 0,
     },
-    ringWrapper: {
-        position: 'relative',
-    },
-    ringTextContainer: {
+    ringCenter: {
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
         alignItems: 'center',
     },
     calorieValue: {
-        fontSize: 32,
-        fontWeight: '800',
+        fontFamily: theme.typography.fontFamily.bold,
+        fontSize: 28,
         color: theme.colors.text.primary,
+        lineHeight: 32,
     },
-    calorieLabel: {
-        fontSize: 13,
+    calorieUnit: {
+        fontFamily: theme.typography.fontFamily.semibold,
+        fontSize: theme.typography.fontSize.xs,
         color: theme.colors.text.secondary,
-        fontWeight: '600',
-        marginTop: -4,
+        marginTop: -2,
     },
-    dailyGoal: {
-        marginTop: 16,
-        fontSize: 12,
+    goalPill: {
+        backgroundColor: theme.colors.backgroundDark,
+        paddingHorizontal: theme.spacing.sm,
+        paddingVertical: theme.spacing.xxs,
+        borderRadius: theme.borderRadius.pill,
+    },
+    goalText: {
+        fontFamily: theme.typography.fontFamily.medium,
+        fontSize: theme.typography.fontSize.xs,
         color: theme.colors.text.secondary,
-        fontWeight: '600',
-        backgroundColor: '#F5F5F5',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        overflow: 'hidden',
     },
-    macrosContainer: {
+    divider: {
+        width: 1,
+        alignSelf: 'stretch',
+        backgroundColor: theme.colors.borderLight,
+    },
+    macrosColumn: {
         flex: 1,
-        paddingLeft: 20,
-        gap: 6,
+        gap: theme.spacing.xs,
         justifyContent: 'center',
     },
+    errorCard: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.borderRadius.card,
+        borderWidth: 1,
+        borderColor: theme.colors.borderLight,
+        padding: theme.spacing.xl,
+        alignItems: 'center',
+    },
+    errorText: {
+        fontFamily: theme.typography.fontFamily.regular,
+        fontSize: theme.typography.fontSize.sm,
+        color: theme.colors.text.secondary,
+        textAlign: 'center',
+    },
 });
+
+export const NutritionSection = React.memo(NutritionSectionComponent);

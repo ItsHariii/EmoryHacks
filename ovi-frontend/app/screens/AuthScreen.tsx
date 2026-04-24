@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { RegistrationWizard } from '../components/auth/RegistrationWizard';
@@ -15,6 +17,7 @@ import { theme } from '../theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { GoogleLogo } from '../components/auth/GoogleLogo';
 
 export const AuthScreen: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,7 +28,7 @@ export const AuthScreen: React.FC = () => {
   const formCardOpacity = useRef(new Animated.Value(0)).current;
   const formCardTranslateY = useRef(new Animated.Value(24)).current;
 
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle, loginWithApple } = useAuth();
 
   useEffect(() => {
     Animated.parallel([
@@ -52,7 +55,37 @@ export const AuthScreen: React.FC = () => {
     try {
       await login(email, password);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Login failed. Please try again.');
+      Alert.alert('Sign In Failed', 'Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (error: any) {
+      const msg = error?.message?.toLowerCase() || '';
+      const isCancelled = msg.includes('cancel') || msg.includes('dismiss');
+      if (!isCancelled) {
+        Alert.alert('Sign In Failed', 'Google sign-in could not be completed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    setLoading(true);
+    try {
+      await loginWithApple();
+    } catch (error: any) {
+      const msg = error?.message?.toLowerCase() || '';
+      const isCancelled = msg.includes('cancel') || msg.includes('dismiss');
+      if (!isCancelled) {
+        Alert.alert('Sign In Failed', 'Apple sign-in could not be completed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -77,8 +110,7 @@ export const AuthScreen: React.FC = () => {
         dietary_preferences: data.dietaryPreferences || undefined,
       });
     } catch (error: any) {
-      console.error('Registration error:', error);
-      Alert.alert('Registration Error', error.message || 'Registration failed. Please try again.');
+      Alert.alert('Registration Failed', 'Could not create your account. Please check your details and try again.');
       setShowWizard(false);
     } finally {
       setLoading(false);
@@ -97,15 +129,17 @@ export const AuthScreen: React.FC = () => {
   }
 
   return (
-    <ScreenWrapper gradientBackground gradientColors={theme.gradients.warmBackground}>
+    <ScreenWrapper backgroundColor={theme.colors.background}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Ovi</Text>
-            <Text style={styles.subtitle}>Your Pregnancy Nutrition Companion</Text>
+            <Text style={styles.title}>
+              Ovi<Text style={styles.titleAccent}>ula</Text>
+            </Text>
+            <Text style={styles.subtitle}>nourish the two of you</Text>
           </View>
 
           <Animated.View
@@ -117,6 +151,40 @@ export const AuthScreen: React.FC = () => {
               },
             ]}
           >
+            <View style={styles.socialSection}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.googleButton,
+                  pressed && !loading && styles.googleButtonPressed,
+                  loading && styles.googleButtonDisabled,
+                ]}
+                onPress={handleGoogleLogin}
+                disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="Continue with Google"
+              >
+                {loading ? (
+                  <ActivityIndicator color={theme.colors.text.primary} size="small" />
+                ) : (
+                  <>
+                    <View style={styles.googleIconWrap}>
+                      <GoogleLogo size={22} />
+                    </View>
+                    <Text style={styles.googleButtonText}>Continue with Google</Text>
+                  </>
+                )}
+              </Pressable>
+              {Platform.OS === 'ios' ? (
+                <Button
+                  title={loading ? 'Please wait...' : 'Continue with Apple'}
+                  onPress={handleAppleLogin}
+                  loading={loading}
+                  disabled={loading}
+                  variant="secondary"
+                />
+              ) : null}
+            </View>
+
             <Input
               label="Email"
               placeholder="Enter your email"
@@ -171,17 +239,28 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xxxl,
   },
   title: {
-    ...theme.typography.presets.heading1,
-    fontSize: theme.typography.fontSize.hero,
-    color: theme.colors.primary,
+    fontFamily: theme.typography.fontFamily.displayLight,
+    fontSize: 56,
+    fontWeight: '300',
+    color: theme.colors.text.primary,
     textAlign: 'center',
+    letterSpacing: -2,
+    lineHeight: 60,
     marginBottom: theme.spacing.xs,
   },
+  titleAccent: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    color: theme.colors.primary,
+    fontStyle: 'italic',
+  },
   subtitle: {
-    ...theme.typography.presets.bodyLarge,
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontSize: 15,
+    fontWeight: '400',
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    opacity: 0.9,
+    letterSpacing: 0.2,
+    marginTop: 4,
   },
   formCard: {
     backgroundColor: theme.colors.surface,
@@ -191,6 +270,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
     gap: theme.spacing.lg,
+  },
+  socialSection: {
+    gap: theme.spacing.md,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: Math.max(48, theme.layout.minTouchTarget),
+    paddingHorizontal: theme.spacing.xl,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.googleBorderColor,
+    ...theme.shadows.sm,
+  },
+  googleButtonPressed: {
+    backgroundColor: theme.colors.backgroundDark,
+    opacity: 0.96,
+  },
+  googleButtonDisabled: {
+    opacity: 0.65,
+  },
+  googleIconWrap: {
+    marginRight: theme.spacing.md,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleButtonText: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: theme.typography.fontSize.md,
+    color: theme.colors.googleTextColor,
+    letterSpacing: 0.15,
   },
   loginButton: {
     marginTop: theme.spacing.xl,

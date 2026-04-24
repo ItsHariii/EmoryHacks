@@ -118,6 +118,8 @@ export const Button: React.FC<ButtonProps> = ({
     </View>
   );
 
+  const hitSlop = size === 'sm' ? { top: 4, bottom: 4, left: 4, right: 4 } : undefined;
+
   return (
     <Animated.View style={[containerStyles, { transform: [{ scale: scaleValue }] }]}>
       <TouchableOpacity
@@ -130,6 +132,7 @@ export const Button: React.FC<ButtonProps> = ({
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel || title}
         accessibilityHint={accessibilityHint}
+        hitSlop={hitSlop}
         style={styles.touchable}
       >
         {isGradient ? (
@@ -182,13 +185,13 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginRight: theme.spacing.sm,
   },
-  // Sizes (min touch target 44 for accessibility)
+  // Sizes — sm uses hitSlop to meet 44px touch target without inflating visual size
   sm: {
-    height: Math.max(36, theme.layout.minTouchTarget),
+    height: 36,
     paddingHorizontal: theme.spacing.md,
   },
   md: {
-    height: Math.max(48, theme.layout.minTouchTarget),
+    height: 48,
     paddingHorizontal: theme.spacing.xl,
   },
   lg: {

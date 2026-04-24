@@ -254,6 +254,9 @@ class Food(Base):
 
 class FoodLog(Base):
     __tablename__ = "food_logs"
+    __table_args__ = (
+        sa.Index('ix_food_log_deleted_at', 'deleted_at'),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
@@ -275,7 +278,7 @@ class FoodLog(Base):
     
     # Relationships
     user = relationship("User", back_populates="food_logs")
-    # food = relationship("Food", back_populates="logs")
+    food = relationship("Food")
 
     @property
     def trimester_at_consumption(self) -> int:
@@ -285,7 +288,9 @@ class FoodLog(Base):
         
         consumption_date = self.consumed_at.date()
         weeks_pregnant = (consumption_date - (self.user.due_date - timedelta(weeks=40))).days // 7
-        
+        # Clamp to valid pregnancy range (handles past due dates and far-future dates)
+        weeks_pregnant = max(0, min(weeks_pregnant, 40))
+
         if weeks_pregnant < 13:
             return 1
         elif 13 <= weeks_pregnant < 27:

@@ -50,6 +50,7 @@ class UserUpdate(BaseModel):
     allergies: Optional[List[str]] = None
     conditions: Optional[List[str]] = None
     dietary_preferences: Optional[str] = None
+    onboarding_completed: Optional[bool] = None
 
 class UserInDB(UserBase):
     id: str
@@ -70,6 +71,15 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
+
+class LinkSupabaseRequest(BaseModel):
+    supabase_access_token: str = Field(..., min_length=1)
+
+
+class LinkSupabaseResponse(BaseModel):
+    linked: bool
+    supabase_user_id: Optional[str] = None
+
 class UserResponse(BaseModel):
     id: str
     email: EmailStr
@@ -82,6 +92,7 @@ class UserResponse(BaseModel):
     height: Optional[float]
     current_weight: Optional[float]
     trimester: int
+    onboarding_completed: bool
     created_at: datetime
     updated_at: datetime
 
@@ -93,7 +104,7 @@ class UserResponse(BaseModel):
         # Calculate weeks pregnant based on due date (40 weeks = 280 days)
         conception_date = user.due_date - timedelta(weeks=40)
         weeks_pregnant = (today - conception_date).days // 7
-        
+
         # Calculate trimester based on standard medical definitions:
         # Trimester 1: Weeks 1-13
         # Trimester 2: Weeks 14-27
@@ -104,10 +115,10 @@ class UserResponse(BaseModel):
             trimester = 2
         else:
             trimester = 3
-        
+
         # Ensure trimester is within valid range
         trimester = min(3, max(1, trimester))
-    
+
         return cls(
             id=str(user.id),
             email=user.email,
@@ -120,6 +131,7 @@ class UserResponse(BaseModel):
             height=user.height,
             current_weight=user.current_weight,
             trimester=trimester,
+            onboarding_completed=user.onboarding_completed,
             created_at=user.created_at,
             updated_at=user.updated_at
         )

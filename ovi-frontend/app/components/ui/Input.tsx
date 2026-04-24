@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     minHeight: theme.layout.minTouchTarget,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.md,
     flexDirection: 'row',
     alignItems: 'center',
     borderColor: theme.colors.border,

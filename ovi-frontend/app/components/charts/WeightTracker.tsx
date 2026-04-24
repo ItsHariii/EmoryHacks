@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, Dimensions, Alert } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../theme';
@@ -44,17 +44,13 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({ currentWeight, onW
         setLoading(true);
         try {
             const weightNum = parseFloat(weight);
-            await journalAPI.logWeight({
-                weight_lbs: weightNum,
-                date: new Date().toISOString().split('T')[0],
-                notes: ''
-            });
+            await journalAPI.logWeight(weightNum, new Date().toISOString().split('T')[0]);
 
             onWeightUpdate?.(weightNum);
             setIsEditing(false);
-            fetchWeightHistory(); // Refresh history
+            fetchWeightHistory();
         } catch (error) {
-            console.error('Failed to save weight:', error);
+            Alert.alert('Save Failed', 'Could not save your weight. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -149,9 +145,9 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({ currentWeight, onW
 
 const styles = StyleSheet.create({
     container: {
-        padding: 24,
-        backgroundColor: '#fff',
-        borderRadius: 28,
+        padding: theme.spacing.xl,
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.borderRadius.card,
         ...theme.shadows.card,
         marginBottom: theme.spacing.xxl,
         marginHorizontal: theme.layout.screenPadding,
@@ -160,7 +156,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: theme.spacing.lg,
     },
     titleContainer: {
         flexDirection: 'row',
@@ -176,7 +172,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: theme.spacing.sm,
     },
     weightDisplay: {
         flex: 1,
@@ -211,24 +207,24 @@ const styles = StyleSheet.create({
         paddingVertical: 0,
     },
     button: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: '#F5F5F5',
+        paddingHorizontal: theme.spacing.lg,
+        paddingVertical: theme.spacing.sm,
+        borderRadius: theme.borderRadius.full,
+        backgroundColor: theme.colors.backgroundDark,
     },
     saveButton: {
         backgroundColor: theme.colors.primary,
     },
     buttonText: {
-        fontSize: 13,
+        fontSize: theme.typography.fontSize.sm,
         fontWeight: '600',
         color: theme.colors.text.primary,
     },
     saveButtonText: {
-        color: '#fff',
+        color: theme.colors.text.inverse,
     },
     chartContainer: {
-        marginTop: 16,
+        marginTop: theme.spacing.lg,
         alignItems: 'center',
         marginLeft: -10,
         overflow: 'hidden',

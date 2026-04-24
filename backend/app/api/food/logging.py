@@ -3,10 +3,10 @@ Food logging endpoints.
 Handles CRUD operations for food consumption logs.
 """
 import logging
-from datetime import datetime, date as date_type
+from datetime import datetime, timedelta, date as date_type
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from app.services.nutrition_calculator_service import NutritionCalculatorService
 from app.core.database import get_db
@@ -123,39 +123,10 @@ async def log_food(
         food = db.query(Food).filter(Food.id == food_id).first()
     
     if not food:
-        # If food not found in either table, try to recreate it
-        logger.warning(f"Food {food_id} not found in database, attempting to recreate")
-        
-        # First, try to find any food with the same FDC ID that might have been recreated
-        potential_food = db.query(Food).filter(Food.name.ilike('%orange%')).first()
-        if potential_food:
-            logger.info(f"Found similar food: {potential_food.name} with ID {potential_food.id}")
-            food = potential_food
-        else:
-            # Try to create from external APIs
-            try:
-                # Check if this looks like a USDA FDC ID pattern
-                if food_id.startswith('usda_'):
-                    fdc_id = food_id[5:]
-                    usda_service = USDAService()
-                    usda_food = await usda_service.get_food_details(fdc_id)
-                    if usda_food:
-                        food_factory = FoodFactory()
-                        food = await food_factory.create_food_from_usda(db, fdc_id)
-                
-                if not food:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Food not found and could not be created from external sources"
-                    )
-            except Exception as e:
-                import traceback
-                logger.error(f"Error creating missing food {food_id}: {str(e)}")
-                logger.error(f"Full traceback: {traceback.format_exc()}")
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Food not found"
-                )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food not found"
+        )
     
     try:
         logger.info(f"Creating food log for user {current_user.id} with food: {food.name}")
@@ -194,15 +165,25 @@ async def log_food(
         )
         
         db.add(food_log)
-        db.flush()  # Flush to get the ID and timestamps
-        db.refresh(food_log)
-        db.commit()
-        
+        try:
+            db.flush()
+            db.refresh(food_log)
+            db.commit()
+        except Exception as db_err:
+            db.rollback()
+            logger.error(f"Database error creating food log: {db_err}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save food log"
+            )
+
         logger.info(f"Successfully created food log {food_log.id} with {nutrition_data['calories_logged']} calories")
-        
+
         # Format response with serving info
         return _format_food_log_response(food_log, food)
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error creating food log: {str(e)}")
         import traceback
@@ -210,7 +191,7 @@ async def log_food(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create food log: {str(e)}"
+            detail="Failed to create food log"
         )
 
 @router.get("/log", response_model=List[FoodLogResponse])
@@ -245,18 +226,16 @@ async def get_food_logs(
     if meal_type:
         query = query.filter(FoodLog.meal_type == meal_type)
     
-    # Order by consumed_at descending (most recent first)
-    query = query.order_by(FoodLog.consumed_at.desc())
-    
+    # Order by consumed_at descending (most recent first). Eager-load food to avoid N+1.
+    query = query.options(joinedload(FoodLog.food)).order_by(FoodLog.consumed_at.desc())
+
     logs = query.all()
-    
-    # Format each log with clarity fields
+
     formatted_logs = []
     for log in logs:
-        food = db.query(Food).filter(Food.id == log.food_id).first()
-        if food:
-            formatted_logs.append(_format_food_log_response(log, food))
-    
+        if log.food:
+            formatted_logs.append(_format_food_log_response(log, log.food))
+
     return formatted_logs
 
 @router.get("/log/{log_id}", response_model=FoodLogResponse)

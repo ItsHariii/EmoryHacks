@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, Suspense } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
@@ -11,10 +12,24 @@ import {
   DMSans_600SemiBold,
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
+import {
+  Fraunces_300Light,
+  Fraunces_400Regular,
+  Fraunces_400Regular_Italic,
+  Fraunces_500Medium_Italic,
+} from '@expo-google-fonts/fraunces';
+import {
+  InstrumentSans_400Regular,
+  InstrumentSans_400Regular_Italic,
+  InstrumentSans_500Medium,
+  InstrumentSans_600SemiBold,
+  InstrumentSans_700Bold,
+} from '@expo-google-fonts/instrument-sans';
 import { AuthProvider } from './app/contexts/AuthContext';
 import { ToastProvider } from './app/components/ui/ToastProvider';
 import { ErrorBoundary } from './app/components/ui/ErrorBoundary';
 import { AuthScreen } from './app/screens/AuthScreen';
+import { OnboardingScreen } from './app/screens/OnboardingScreen';
 import { DashboardScreen } from './app/screens/DashboardScreen';
 // Lazy load other screens
 const FoodLoggingScreen = React.lazy(() => import('./app/screens/FoodLoggingScreen').then(module => ({ default: module.FoodLoggingScreen })));
@@ -250,14 +265,33 @@ function AppNavigator() {
     <RootStack.Navigator
       screenOptions={enhancedStackScreenOptions}
     >
-      {user ? (
+      {!user ? (
+        <RootStack.Screen
+          name="Auth"
+          component={AuthScreen}
+          options={{
+            ...fadeTransition,
+            gestureEnabled: false,
+          }}
+        />
+      ) : user.onboarding_completed === false ? (
+        <RootStack.Screen
+          name="Onboarding"
+          component={OnboardingScreen}
+          options={{
+            ...fadeTransition,
+            gestureEnabled: false,
+            headerShown: false,
+          }}
+        />
+      ) : (
         <>
           <RootStack.Screen
             name="Main"
             component={MainTabs}
             options={{
               ...slideFromRightTransition,
-              gestureEnabled: false, // Disable gesture for main tabs
+              gestureEnabled: false,
             }}
           />
           <RootStack.Screen
@@ -292,21 +326,24 @@ function AppNavigator() {
               ...slideFromRightTransition,
             }}
           />
-
         </>
-      ) : (
-        <RootStack.Screen
-          name="Auth"
-          component={AuthScreen}
-          options={{
-            ...fadeTransition,
-            gestureEnabled: false, // Disable gesture for auth screen
-          }}
-        />
       )}
     </RootStack.Navigator>
   );
 }
+
+// Registers both the native `ovi://` scheme and Expo Go's `exp://.../--/`
+// prefix so OAuth callbacks resolve correctly in all runtimes:
+// - dev client / production build → ovi://auth/callback
+// - Expo Go (dev)                  → exp://<host>/--/auth/callback
+const linking: LinkingOptions<any> = {
+  prefixes: ['ovi://', Linking.createURL('/')],
+  config: {
+    screens: {
+      Auth: 'auth/callback',
+    },
+  },
+};
 
 export default function App() {
   const navigationRef = useRef<any>(null);
@@ -316,6 +353,15 @@ export default function App() {
     DMSans_500Medium,
     DMSans_600SemiBold,
     DMSans_700Bold,
+    Fraunces_300Light,
+    Fraunces_400Regular,
+    Fraunces_400Regular_Italic,
+    Fraunces_500Medium_Italic,
+    InstrumentSans_400Regular,
+    InstrumentSans_400Regular_Italic,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+    InstrumentSans_700Bold,
   });
 
   useEffect(() => {
@@ -338,8 +384,8 @@ export default function App() {
     <ErrorBoundary>
       <AuthProvider>
         <ToastProvider>
-          <NavigationContainer ref={navigationRef}>
-            <StatusBar style="light" />
+          <NavigationContainer ref={navigationRef} linking={linking}>
+            <StatusBar style="dark" />
             <AppNavigator />
           </NavigationContainer>
         </ToastProvider>
@@ -353,6 +399,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.background,
   },
 });

@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { HeaderBar } from '../components/layout/HeaderBar';
@@ -123,7 +125,11 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
         showBack
         onBack={() => navigation.goBack()}
       />
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Date</Text>
           <SimpleDatePicker value={entryDate} onChange={setEntryDate} maximumDate={new Date()} />
@@ -182,6 +188,7 @@ export const JournalEntryScreen: React.FC<JournalEntryScreenProps> = ({
           />
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Floating Delete + Circular Save */}
       <View style={styles.buttonContainer}>

@@ -7,11 +7,10 @@ import {
   RefreshControl,
   Animated,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { DashboardHeader } from '../components/layout/DashboardHeader';
@@ -54,8 +53,12 @@ const getGreetingEmoji = () => {
   return '🌙';
 };
 
+const TAB_BAR_HEIGHT = 70;
+const TAB_BAR_BOTTOM_MARGIN = 20;
+
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { bottom: safeBottom } = useSafeAreaInsets();
   const { checkPermissions } = useNotifications();
 
   // Zustand Stores
@@ -111,9 +114,6 @@ export const DashboardScreen: React.FC = () => {
   // Content fade animation for date switching
   const contentOpacity = useRef(new Animated.Value(1)).current;
 
-  // Scroll position for header animation
-  const scrollY = useRef(new Animated.Value(0)).current;
-
   // Fetch journal entry for selected date (never throws so refresh still succeeds)
   const fetchJournalForDate = async (date: Date): Promise<void> => {
     try {
@@ -132,7 +132,7 @@ export const DashboardScreen: React.FC = () => {
   };
 
   // Load all data (journal failure does not fail the whole load)
-  const loadAllData = async (date: Date = selectedDate) => {
+  const loadAllData = useCallback(async (date: Date = selectedDate) => {
     const offset = date.getTimezoneOffset() * 60000;
     const localDate = new Date(date.getTime() - offset);
     const dateString = localDate.toISOString().split('T')[0];
@@ -150,7 +150,7 @@ export const DashboardScreen: React.FC = () => {
     if (rejected.length > 0) {
       rejected.forEach((r) => r.status === 'rejected' && console.warn('Dashboard load item failed:', r.reason));
     }
-  };
+  }, [selectedDate]);
 
   // Pull to refresh
   const onRefresh = async () => {
@@ -178,12 +178,11 @@ export const DashboardScreen: React.FC = () => {
     useCallback(() => {
       loadAllData(selectedDate);
       checkPermissions();
-    }, [selectedDate])
+    }, [loadAllData, selectedDate])
   );
 
-  // Handle date selection
   // Handle date selection with fade animation
-  const handleDateSelect = (date: Date) => {
+  const handleDateSelect = useCallback((date: Date) => {
     // Fade out
     Animated.timing(contentOpacity, {
       toValue: 0,
@@ -200,7 +199,7 @@ export const DashboardScreen: React.FC = () => {
         }).start();
       });
     });
-  };
+  }, [loadAllData, contentOpacity]);
 
   const isToday = (date: Date) => {
     const today = new Date();
@@ -210,6 +209,16 @@ export const DashboardScreen: React.FC = () => {
       date.getFullYear() === today.getFullYear()
     );
   };
+
+  const handleNavigateToFood = useCallback(() => {
+    (navigation as any).navigate('FoodLogging', { date: selectedDate.toISOString() });
+  }, [navigation, selectedDate]);
+
+  const handleNavigateToJournal = useCallback((entry: any) => {
+    (navigation as any).navigate('Journal', { screen: 'JournalEntry', params: { entry } });
+  }, [navigation]);
+
+  const handleWeightUpdate = useCallback(() => fetchProfile(), []);
 
   // Progressive loading states
   const isInitialLoading = (userLoading || pregnancyLoading || nutritionLoading) && !profile && !summary;
@@ -248,7 +257,7 @@ export const DashboardScreen: React.FC = () => {
 
   if (isInitialLoading) {
     return (
-      <ScreenWrapper edges={['bottom']}>
+      <ScreenWrapper edges={['bottom']} backgroundColor={theme.colors.background}>
         <DashboardHeader />
         <DashboardSkeleton />
       </ScreenWrapper>
@@ -256,7 +265,7 @@ export const DashboardScreen: React.FC = () => {
   }
 
   return (
-    <ScreenWrapper edges={['bottom']} useSafeArea={false}>
+    <ScreenWrapper edges={['bottom']} useSafeArea={false} backgroundColor={theme.colors.background}>
       <DashboardHeader />
 
       {/* Compact Calendar Section */}
@@ -272,15 +281,13 @@ export const DashboardScreen: React.FC = () => {
       {/* @ts-ignore: Animated.ScrollView types are tricky with children in React 19 */}
       <Animated.ScrollView
         style={[styles.scrollView, { opacity: contentOpacity }]}
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={[
+          styles.scrollViewContent,
+          { paddingBottom: TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_MARGIN + safeBottom + theme.spacing.lg },
+        ]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
         }
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
       >
         {/* Today in week X – first scan anchor */}
         {pregnancyInfo?.week != null && (
@@ -372,7 +379,7 @@ export const DashboardScreen: React.FC = () => {
               headline="Log some meals to see your nutrient breakdown"
               description="Once you start tracking your meals, you'll see detailed insights about your vitamin and mineral intake."
               actionLabel="Log a Meal"
-              onAction={() => (navigation as any).navigate('FoodLogging', { date: selectedDate.toISOString() })}
+              onAction={handleNavigateToFood}
             />
           </Animated.View>
         ) : null}
@@ -386,7 +393,7 @@ export const DashboardScreen: React.FC = () => {
         >
           <WeightTracker
             currentWeight={profile?.current_weight}
-            onWeightUpdate={() => fetchProfile()}
+            onWeightUpdate={handleWeightUpdate}
           />
         </Animated.View>
 
@@ -406,10 +413,7 @@ export const DashboardScreen: React.FC = () => {
             </Text>
             <TouchableOpacity
               style={styles.journalSummary}
-              onPress={() => (navigation as any).navigate('Journal', {
-                screen: 'JournalEntry',
-                params: { entry: todayJournalEntry }
-              })}
+              onPress={() => handleNavigateToJournal(todayJournalEntry)}
               accessible={true}
               accessibilityLabel="View today's journal entry"
               accessibilityRole="button"
@@ -491,12 +495,9 @@ export const DashboardScreen: React.FC = () => {
 const styles = StyleSheet.create({
   calendarContainer: {
     paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
-    paddingHorizontal: theme.layout.screenPadding,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
-    ...theme.shadows.xs,
+    paddingBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
     zIndex: 1,
   },
   sectionHeaderRow: {
@@ -511,7 +512,6 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingTop: theme.spacing.sectionSpacing,
-    paddingBottom: 100,
     paddingHorizontal: 0,
   },
   todayInWeekRow: {
@@ -551,12 +551,10 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   journalSummary: {
-    backgroundColor: theme.colors.surfaceHighlight,
+    backgroundColor: theme.colors.surface,
     padding: theme.layout.cardPadding,
     borderRadius: theme.borderRadius.xl,
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: theme.colors.border,
     ...theme.shadows.sm,
   },

@@ -3,6 +3,7 @@
     "name": "ovi-frontend",
     "slug": "ovi-frontend",
     "version": "1.0.0",
+    "scheme": "ovi",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,7 +19,8 @@
         "NSMicrophoneUsageDescription": "This app does not use the microphone.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.itshari.ovifrontend"
+      "bundleIdentifier": "com.itshari.ovifrontend",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -52,9 +54,12 @@
           "color": "#8B2635",
           "sounds": []
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "extra": {
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
       "eas": {
         "projectId": "6fe6292e-ed5d-431a-a8ef-4a9059970a85"
       }

@@ -17,18 +17,20 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { theme } from '../../theme';
-import { registrationSchema, RegistrationFormData } from '../../utils/validation';
+import { registrationSchema, oauthOnboardingSchema, RegistrationFormData } from '../../utils/validation';
 
 interface RegistrationWizardProps {
-  onComplete: (data: RegistrationFormData) => void;
+  onComplete: (data: any) => void;
   onCancel: () => void;
+  mode?: 'email' | 'oauth';
 }
 
 export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
   onComplete,
   onCancel,
+  mode = 'email',
 }) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(mode === 'oauth' ? 2 : 1);
   const [allergyInput, setAllergyInput] = useState('');
   const [conditionInput, setConditionInput] = useState('');
 
@@ -40,7 +42,7 @@ export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
     setValue,
     formState: { errors },
   } = useForm<RegistrationFormData>({
-    resolver: zodResolver(registrationSchema) as any,
+    resolver: zodResolver(mode === 'oauth' ? oauthOnboardingSchema : registrationSchema) as any,
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -93,7 +95,8 @@ export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
   };
 
   const handleBack = () => {
-    if (step > 1) {
+    const minStep = mode === 'oauth' ? 2 : 1;
+    if (step > minStep) {
       setStep(step - 1);
     } else {
       onCancel();
@@ -126,22 +129,22 @@ export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
     setValue('conditions', currentConditions.filter((_, i) => i !== index));
   };
 
-  const renderProgressBar = () => (
-    <View style={styles.progressContainer}>
-      {[1, 2, 3, 4].map((s) => (
-        <View
-          key={s}
-          style={[
-            styles.progressDot,
-            s <= step && styles.progressDotActive,
-          ]}
-        />
-      ))}
-    </View>
-  );
+  const renderProgressBar = () => {
+    const dots = mode === 'oauth' ? [2, 3, 4] : [1, 2, 3, 4];
+    return (
+      <View style={styles.progressContainer}>
+        {dots.map((s) => (
+          <View
+            key={s}
+            style={[styles.progressDot, s <= step && styles.progressDotActive]}
+          />
+        ))}
+      </View>
+    );
+  };
 
   const renderStep1 = () => (
-    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <Text style={styles.stepTitle}>Let's get started!</Text>
       <Text style={styles.stepSubtitle}>Create your account</Text>
 
@@ -220,7 +223,7 @@ export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
   );
 
   const renderStep2 = () => (
-    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <Text style={styles.stepTitle}>Pregnancy Information</Text>
       <Text style={styles.stepSubtitle}>Help us personalize your experience</Text>
 
@@ -269,7 +272,7 @@ export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
   );
 
   const renderStep3 = () => (
-    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <Text style={styles.stepTitle}>Health Information</Text>
       <Text style={styles.stepSubtitle}>Optional - helps us provide better recommendations</Text>
 
@@ -354,7 +357,7 @@ export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
   );
 
   const renderStep4 = () => (
-    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <Text style={styles.stepTitle}>Dietary Preferences</Text>
       <Text style={styles.stepSubtitle}>Optional - helps us provide personalized nutrition advice</Text>
 
@@ -448,12 +451,15 @@ export const RegistrationWizard: React.FC<RegistrationWizardProps> = ({
       {step === 4 && renderStep4()}
 
       <View style={styles.buttonContainer}>
-        <Button
-          variant="outline"
-          title={step === 1 ? 'Cancel' : 'Back'}
-          onPress={handleBack}
-          style={styles.navButton}
-        />
+        {/* Hide back/cancel button on the first oauth onboarding step — the user must complete it */}
+        {!(mode === 'oauth' && step === 2) && (
+          <Button
+            variant="outline"
+            title={step === 1 ? 'Cancel' : 'Back'}
+            onPress={handleBack}
+            style={styles.navButton}
+          />
+        )}
 
         <Button
           variant="primary"

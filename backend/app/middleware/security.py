@@ -155,7 +155,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if not settings.RATE_LIMIT_ENABLED:
             return await call_next(request)
 
-        client_ip = request.client.host if request.client else "unknown"
+        forwarded_for = request.headers.get("X-Forwarded-For", "")
+        client_ip = (
+            forwarded_for.split(",")[0].strip()
+            or (request.client.host if request.client else "unknown")
+        )
 
         allowed, remaining, reset_timestamp = await self.backend.increment_and_check(
             key=client_ip,

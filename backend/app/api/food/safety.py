@@ -118,18 +118,18 @@ async def check_food_safety(
             }
             
             results.append({
-                "name": ingredient_result["name"],
-                "safety_status": ingredient_result["safety_status"],
-                "safety_notes": ingredient_result["safety_notes"],
+                "name": ingredient_result.get("name", ingredient),
+                "safety_status": ingredient_result.get("safety_status", "safe"),
+                "safety_notes": ingredient_result.get("safety_notes", ""),
                 "nutrients": nutrition if nutrition else None
             })
-            
+
             # Track safety statuses for overall determination
             safety_status_enum = {
                 "safe": FoodSafetyStatus.SAFE,
                 "limited": FoodSafetyStatus.LIMITED,
                 "avoid": FoodSafetyStatus.AVOID
-            }.get(ingredient_result["safety_status"], FoodSafetyStatus.SAFE)
+            }.get(ingredient_result.get("safety_status", "safe"), FoodSafetyStatus.SAFE)
             safety_statuses.append(safety_status_enum)
         
         # Determine overall safety status

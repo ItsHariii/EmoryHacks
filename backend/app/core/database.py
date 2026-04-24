@@ -11,6 +11,7 @@ import logging
 from sqlalchemy.orm import Session, scoped_session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
+from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings  # Use absolute import for stability
 
@@ -25,22 +26,44 @@ logger.setLevel(logging.INFO)
 # --------------------------------------------------
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 parsed_url = urlparse(SQLALCHEMY_DATABASE_URL)
-if not all([parsed_url.scheme, parsed_url.hostname, parsed_url.path]):
-    raise ValueError("Invalid DATABASE_URL format. Please check your .env file.")
+is_sqlite = parsed_url.scheme.startswith("sqlite")
+if not is_sqlite:
+    if not all([parsed_url.scheme, parsed_url.hostname, parsed_url.path]):
+        raise ValueError("Invalid DATABASE_URL format. Please check your .env file.")
 
 # --------------------------------------------------
 # Build connect_args safely (no duplicate sslmode)
 # --------------------------------------------------
-connect_args = {
-    "connect_timeout": 10,
-    "keepalives": 1,
-    "keepalives_idle": 30,
-    "keepalives_interval": 10,
-    "keepalives_count": 5,
-}
+connect_args = {}
+engine_kwargs = {}
+
+if is_sqlite:
+    # Useful for tests and local dev; avoids thread issues and allows in-memory DB.
+    connect_args = {"check_same_thread": False}
+    engine_kwargs = {
+        "poolclass": StaticPool,
+        "echo": settings.DEBUG,
+    }
+else:
+    connect_args = {
+        "connect_timeout": 10,
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5,
+    }
+
+    engine_kwargs = {
+        "pool_size": 10,            # Default 5 → bumped for better concurrency
+        "max_overflow": 20,         # Allow extra connections beyond pool_size
+        "pool_timeout": 10,         # Short timeout for faster failover
+        "pool_recycle": 1800,       # Recycle every 30 min for managed DBs (Supabase default 1h)
+        "pool_pre_ping": True,      # Health check before using a connection
+        "echo": settings.DEBUG,     # Logs queries in dev, silent in prod
+    }
 
 # If DATABASE_URL already contains sslmode, do NOT add it again
-if "sslmode" not in SQLALCHEMY_DATABASE_URL and "supabase" in SQLALCHEMY_DATABASE_URL:
+if (not is_sqlite) and "sslmode" not in SQLALCHEMY_DATABASE_URL and "supabase" in SQLALCHEMY_DATABASE_URL:
     connect_args["sslmode"] = "require"
 
 # --------------------------------------------------
@@ -49,12 +72,7 @@ if "sslmode" not in SQLALCHEMY_DATABASE_URL and "supabase" in SQLALCHEMY_DATABAS
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args=connect_args,
-    pool_size=10,            # Default 5 → bumped for better concurrency
-    max_overflow=20,         # Allow extra connections beyond pool_size
-    pool_timeout=10,         # Short timeout for faster failover
-    pool_recycle=1800,       # Recycle every 30 min for managed DBs (Supabase default 1h)
-    pool_pre_ping=True,      # Health check before using a connection
-    echo=settings.DEBUG,     # Logs queries in dev, silent in prod
+    **engine_kwargs,
 )
 
 # --------------------------------------------------

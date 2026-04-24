@@ -14,8 +14,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 # Load environment variables from .env file
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
-print(f"Loading .env from: {env_path}")
-print(f".env exists: {env_path.exists()}")
 
 from app.core.config import settings
 from .api import auth, health, journal, users

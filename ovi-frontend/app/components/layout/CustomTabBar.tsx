@@ -13,7 +13,6 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../../theme';
 import { ANIMATION_CONFIG } from '../../utils/animations';
 import { CameraOptionsModal } from '../modals/CameraOptionsModal';
@@ -25,13 +24,14 @@ const BOTTOM_MARGIN = 20;
 
 interface TabIconProps {
   name: string;
+  label: string;
   focused: boolean;
   badgeCount?: number;
 }
 
-const TabIcon: React.FC<TabIconProps> = ({ name, focused, badgeCount }) => {
+const TabIcon: React.FC<TabIconProps> = ({ name, label, focused, badgeCount }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(focused ? 1 : 0.6)).current;
+  const opacityAnim = useRef(new Animated.Value(focused ? 1 : 0.62)).current;
   const badgeScaleAnim = useRef(new Animated.Value(badgeCount ? 1 : 0)).current;
   const badgeFadeAnim = useRef(new Animated.Value(badgeCount ? 1 : 0)).current;
 
@@ -44,7 +44,7 @@ const TabIcon: React.FC<TabIconProps> = ({ name, focused, badgeCount }) => {
         bounciness: ANIMATION_CONFIG.spring.bounciness,
       }),
       Animated.timing(opacityAnim, {
-        toValue: focused ? 1 : 0.5,
+        toValue: focused ? 1 : 0.62,
         duration: ANIMATION_CONFIG.normal,
         useNativeDriver: true,
       }),
@@ -92,14 +92,14 @@ const TabIcon: React.FC<TabIconProps> = ({ name, focused, badgeCount }) => {
         },
       ]}
     >
-      {focused && (
-        <View style={styles.activeIndicator} />
-      )}
       <MaterialCommunityIcons
         name={name as any}
-        size={26}
+        size={22}
         color={focused ? theme.colors.primary : theme.colors.text.secondary}
       />
+      <RNText style={[styles.tabLabel, focused && styles.tabLabelFocused]}>
+        {label}
+      </RNText>
       {badgeCount && badgeCount > 0 && (
         <Animated.View
           style={[
@@ -173,8 +173,6 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
   };
 
   const handleCameraPress = () => {
-    console.log('Camera button pressed - showing options modal');
-
     // Haptic feedback
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -227,13 +225,24 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
 
   const getIconName = (routeName: string): string => {
     const iconMap: Record<string, string> = {
-      Dashboard: 'home-variant', // Updated icon
-      FoodLogging: 'silverware-fork-knife', // Updated icon
-      Journal: 'notebook-heart', // Updated icon
-      Baby: 'baby-carriage', // Updated icon
+      Dashboard: 'home-variant',
+      FoodLogging: 'silverware-fork-knife',
+      Journal: 'notebook-heart',
+      Baby: 'baby-carriage',
       Profile: 'account',
     };
     return iconMap[routeName] || 'help-circle';
+  };
+
+  const getTabLabel = (routeName: string): string => {
+    const labelMap: Record<string, string> = {
+      Dashboard: 'Home',
+      FoodLogging: 'Food',
+      Journal: 'Journal',
+      Baby: 'Baby',
+      Profile: 'Profile',
+    };
+    return labelMap[routeName] || routeName;
   };
 
   // Split routes into left and right for center camera button
@@ -254,6 +263,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
         {leftRoutes.map((route, index) => {
           const isFocused = state.index === index;
           const iconName = getIconName(route.name);
+          const tabLabel = getTabLabel(route.name);
           const badgeCount = badgeCounts[route.name];
 
           return (
@@ -266,7 +276,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
               style={styles.tab}
               activeOpacity={0.7}
             >
-              <TabIcon name={iconName} focused={isFocused} badgeCount={badgeCount} />
+              <TabIcon name={iconName} label={tabLabel} focused={isFocused} badgeCount={badgeCount} />
             </TouchableOpacity>
           );
         })}
@@ -289,14 +299,9 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                 },
               ]}
             >
-              <LinearGradient
-                colors={theme.gradients.primary}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.cameraGradient}
-              >
-                <MaterialCommunityIcons name="camera-plus" size={28} color="#FFF" />
-              </LinearGradient>
+              <View style={styles.cameraGradient}>
+                <MaterialCommunityIcons name="camera-plus" size={26} color="#FFF" />
+              </View>
             </Animated.View>
           </TouchableOpacity>
         </View>
@@ -306,6 +311,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
           const actualIndex = index + 2;
           const isFocused = state.index === actualIndex;
           const iconName = getIconName(route.name);
+          const tabLabel = getTabLabel(route.name);
           const badgeCount = badgeCounts[route.name];
 
           return (
@@ -318,7 +324,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
               style={styles.tab}
               activeOpacity={0.7}
             >
-              <TabIcon name={iconName} focused={isFocused} badgeCount={badgeCount} />
+              <TabIcon name={iconName} label={tabLabel} focused={isFocused} badgeCount={badgeCount} />
             </TouchableOpacity>
           );
         })}
@@ -354,10 +360,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)', // Glass effect
+    backgroundColor: theme.colors.surfaceGlass,
     borderRadius: 35,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: theme.colors.surfaceGlassBorder,
   },
   androidTabBar: {
     backgroundColor: '#FFF',
@@ -372,16 +378,18 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 44,
-    height: 44,
+    minWidth: 44,
+    paddingVertical: 4,
   },
-  activeIndicator: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.primaryLight,
-    opacity: 0.15,
+  tabLabel: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 10,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  tabLabelFocused: {
+    color: theme.colors.primary,
+    fontFamily: theme.typography.fontFamily.semibold,
   },
   badge: {
     position: 'absolute',
@@ -417,20 +425,21 @@ const styles = StyleSheet.create({
     marginTop: -30, // Float above
   },
   cameraButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    ...theme.shadows.glow,
-    shadowColor: theme.colors.primary,
-    shadowOpacity: 0.4,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    ...theme.shadows.md,
+    shadowColor: 'rgba(43, 34, 27, 0.25)',
+    shadowOpacity: 0.25,
   },
   cameraGradient: {
     width: '100%',
     height: '100%',
-    borderRadius: 30,
+    borderRadius: 29,
+    backgroundColor: '#2B221B',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#FFF',
+    borderColor: theme.colors.background,
   },
 });

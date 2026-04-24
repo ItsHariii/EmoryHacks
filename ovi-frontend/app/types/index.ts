@@ -6,6 +6,7 @@ export interface User {
   dueDate?: string;
   trimester?: number;
   babies?: number;
+  onboarding_completed?: boolean;
 }
 
 export interface FoodItem {

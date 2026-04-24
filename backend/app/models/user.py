@@ -12,7 +12,10 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
+    # Nullable to support social-login users (Supabase) that may not have a local password.
+    password_hash = Column(String, nullable=True)
+    # Supabase user UUID (Auth "sub"). Used to map Supabase JWTs to a local user.
+    supabase_user_id = Column(String, unique=True, index=True, nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     due_date = Column(Date, nullable=False)
@@ -26,6 +29,10 @@ class User(Base):
     conditions = Column(JSON, default=list)
     dietary_preferences = Column(String, nullable=True)
     
+    # False until the user completes the post-OAuth onboarding wizard.
+    # Email/password users have this set True at registration time.
+    onboarding_completed = Column(Boolean, default=False, nullable=False)
+
     # Verification
     is_verified = Column(Boolean, default=False, nullable=False)
     verification_token = Column(String, nullable=True)

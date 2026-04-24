@@ -90,9 +90,16 @@ cd ovi-frontend
 # Install dependencies
 npm install
 
+# Copy env template and set Supabase anon key + URL (required for Google/Apple sign-in)
+cp .env.example .env
+
 # Start development server
 npm start
 ```
+
+### Supabase Auth (Google / Apple)
+
+See **[docs/SUPABASE_AUTH.md](docs/SUPABASE_AUTH.md)** for redirect URLs, env vars, and security notes. The mobile app stores either a legacy API JWT or a Supabase `access_token` in the same storage keys; the backend accepts both after verifying Supabase tokens via JWKS.
 
 ## 🧪 Testing
 

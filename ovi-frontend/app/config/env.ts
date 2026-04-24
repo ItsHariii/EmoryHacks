@@ -1,5 +1,11 @@
 import { Platform } from 'react-native';
 
+/** If set (e.g. http://10.0.2.2:8000 for Android emulator), overrides auto URL selection. */
+const API_URL_OVERRIDE =
+    typeof process.env.EXPO_PUBLIC_API_URL === 'string' && process.env.EXPO_PUBLIC_API_URL.length > 0
+        ? process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, '')
+        : null;
+
 const ENV = {
     dev: {
         apiUrl: 'http://localhost:8000',
@@ -29,7 +35,23 @@ const getEnvVars = (env = 'dev') => {
 
 export const config = getEnvVars();
 
+function isAndroidEmulator(): boolean {
+    if (Platform.OS !== 'android') return false;
+    const model = String(Platform.constants?.Model ?? '');
+    const brand = String(Platform.constants?.Brand ?? '');
+    const fingerprint = String(Platform.constants?.Fingerprint ?? '');
+    return (
+        brand === 'generic' ||
+        /sdk|emulator|gphone|Emulator/i.test(model) ||
+        /generic|google_sdk|unknown/i.test(fingerprint)
+    );
+}
+
 export const getApiBaseUrl = () => {
+    if (API_URL_OVERRIDE) {
+        return API_URL_OVERRIDE;
+    }
+
     if (Platform.OS === 'web') {
         return config.apiUrl;
     }
@@ -39,15 +61,10 @@ export const getApiBaseUrl = () => {
     }
 
     if (Platform.OS === 'android') {
-        const isEmulator = Platform.constants?.Brand === 'generic' ||
-            Platform.constants?.Model?.includes('sdk') ||
-            Platform.constants?.Model?.includes('Emulator');
-
-        if (isEmulator) {
+        if (isAndroidEmulator()) {
             return config.androidEmulatorUrl;
-        } else {
-            return config.apiUrl; // Physical device usually needs real IP or tunnel
         }
+        return config.apiUrl; // Physical device: set EXPO_PUBLIC_API_URL to your LAN IP if needed
     }
 
     return config.apiUrl;

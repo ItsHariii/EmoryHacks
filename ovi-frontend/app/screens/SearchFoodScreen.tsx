@@ -37,6 +37,7 @@ export const SearchFoodScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [totalResults, setTotalResults] = useState(0);
@@ -85,6 +86,7 @@ export const SearchFoodScreen: React.FC = () => {
     if (!searchQuery.trim()) return;
 
     setLoading(true);
+    setSearchError(false);
 
     try {
       const results = await foodAPI.search(searchQuery.trim());
@@ -107,10 +109,9 @@ export const SearchFoodScreen: React.FC = () => {
       setTotalResults(results.total);
       setHasMore(false); // No pagination support yet
     } catch (error) {
-      // Silently handle search errors - backend may have validation issues
-      // Just show empty results instead of alerting the user
       setSearchResults([]);
       setSearched(true);
+      setSearchError(true);
     } finally {
       setLoading(false);
     }
@@ -120,13 +121,13 @@ export const SearchFoodScreen: React.FC = () => {
     // Pagination not supported yet
   };
 
-  const handleFoodSelect = (food: FoodItem) => {
+  const handleFoodSelect = useCallback((food: FoodItem) => {
     (navigation as any).navigate('EditFoodEntry', {
       food,
       mealType,
       isNewEntry: true
     });
-  };
+  }, [navigation, mealType]);
 
   const renderFoodItem = ({ item: food }: { item: FoodItem }) => (
     <TouchableOpacity
@@ -255,6 +256,18 @@ export const SearchFoodScreen: React.FC = () => {
   const renderEmptyComponent = () => {
     if (loading) {
       return null;
+    }
+
+    if (searched && searchError) {
+      return (
+        <View style={styles.emptyStateWrapper}>
+          <EmptyState
+            icon={FEATURE_ICONS.search}
+            headline="Search failed"
+            description="Could not connect to the food database. Please check your connection and try again."
+          />
+        </View>
+      );
     }
 
     if (searched && searchResults.length === 0) {
