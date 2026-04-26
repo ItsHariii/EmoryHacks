@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,36 +8,32 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { theme } from '../theme';
 import { MealAccordionCard } from '../components/food/MealAccordionCard';
-import { EmptyState } from '../components/ui/EmptyState';
 import { FoodListSkeleton } from '../components/skeletons';
-import { SimpleDatePicker } from '../components/ui/SimpleDatePicker';
-import { ProgressBar } from '../components/charts/ProgressBar';
 import { foodAPI, nutritionAPI } from '../services/api';
 import { FoodEntry, MealType, NutritionSummary } from '../types';
-import { FEATURE_ICONS } from '../components/icons/iconConstants';
 import { useNutritionStore } from '../store/useNutritionStore';
 
 import type { FoodStackParamList } from '../types/navigation';
 
 function toDateString(d: Date): string {
-  return d.toISOString().split('T')[0];
+  const offset = d.getTimezoneOffset() * 60000;
+  const localDate = new Date(d.getTime() - offset);
+  return localDate.toISOString().split('T')[0];
 }
 
-function isToday(d: Date): boolean {
-  const today = new Date();
-  return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-}
-
-function formatDateLabel(d: Date): string {
-  if (isToday(d)) return 'Today';
-  const options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
-  return d.toLocaleDateString(undefined, options);
+function formatHeaderDateLabel(d: Date): string {
+  const weekday = d.toLocaleDateString(undefined, { weekday: 'long' }).toUpperCase();
+  const monthDay = d
+    .toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    .replace(',', '')
+    .toUpperCase();
+  return `${weekday} · ${monthDay}`;
 }
 
 type FoodLoggingScreenNavigationProp = StackNavigationProp<
@@ -47,8 +43,12 @@ type FoodLoggingScreenNavigationProp = StackNavigationProp<
 
 export const FoodLoggingScreen: React.FC = () => {
   const navigation = useNavigation<FoodLoggingScreenNavigationProp>();
+  const route = useRoute<any>();
   const { targets, fetchTargets } = useNutritionStore();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate] = useState<Date>(() => {
+    const routeDate = route.params?.date;
+    return routeDate ? new Date(routeDate) : new Date();
+  });
   const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([]);
   const [nutritionSummary, setNutritionSummary] = useState<NutritionSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -106,45 +106,55 @@ export const FoodLoggingScreen: React.FC = () => {
   };
 
   const handleAddFood = (mealType: MealType) => {
-    navigation.navigate('SearchFood', { mealType });
+    navigation.navigate('SearchFood', {
+      mealType,
+      date: selectedDate.toISOString(),
+    });
   };
 
   const handleScanBarcode = () => {
-    navigation.navigate('BarcodeScanner', { mealType: 'snack' });
+    navigation.navigate('BarcodeScanner', {
+      mealType: 'snack',
+      date: selectedDate.toISOString(),
+    });
   };
 
   const handleSearchFood = () => {
-    navigation.navigate('SearchFood', { mealType: 'breakfast' });
+    navigation.navigate('SearchFood', {
+      mealType: 'breakfast',
+      date: selectedDate.toISOString(),
+    });
   };
 
   const handleEditEntry = (entry: FoodEntry) => {
     navigation.navigate('EditFoodEntry', { entry });
   };
 
-  const handleDeleteEntry = async (entryId: string) => {
-    Alert.alert(
-      'Delete Entry',
-      'Are you sure you want to delete this food entry?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-        onPress: async () => {
-            try {
-              await foodAPI.deleteFoodEntry(entryId);
-              await loadData(); // Refresh data
-            } catch (error: any) {
-              Alert.alert('Error', 'Failed to delete entry. Please try again.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const groupedEntries = groupEntriesByMeal(foodEntries);
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const targetCalories = targets?.calories || 2200;
+  const totalCalories = Math.round(nutritionSummary?.total_calories || 0);
+  const remainingCalories = Math.max(targetCalories - totalCalories, 0);
+  const progress = Math.min(totalCalories / Math.max(targetCalories, 1), 1);
+
+  const mealTimeByType = useMemo(() => {
+    const fallback: Record<MealType, string> = {
+      breakfast: '8:20 AM',
+      lunch: '12:45 PM',
+      dinner: '7:10 PM',
+      snack: '',
+    };
+    const result = { ...fallback };
+    mealTypes.forEach((meal) => {
+      const firstEntry = groupedEntries[meal]?.[0];
+      if (!firstEntry?.logged_at) return;
+      result[meal] = new Date(firstEntry.logged_at).toLocaleTimeString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    });
+    return result;
+  }, [groupedEntries]);
 
   if (loading && foodEntries.length === 0) {
     return (
@@ -152,9 +162,8 @@ export const FoodLoggingScreen: React.FC = () => {
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <View>
-              <Text style={styles.titleKicker}>Food</Text>
-              <Text style={styles.title}>Log</Text>
-              <Text style={styles.subtitle}>Loading your meals...</Text>
+              <Text style={styles.dateLabel}>{formatHeaderDateLabel(selectedDate)}</Text>
+              <Text style={styles.title}>Food <Text style={styles.titleItalic}>log</Text></Text>
             </View>
           </View>
         </View>
@@ -175,253 +184,226 @@ export const FoodLoggingScreen: React.FC = () => {
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <View>
-              <Text style={styles.titleKicker}>{formatDateLabel(selectedDate).toUpperCase()}</Text>
+              <Text style={styles.dateLabel}>{formatHeaderDateLabel(selectedDate)}</Text>
               <Text style={styles.title}>
                 Food <Text style={styles.titleItalic}>log</Text>
               </Text>
             </View>
             <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.searchButton} onPress={handleSearchFood} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.iconCircleButton} onPress={handleSearchFood} activeOpacity={0.8}>
                 <MaterialCommunityIcons name="magnify" size={theme.iconSize.lg} color={theme.colors.text.primary} />
-                <Text style={styles.scanButtonText}>Search</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.scanButton} onPress={handleScanBarcode} testID="scan-button" activeOpacity={0.8}>
+              <TouchableOpacity style={styles.iconCircleButton} onPress={handleScanBarcode} testID="scan-button" activeOpacity={0.8}>
                 <MaterialCommunityIcons name="barcode-scan" size={theme.iconSize.lg} color={theme.colors.text.primary} />
-                <Text style={styles.scanButtonText}>Scan</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        <View style={styles.datePickerWrap}>
-          <SimpleDatePicker
-            value={selectedDate}
-            onChange={setSelectedDate}
-            maximumDate={new Date()}
-          />
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryTopRow}>
+            <View style={styles.summaryBlock}>
+              <Text style={styles.summaryLabel}>CALORIES</Text>
+              <Text style={styles.summaryCaloriesText}>
+                {totalCalories.toLocaleString()}
+                <Text style={styles.summaryCaloriesInline}> / {targetCalories.toLocaleString()} kcal</Text>
+              </Text>
+            </View>
+            <View style={styles.summaryBlockRight}>
+              <Text style={styles.summaryLabel}>REMAINING</Text>
+              <Text style={styles.remainingValue}>{remainingCalories.toLocaleString()}</Text>
+            </View>
+          </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          </View>
+          <View style={styles.macroRow}>
+            <View style={styles.macroItemWrap}>
+              <View style={[styles.macroDot, { backgroundColor: theme.colors.macroProtein }]} />
+              <Text style={styles.macroText}>Protein {Math.round(nutritionSummary?.protein_g || 0)}g</Text>
+            </View>
+            <View style={styles.macroItemWrap}>
+              <View style={[styles.macroDot, { backgroundColor: theme.colors.macroCarbs }]} />
+              <Text style={styles.macroText}>Carbs {Math.round(nutritionSummary?.carbs_g || 0)}g</Text>
+            </View>
+            <View style={styles.macroItemWrap}>
+              <View style={[styles.macroDot, { backgroundColor: theme.colors.macroFats }]} />
+              <Text style={styles.macroText}>Fats {Math.round(nutritionSummary?.fat_g || 0)}g</Text>
+            </View>
+          </View>
         </View>
 
-        {nutritionSummary && (foodEntries.length > 0 || nutritionSummary.total_calories > 0) && (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>{formatDateLabel(selectedDate)}</Text>
-            <View style={styles.summaryRow}>
-              <View style={styles.summaryCalories}>
-                <Text style={styles.summaryCaloriesValue}>{Math.round(nutritionSummary.total_calories)}</Text>
-                <Text style={styles.summaryCaloriesLabel}>kcal</Text>
-              </View>
-              <View style={styles.summaryMacros}>
-                <Text style={styles.macroItem}>P {Math.round(nutritionSummary.protein_g || 0)}g</Text>
-                <Text style={styles.macroItem}>C {Math.round(nutritionSummary.carbs_g || 0)}g</Text>
-                <Text style={styles.macroItem}>F {Math.round(nutritionSummary.fat_g || 0)}g</Text>
-              </View>
-            </View>
-            {targets && targets.calories > 0 && (
-              <View style={styles.progressWrap}>
-                <ProgressBar
-                  current={nutritionSummary.total_calories}
-                  target={targets.calories}
-                  label="Calories"
-                  color={theme.colors.primary}
-                  showNumbers={true}
-                />
-              </View>
-            )}
-          </View>
-        )}
+        <Text style={styles.sectionLabel}>TODAY'S MEALS</Text>
 
-        {foodEntries.length === 0 ? (
-          <View style={styles.emptyStateWrapper}>
-            <View style={styles.emptyStateContainer}>
-              <EmptyState
-                icon={FEATURE_ICONS.food}
-                headline={isToday(selectedDate) ? 'No meals logged today' : `No meals logged for ${formatDateLabel(selectedDate)}`}
-                description="Add foods by searching or scanning a barcode to track nutrition and reach your goals."
-                actionLabel="Search Food"
-                onAction={handleSearchFood}
+        <View style={styles.mealsContainer}>
+          {mealTypes.map((mealType, index) => {
+            const entriesForMeal = groupedEntries[mealType] || [];
+            const isFirstNonEmpty = mealTypes.findIndex(m => (groupedEntries[m]?.length ?? 0) > 0) === index;
+            return (
+              <MealAccordionCard
+                key={mealType}
+                mealType={mealType}
+                entries={entriesForMeal}
+                totalCalories={getCaloriesForMeal(mealType, foodEntries)}
+                mealTimeLabel={mealTimeByType[mealType]}
+                onAddFood={handleAddFood}
+                onEditEntry={handleEditEntry}
+                initialExpanded={entriesForMeal.length > 0 && isFirstNonEmpty}
               />
-              <TouchableOpacity style={styles.secondaryActionButton} onPress={handleScanBarcode} activeOpacity={0.8}>
-                <MaterialCommunityIcons name="barcode-scan" size={theme.iconSize.lg} color={theme.colors.primary} />
-                <Text style={styles.secondaryActionLabel}>Scan barcode</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.mealsContainer}>
-            {mealTypes.map((mealType, index) => {
-              const entriesForMeal = groupedEntries[mealType] || [];
-              const isFirstNonEmpty = mealTypes.findIndex(m => (groupedEntries[m]?.length ?? 0) > 0) === index;
-              return (
-                <MealAccordionCard
-                  key={mealType}
-                  mealType={mealType}
-                  entries={entriesForMeal}
-                  totalCalories={getCaloriesForMeal(mealType, foodEntries)}
-                  onAddFood={handleAddFood}
-                  onEditEntry={handleEditEntry}
-                  onDeleteEntry={handleDeleteEntry}
-                  initialExpanded={entriesForMeal.length > 0 && isFirstNonEmpty}
-                />
-              );
-            })}
-          </View>
-        )}
+            );
+          })}
+        </View>
       </ScrollView>
     </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  // Container styles removed as ScreenWrapper handles them
   scrollView: {
     flex: 1,
+    backgroundColor: '#F6F1EA',
   },
   scrollViewContent: {
-    paddingBottom: 100, // Extra padding for floating tab bar
+    paddingBottom: 96,
+    backgroundColor: '#F6F1EA',
   },
   header: {
-    padding: theme.layout.screenPadding,
-    paddingTop: 60,
-    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.layout.screenPadding,
+    paddingTop: 58,
+    paddingBottom: 16,
+    backgroundColor: '#F6F1EA',
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-  titleKicker: {
+  dateLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: theme.colors.text.muted,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  title: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 32,
+    color: theme.colors.text.primary,
+    lineHeight: 36,
+    letterSpacing: -0.3,
+  },
+  titleItalic: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconCircleButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: '#E8E0D5',
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  summaryCard: {
+    marginHorizontal: theme.layout.screenPadding,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+  },
+  summaryTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  summaryBlock: {
+    flex: 1,
+  },
+  summaryBlockRight: {
+    alignItems: 'flex-end',
+    marginLeft: 14,
+  },
+  summaryLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
     color: theme.colors.text.muted,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  title: {
+  summaryCaloriesText: {
     fontFamily: theme.typography.fontFamily.display,
     fontSize: 28,
-    fontWeight: '400',
     color: theme.colors.text.primary,
-    letterSpacing: -0.8,
-    lineHeight: 30,
   },
-  titleItalic: {
-    fontFamily: theme.typography.fontFamily.displayItalic,
-    fontStyle: 'italic',
-  },
-  subtitle: {
+  summaryCaloriesInline: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 14,
-    color: theme.colors.text.secondary,
-    marginTop: 4,
+    color: theme.colors.text.muted,
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  searchButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    ...theme.shadows.sm,
-    minHeight: theme.layout.minTouchTarget,
-  },
-  scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    ...theme.shadows.sm,
-    minHeight: theme.layout.minTouchTarget,
-  },
-  scanButtonText: {
+  remainingValue: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 32,
     color: theme.colors.primary,
-    ...theme.typography.presets.captionBold,
+    lineHeight: 36,
   },
-  datePickerWrap: {
-    paddingHorizontal: theme.layout.screenPadding,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.xs,
+  progressTrack: {
+    marginTop: 8,
+    width: '100%',
+    height: 4,
+    borderRadius: 4,
+    backgroundColor: '#E6DED2',
+    overflow: 'hidden',
   },
-  summaryCard: {
-    marginHorizontal: theme.layout.screenPadding,
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    ...theme.shadows.sm,
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: theme.colors.primary,
   },
-  summaryTitle: {
-    ...theme.typography.presets.captionBold,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.sm,
-  },
-  summaryRow: {
+  macroRow: {
+    marginTop: 10,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  macroItemWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+    gap: 6,
   },
-  summaryCalories: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: theme.spacing.xs,
+  macroDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
-  summaryCaloriesValue: {
-    ...theme.typography.presets.heading3,
-    color: theme.colors.primary,
-  },
-  summaryCaloriesLabel: {
-    ...theme.typography.presets.caption,
+  macroText: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 13,
     color: theme.colors.text.secondary,
   },
-  summaryMacros: {
-    flexDirection: 'row',
-    gap: theme.spacing.lg,
-  },
-  macroItem: {
-    ...theme.typography.presets.caption,
-    color: theme.colors.text.secondary,
-    fontWeight: theme.typography.fontWeight.medium,
-  },
-  progressWrap: {
-    marginTop: theme.spacing.sm,
+  sectionLabel: {
+    marginTop: 18,
+    marginBottom: 12,
+    marginHorizontal: theme.layout.screenPadding,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: theme.colors.text.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
   mealsContainer: {
-    padding: theme.layout.screenPadding,
-    gap: theme.spacing.md,
-  },
-  emptyStateWrapper: {
-    flex: 1,
-    paddingTop: theme.spacing.lg,
-    justifyContent: 'center',
-  },
-  emptyStateContainer: {
     paddingHorizontal: theme.layout.screenPadding,
-    alignItems: 'center',
-  },
-  secondaryActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xl,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    minHeight: theme.layout.minTouchTarget,
-    ...theme.shadows.sm,
-  },
-  secondaryActionLabel: {
-    ...theme.typography.presets.captionBold,
-    color: theme.colors.primary,
+    gap: 12,
   },
 });

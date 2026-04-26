@@ -17,32 +17,22 @@ const SIZE_CONFIG = {
     large: { width: 300, height: 300 },
 };
 
-// Ovi stages: 24 development images mapped evenly across pregnancy weeks 4-40
+// Oviula stages: 14 development images mapped to specific milestone weeks.
 const OVI_STAGES: Record<number, any> = {
-    1: require('../../../assets/Ovi_stages/1.png'),
-    2: require('../../../assets/Ovi_stages/2.png'),
-    3: require('../../../assets/Ovi_stages/3.png'),
-    4: require('../../../assets/Ovi_stages/4.png'),
-    5: require('../../../assets/Ovi_stages/5.png'),
-    6: require('../../../assets/Ovi_stages/6.png'),
-    7: require('../../../assets/Ovi_stages/7.png'),
-    8: require('../../../assets/Ovi_stages/8.png'),
-    9: require('../../../assets/Ovi_stages/9.png'),
-    10: require('../../../assets/Ovi_stages/10.png'),
-    11: require('../../../assets/Ovi_stages/11.png'),
-    12: require('../../../assets/Ovi_stages/12.png'),
-    13: require('../../../assets/Ovi_stages/13.png'),
-    14: require('../../../assets/Ovi_stages/14.png'),
-    15: require('../../../assets/Ovi_stages/15.png'),
-    16: require('../../../assets/Ovi_stages/16.png'),
-    17: require('../../../assets/Ovi_stages/17.png'),
-    18: require('../../../assets/Ovi_stages/18.png'),
-    19: require('../../../assets/Ovi_stages/19.png'),
-    20: require('../../../assets/Ovi_stages/20.png'),
-    21: require('../../../assets/Ovi_stages/21.png'),
-    22: require('../../../assets/Ovi_stages/22.png'),
-    23: require('../../../assets/Ovi_stages/23.png'),
-    24: require('../../../assets/Ovi_stages/24.png'),
+    1: require('../../../assets/Oviula stages/1.png'),
+    2: require('../../../assets/Oviula stages/2.png'),
+    3: require('../../../assets/Oviula stages/3.png'),
+    4: require('../../../assets/Oviula stages/4.png'),
+    5: require('../../../assets/Oviula stages/5.png'),
+    6: require('../../../assets/Oviula stages/6.png'),
+    7: require('../../../assets/Oviula stages/7.png'),
+    8: require('../../../assets/Oviula stages/8.png'),
+    9: require('../../../assets/Oviula stages/9.png'),
+    10: require('../../../assets/Oviula stages/10.png'),
+    11: require('../../../assets/Oviula stages/11.png'),
+    12: require('../../../assets/Oviula stages/12.png'),
+    13: require('../../../assets/Oviula stages/13.png'),
+    14: require('../../../assets/Oviula stages/14.png'),
 };
 
 /**
@@ -71,7 +61,7 @@ export const FetusDevelopmentAnimation: React.FC<FetusDevelopmentAnimationProps>
     const weekData = getWeekData(week);
     const oviStage = getOviStage(week);
     const dimensions = SIZE_CONFIG[size];
-    const imageSource = OVI_STAGES[oviStage] ?? OVI_STAGES[12];
+    const imageSource = OVI_STAGES[oviStage] ?? OVI_STAGES[8];
 
     // Check accessibility settings
     useEffect(() => {

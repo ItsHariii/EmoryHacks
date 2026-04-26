@@ -179,10 +179,10 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
                             ]}>
                                 <Text style={[
                                     styles.dayName,
-                                    isTodaySelected && styles.textOnPrimary,
+                                    isTodaySelected && styles.dayNameOnPrimary,
                                     isOtherSelected && styles.textSelectedAccent,
                                 ]}>
-                                    {dayName}
+                                    {dayName.charAt(0)}
                                 </Text>
                                 <Text style={[
                                     styles.dayNumber,
@@ -215,72 +215,70 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        height: 96,
-        backgroundColor: theme.colors.background,
+        height: 78,
+        backgroundColor: '#F6F1EA',
     },
     contentContainer: {
         paddingHorizontal: (Dimensions.get('window').width - FULL_ITEM_WIDTH) / 2,
         alignItems: 'center',
-        paddingVertical: theme.spacing.md,
+        paddingVertical: 6,
     },
     touchable: {
         marginRight: DATE_ITEM_MARGIN,
     },
     dateItem: {
         width: DATE_ITEM_WIDTH,
-        height: 72,
+        height: 60,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: theme.borderRadius.lg,
-        backgroundColor: theme.colors.surface,
-        borderWidth: 1,
-        borderColor: theme.colors.borderLight,
+        borderRadius: 14,
+        backgroundColor: 'transparent',
         gap: 2,
     },
     dateItemTodaySelected: {
-        backgroundColor: theme.colors.text.primary,
-        borderColor: theme.colors.text.primary,
-        ...theme.shadows.sm,
+        backgroundColor: '#2B221B',
     },
     dateItemOtherSelected: {
-        backgroundColor: theme.colors.surface,
-        borderWidth: 2,
-        borderColor: theme.colors.text.primary,
+        backgroundColor: 'rgba(43, 34, 27, 0.08)',
     },
     dateItemTodayUnselected: {
-        borderColor: theme.colors.border,
+        backgroundColor: 'transparent',
     },
     dayName: {
-        fontFamily: theme.typography.fontFamily.medium,
-        fontSize: theme.typography.fontSize.xs,
-        color: theme.colors.text.secondary,
+        fontFamily: theme.typography.fontFamily.semibold,
+        fontSize: 10,
+        color: '#9C8E80',
+        letterSpacing: 0.5,
     },
     dayNumber: {
-        fontFamily: theme.typography.fontFamily.bold,
-        fontSize: theme.typography.fontSize.xl,
-        color: theme.colors.text.primary,
+        fontFamily: theme.typography.fontFamily.display,
+        fontSize: 18,
+        color: '#2B221B',
+        marginTop: 2,
     },
     textOnPrimary: {
-        color: theme.colors.text.inverse,
+        color: '#FFFFFF',
+    },
+    dayNameOnPrimary: {
+        color: 'rgba(255,255,255,0.6)',
     },
     textSelectedAccent: {
-        color: theme.colors.text.primary,
+        color: '#2B221B',
     },
     todayButton: {
-        width: 52,
-        height: 72,
+        width: 60,
+        height: 60,
         justifyContent: 'center',
         alignItems: 'center',
-        borderRadius: theme.borderRadius.lg,
-        backgroundColor: theme.colors.surface,
-        borderWidth: 1,
-        borderColor: theme.colors.borderLight,
+        borderRadius: 14,
+        backgroundColor: 'rgba(43, 34, 27, 0.06)',
         marginLeft: DATE_ITEM_MARGIN,
         gap: 4,
     },
     todayButtonText: {
         fontFamily: theme.typography.fontFamily.semibold,
         fontSize: 10,
-        color: theme.colors.text.secondary,
+        color: '#6A5D52',
+        letterSpacing: 0.5,
     },
 });

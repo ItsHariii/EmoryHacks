@@ -378,6 +378,7 @@ export const foodAPI = {
     serving_size: number;
     serving_unit: string;
     meal_type: MealType;
+    consumed_at?: string;
   }): Promise<FoodEntry> => {
     const response = await api.post('/food/log', foodData);
     // Invalidate nutrition cache so dashboard updates
@@ -388,7 +389,31 @@ export const foodAPI = {
   getFoodEntries: async (date?: string): Promise<FoodEntry[]> => {
     const params = date ? { date } : {};
     const response = await api.get('/food/log', { params });
-    return response.data;
+    const raw: any[] = Array.isArray(response.data) ? response.data : [];
+    return raw.map((entry: any) => ({
+      id: entry.id,
+      food_id: entry.food_id ?? entry.food?.id ?? '',
+      food_name: entry.food_name ?? entry.food?.name ?? 'Unknown food',
+      quantity: entry.quantity ?? entry.serving_size ?? 1,
+      serving_size: entry.serving_unit
+        ? `${entry.serving_size ?? 1} ${entry.serving_unit}`
+        : String(entry.serving_size ?? '100g'),
+      meal_type: entry.meal_type ?? 'snack',
+      calories_logged: entry.calories_logged
+        ?? entry.food?.calories * (entry.serving_size ?? 1)
+        ?? 0,
+      protein_logged: entry.protein_logged
+        ?? (entry.nutrients_logged?.protein)
+        ?? undefined,
+      carbs_logged: entry.carbs_logged
+        ?? (entry.nutrients_logged?.carbs)
+        ?? undefined,
+      fat_logged: entry.fat_logged
+        ?? (entry.nutrients_logged?.fat)
+        ?? undefined,
+      logged_at: entry.consumed_at ?? entry.logged_at ?? entry.created_at ?? '',
+      safety_status: entry.safety_status ?? entry.food?.safety_status,
+    }));
   },
 
   updateFoodEntry: async (entryId: string, updates: Partial<FoodEntry>): Promise<FoodEntry> => {

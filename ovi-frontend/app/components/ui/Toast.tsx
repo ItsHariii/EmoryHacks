@@ -157,11 +157,13 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   icon: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.typography.fontSize.lg,
     color: theme.colors.text.inverse,
     marginRight: theme.spacing.sm,
   },
   message: {
+    fontFamily: theme.typography.fontFamily.medium,
     flex: 1,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.inverse,

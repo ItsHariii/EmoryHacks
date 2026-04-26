@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
         gap: theme.spacing.sm,
     },
     title: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: 20,
         fontWeight: '700',
         color: theme.colors.text.primary,
@@ -183,11 +184,13 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     value: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: 36,
         fontWeight: '800',
         color: theme.colors.text.primary,
     },
     unit: {
+        fontFamily: theme.typography.fontFamily.semibold,
         fontSize: 16,
         color: theme.colors.text.secondary,
         fontWeight: '600',
@@ -198,6 +201,7 @@ const styles = StyleSheet.create({
         gap: theme.spacing.xs,
     },
     input: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: 36,
         fontWeight: '800',
         color: theme.colors.text.primary,
@@ -216,6 +220,7 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.primary,
     },
     buttonText: {
+        fontFamily: theme.typography.fontFamily.medium,
         fontSize: theme.typography.fontSize.sm,
         fontWeight: '600',
         color: theme.colors.text.primary,

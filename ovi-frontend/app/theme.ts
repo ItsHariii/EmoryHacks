@@ -208,21 +208,21 @@ export const theme = {
     // Named presets for consistent text styling
     presets: {
       heading1: {
-        fontFamily: 'InstrumentSans_700Bold',
+        fontFamily: 'Fraunces_400Regular',
         fontSize: 48,
         fontWeight: '700' as const,
         lineHeight: 52,
         letterSpacing: -1,
       },
       heading2: {
-        fontFamily: 'InstrumentSans_700Bold',
+        fontFamily: 'Fraunces_400Regular',
         fontSize: 24,
         fontWeight: '700' as const,
         lineHeight: 30,
         letterSpacing: -0.5,
       },
       heading3: {
-        fontFamily: 'InstrumentSans_600SemiBold',
+        fontFamily: 'Fraunces_400Regular',
         fontSize: 20,
         fontWeight: '600' as const,
         lineHeight: 26,

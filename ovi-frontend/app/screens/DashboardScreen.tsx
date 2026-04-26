@@ -8,7 +8,7 @@ import {
   Animated,
   TouchableOpacity,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../theme';
@@ -58,6 +58,7 @@ const TAB_BAR_BOTTOM_MARGIN = 20;
 
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const { bottom: safeBottom } = useSafeAreaInsets();
   const { checkPermissions } = useNotifications();
 
@@ -180,6 +181,18 @@ export const DashboardScreen: React.FC = () => {
       checkPermissions();
     }, [loadAllData, selectedDate])
   );
+
+  // Explicit refresh trigger when returning from food logging flows.
+  useEffect(() => {
+    if (!route.params?.refresh) return;
+
+    const today = new Date();
+    setSelectedDate(today);
+    loadAllData(today);
+
+    // Clear one-shot refresh flag to avoid repeated reloads.
+    (navigation as any).setParams?.({ refresh: false, refreshAt: undefined });
+  }, [route.params?.refresh, route.params?.refreshAt, loadAllData, navigation]);
 
   // Handle date selection with fade animation
   const handleDateSelect = useCallback((date: Date) => {

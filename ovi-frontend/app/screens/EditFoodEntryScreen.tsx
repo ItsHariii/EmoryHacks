@@ -12,8 +12,58 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
-import { HeaderBar } from '../components/layout/HeaderBar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../theme';
+
+const NavBar: React.FC<{ title: string; kicker?: string; onBack: () => void; right?: React.ReactNode }> = ({ title, kicker, onBack, right }) => {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[navBarStyles.bar, { paddingTop: Math.max(insets.top, 12) + 4 }]}>
+      <TouchableOpacity onPress={onBack} style={navBarStyles.backBtn} accessibilityLabel="Go back">
+        <MaterialCommunityIcons name="chevron-left" size={20} color="#2B221B" />
+      </TouchableOpacity>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        {kicker && <Text style={navBarStyles.kicker}>{kicker}</Text>}
+        <Text style={navBarStyles.title} numberOfLines={1}>{title}</Text>
+      </View>
+      {right}
+    </View>
+  );
+};
+
+const navBarStyles = StyleSheet.create({
+  bar: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  kicker: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 10,
+    color: '#9C8E80',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  title: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 20,
+    color: '#2B221B',
+    letterSpacing: -0.3,
+    marginTop: 2,
+  },
+});
 import { SafetyTag } from '../components/ui/SafetyTag';
 import { Button } from '../components/ui/Button';
 import { NutritionPreview } from '../components/food/NutritionPreview';
@@ -30,6 +80,7 @@ interface RouteParams {
   food?: FoodItem;
   entry?: FoodEntry;
   mealType?: MealType;
+  date?: string;
   isNewEntry?: boolean;
 }
 
@@ -45,7 +96,7 @@ export const EditFoodEntryScreen: React.FC = () => {
   const { showToast } = useToast();
   const { celebrate, dismissCelebration, currentCelebration, showCelebration } = useCelebrations();
 
-  const { food, entry, mealType, isNewEntry = false } = route.params as RouteParams;
+  const { food, entry, mealType, date, isNewEntry = false } = route.params as RouteParams;
 
   // Use custom hook for food entry logic
   const {
@@ -100,6 +151,14 @@ export const EditFoodEntryScreen: React.FC = () => {
 
       const servingSizeNum = parseFloat(match[1]);
       const servingUnit = match[2] || 'g';
+      const consumedAt = date
+        ? (() => {
+          const selected = new Date(date);
+          const offset = selected.getTimezoneOffset() * 60000;
+          const localDate = new Date(selected.getTime() - offset).toISOString().split('T')[0];
+          return `${localDate}T12:00:00`;
+        })()
+        : undefined;
 
       if (isNewEntry) {
         // Create new food entry
@@ -108,6 +167,7 @@ export const EditFoodEntryScreen: React.FC = () => {
           serving_size: servingSizeNum,
           serving_unit: servingUnit,
           meal_type: selectedMealType,
+          consumed_at: consumedAt,
         });
         showToast('Food logged successfully!', 'success');
 
@@ -125,7 +185,7 @@ export const EditFoodEntryScreen: React.FC = () => {
 
       // Navigate back
       if (isNewEntry) {
-        (navigation as any).navigate('Dashboard', { refresh: true });
+        (navigation as any).navigate('Dashboard', { refresh: true, refreshAt: Date.now() });
       } else {
         navigation.goBack();
       }
@@ -187,42 +247,69 @@ export const EditFoodEntryScreen: React.FC = () => {
     { value: 'snack', label: 'Snack' },
   ];
 
+  // Compute meal label for the CTA button
+  const ctaMealLabel = (selectedMealType || 'meal').charAt(0).toUpperCase() + (selectedMealType || 'meal').slice(1);
+  const ctaKcal = Math.round(nutrition?.calories || 0);
+
   return (
-    <ScreenWrapper>
-      <HeaderBar
-        title={isNewEntry ? 'Log Food' : 'Edit Entry'}
-        showBack
+    <ScreenWrapper backgroundColor="#F6F1EA">
+      <NavBar
+        title={currentFood.name.split(',')[0] || (isNewEntry ? 'Food details' : 'Edit entry')}
+        kicker={isNewEntry ? 'Food details' : 'Edit entry'}
         onBack={() => navigation.goBack()}
-        rightActions={[
-          {
-            icon: 'content-save',
-            onPress: handleSave,
-            color: loading || !isValid ? theme.colors.text.muted : theme.colors.primary,
-            accessibilityLabel: loading ? 'Saving...' : 'Save food entry',
-          },
-        ]}
+        right={
+          <TouchableOpacity style={styles.iconCircle} accessibilityLabel="Favorite">
+            <MaterialCommunityIcons name="star-outline" size={18} color="#9C8E80" />
+          </TouchableOpacity>
+        }
       />
 
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-        {/* Food Info */}
-        <View style={styles.foodInfo}>
-          <View style={styles.foodHeader}>
-            <MaterialCommunityIcons
-              name="food-apple"
-              size={theme.iconSize.lg}
-              color={theme.colors.primary}
-              style={styles.foodNameIcon}
-            />
-            <View style={styles.foodTitleContainer}>
-              <Text style={styles.foodName}>{currentFood.name}</Text>
-              {currentFood.brand && (
-                <Text style={styles.foodBrand}>{currentFood.brand}</Text>
-              )}
-            </View>
-            {currentFood.safety_status && (
-              <SafetyTag status={currentFood.safety_status} size="small" />
+        {/* Food Hero */}
+        <View style={styles.heroCard}>
+          <Text style={styles.heroBrand}>
+            {currentFood.brand || 'Generic'}{currentFood.serving_unit ? ` · ${currentFood.serving_unit}` : ''}
+          </Text>
+          <Text style={styles.heroName}>
+            {currentFood.name.split(',')[0]}
+            {currentFood.name.includes(',') && (
+              <Text>
+                {','}{'\n'}
+                <Text style={styles.heroNameItalic}>{currentFood.name.split(',').slice(1).join(',').trim()}</Text>
+              </Text>
             )}
+          </Text>
+
+          <View style={styles.heroKcalRow}>
+            <Text style={styles.heroKcal}>{Math.round(currentFood.calories_per_100g || 0)}</Text>
+            <Text style={styles.heroKcalLabel}>kcal per serving</Text>
           </View>
+
+          {nutrition && (
+            <View style={styles.macroBars}>
+              {[
+                { label: 'PROT', value: Math.round(nutrition.protein || 0), color: '#B84C3F', wash: '#F4E4DF' },
+                { label: 'CARB', value: Math.round(nutrition.carbs || 0), color: '#D19B4E', wash: '#F5EAD7' },
+                { label: 'FATS', value: Math.round(nutrition.fat || 0), color: '#8A9A7B', wash: '#E9EEE2' },
+              ].map(m => (
+                <View key={m.label} style={{ flex: 1 }}>
+                  <View style={[styles.macroBarTrack, { backgroundColor: m.wash }]}>
+                    <View style={{ width: '60%', height: '100%', backgroundColor: m.color, borderRadius: 2 }} />
+                  </View>
+                  <View style={styles.macroValueRow}>
+                    <Text style={styles.macroValue}>{m.value}g</Text>
+                    <Text style={styles.macroLabel}>{m.label}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {currentFood.safety_status && (
+            <View style={{ marginTop: 14 }}>
+              <SafetyTag status={currentFood.safety_status} size="small" />
+            </View>
+          )}
         </View>
 
         {/* Meal Type Selector - Chip Pills */}

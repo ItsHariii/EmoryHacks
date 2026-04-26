@@ -82,9 +82,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   calories: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+    color: theme.colors.text.secondary,
   },
   caloriesLabel: {
     fontSize: theme.fontSize.xs,

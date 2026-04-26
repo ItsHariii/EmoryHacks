@@ -161,14 +161,7 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     });
 
     if (!isFocused && !event.defaultPrevented) {
-      // For FoodLogging tab, navigate to SearchFood screen explicitly
-      if (route.name === 'FoodLogging') {
-        navigation.navigate('FoodLogging' as never, {
-          screen: 'SearchFood',
-        } as never);
-      } else {
-        navigation.navigate(route.name);
-      }
+      navigation.navigate(route.name);
     }
   };
 
@@ -345,29 +338,24 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: BOTTOM_MARGIN,
-    left: HORIZONTAL_MARGIN,
-    right: HORIZONTAL_MARGIN,
+    left: HORIZONTAL_MARGIN - 4,
+    right: HORIZONTAL_MARGIN - 4,
     height: TAB_BAR_HEIGHT,
-    borderRadius: 35, // Fully rounded
-    ...theme.shadows.lg,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
+    borderRadius: 35,
   },
   tabBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 10,
-    backgroundColor: theme.colors.surfaceGlass,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 35,
-    borderWidth: 1,
-    borderColor: theme.colors.surfaceGlassBorder,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
   },
   androidTabBar: {
-    backgroundColor: '#FFF',
-    elevation: 8,
+    backgroundColor: '#FFFFFF',
   },
   tab: {
     flex: 1,
@@ -380,15 +368,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 44,
     paddingVertical: 4,
+    gap: 3,
   },
   tabLabel: {
-    fontFamily: theme.typography.fontFamily.medium,
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 10,
-    color: theme.colors.text.secondary,
-    marginTop: 2,
+    color: '#9C8E80',
+    letterSpacing: 0.2,
   },
   tabLabelFocused: {
-    color: theme.colors.primary,
+    color: '#B84C3F',
     fontFamily: theme.typography.fontFamily.semibold,
   },
   badge: {
@@ -425,21 +414,18 @@ const styles = StyleSheet.create({
     marginTop: -30, // Float above
   },
   cameraButton: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    ...theme.shadows.md,
-    shadowColor: 'rgba(43, 34, 27, 0.25)',
-    shadowOpacity: 0.25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   cameraGradient: {
     width: '100%',
     height: '100%',
-    borderRadius: 29,
+    borderRadius: 28,
     backgroundColor: '#2B221B',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: theme.colors.background,
+    borderColor: '#F6F1EA',
   },
 });

@@ -330,6 +330,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   cancelButtonText: {
+    fontFamily: theme.typography.fontFamily.semibold,
     color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.bold,
@@ -393,12 +394,14 @@ const styles = StyleSheet.create({
     ...theme.shadows.card,
   },
   analyzingText: {
+    fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     marginTop: theme.spacing.lg,
   },
   analyzingSubtext: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,
@@ -443,12 +446,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   foodName: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   confidence: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     fontWeight: theme.fontWeight.medium,
@@ -466,12 +471,14 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderLight,
   },
   infoLabel: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
     fontWeight: theme.fontWeight.medium,
   },
   infoValue: {
+    fontFamily: theme.typography.fontFamily.bold,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -486,6 +493,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.borderLight,
   },
   sectionTitle: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -505,6 +513,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
   },
   nutritionLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.xs,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
@@ -512,6 +521,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fontWeight.bold,
   },
   nutritionValue: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.primary,
@@ -537,6 +547,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.full,
   },
   ingredientText: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.sm,
     color: theme.colors.primary,
     fontWeight: theme.fontWeight.medium,
@@ -552,6 +563,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.warningDark,
   },
   warningText: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     fontSize: theme.fontSize.sm,
     color: theme.colors.warningDark,
@@ -585,6 +597,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   retakeButtonText: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.primary,
     fontWeight: theme.fontWeight.bold,
@@ -600,6 +613,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   logButtonText: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.inverse,
     fontWeight: theme.fontWeight.bold,
@@ -631,6 +645,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.card,
   },
   errorTitle: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -638,6 +653,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   errorMessage: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',

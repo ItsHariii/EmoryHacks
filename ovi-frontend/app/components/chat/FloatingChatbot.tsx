@@ -358,11 +358,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   headerTitle: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold as any,
     color: theme.colors.text.primary,
   },
   headerSubtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xs,
     color: theme.colors.text.secondary,
   },
@@ -405,6 +407,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   messageText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     lineHeight: 20,
     padding: theme.spacing.sm,
@@ -434,6 +437,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   nutritionBadgeText: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.xs,
     color: theme.colors.primary,
     fontWeight: theme.fontWeight.medium as any,
@@ -448,6 +452,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
   },
   loadingText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     fontStyle: 'italic',
@@ -466,6 +471,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   input: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.lg,
@@ -490,6 +496,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   disclaimer: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xs,
     color: theme.colors.text.muted,
     textAlign: 'center',

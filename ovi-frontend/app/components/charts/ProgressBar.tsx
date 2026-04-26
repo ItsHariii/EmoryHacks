@@ -74,11 +74,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   label: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text.primary,
   },
   numbers: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text.secondary,

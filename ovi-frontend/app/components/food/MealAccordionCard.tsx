@@ -1,18 +1,16 @@
-// @ts-nocheck
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../theme';
-import { FoodEntryCard } from './FoodEntryCard';
-import { FoodEntry, MealType } from '../types';
+import { FoodEntry, MealType } from '../../types';
 
 interface MealAccordionCardProps {
   mealType: MealType;
   entries: FoodEntry[];
   totalCalories: number;
+  mealTimeLabel: string;
   onAddFood: (mealType: MealType) => void;
   onEditEntry?: (entry: FoodEntry) => void;
-  onDeleteEntry?: (entryId: string) => void;
   /** When true, the accordion starts expanded (e.g. first non-empty meal of the day). */
   initialExpanded?: boolean;
 }
@@ -27,92 +25,101 @@ const getMealDisplayName = (mealType: MealType): string => {
   return names[mealType];
 };
 
-const getMealIconName = (mealType: MealType): 'food-apple' | 'white-balance-sunny' | 'weather-night' | 'fruit-cherries' => {
-  const icons = {
-    breakfast: 'food-apple' as const,
-    lunch: 'white-balance-sunny' as const,
-    dinner: 'weather-night' as const,
-    snack: 'fruit-cherries' as const,
-  };
-  return icons[mealType];
-};
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export const MealAccordionCard: React.FC<MealAccordionCardProps> = ({
   mealType,
   entries,
   totalCalories,
+  mealTimeLabel,
   onAddFood,
   onEditEntry,
-  onDeleteEntry,
   initialExpanded = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
-  const [animation] = useState(new Animated.Value(initialExpanded ? 1 : 0));
+  const animation = useRef(new Animated.Value(initialExpanded ? 1 : 0)).current;
+  const itemCount = entries.length;
+  const isSnack = mealType === 'snack';
 
   const toggleExpanded = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const toValue = isExpanded ? 0 : 1;
     setIsExpanded(!isExpanded);
 
     Animated.timing(animation, {
       toValue,
-      duration: 300,
-      useNativeDriver: false as boolean,
+      duration: 220,
+      useNativeDriver: true,
     }).start();
   };
 
   const rotateInterpolate = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
+    outputRange: ['0deg', '90deg'],
   });
+
+  const itemText = `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
+
+  const totalCaloriesDisplay = useMemo(() => `${Math.round(totalCalories)} kcal`, [totalCalories]);
+  const isEmptySnack = isSnack && itemCount === 0;
+
+  const addLabel = `Add to ${mealType === 'snack' ? 'snacks' : mealType}`;
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.header} onPress={toggleExpanded} activeOpacity={0.7}>
-        <View style={styles.headerLeft}>
-          <MaterialCommunityIcons
-            name={getMealIconName(mealType)}
-            size={theme.iconSize.xl}
-            color={theme.colors.primary}
-            style={styles.mealIcon}
-          />
-          <View style={styles.mealInfo}>
+        <View style={styles.headerMain}>
+          <View style={styles.mealTitleRow}>
             <Text style={styles.mealName}>{getMealDisplayName(mealType)}</Text>
-            <Text style={styles.entryCount}>
-              {entries.length} {entries.length === 1 ? 'item' : 'items'}
-            </Text>
+            <Text style={styles.mealTime}>{mealTimeLabel}</Text>
           </View>
+          <Text style={[styles.metaText, isEmptySnack && styles.metaTextItalic]}>
+            {isEmptySnack ? 'Nothing logged yet' : `${totalCaloriesDisplay}${itemCount > 0 ? ` · ${itemText}` : ''}`}
+          </Text>
         </View>
-        <View style={styles.headerRight}>
-          <Text style={styles.calories}>{Math.round(totalCalories)}</Text>
-          <Text style={styles.caloriesLabel}>cal</Text>
+        {!isExpanded && isSnack && entries.length === 0 ? (
+          <TouchableOpacity style={styles.snackAddCircle} onPress={() => onAddFood(mealType)} activeOpacity={0.8}>
+            <MaterialCommunityIcons name="plus" size={16} color={theme.colors.primary} />
+          </TouchableOpacity>
+        ) : (
           <Animated.View style={[styles.chevronWrap, { transform: [{ rotate: rotateInterpolate }] }]}>
-            <MaterialCommunityIcons name="chevron-down" size={theme.iconSize.md} color={theme.colors.text.secondary} />
+            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.text.muted} />
           </Animated.View>
-        </View>
+        )}
       </TouchableOpacity>
 
       {isExpanded && (
         <View style={styles.content}>
-          {entries.length > 0 ? (
-            entries.map((entry) => (
-              <FoodEntryCard
-                key={entry.id}
-                entry={entry}
-                onEdit={onEditEntry}
-                onDelete={onDeleteEntry}
-              />
-            ))
-          ) : (
-            <Text style={styles.emptyText}>No foods logged yet</Text>
+          {entries.length > 0 && entries.map((entry, index) => (
+            <TouchableOpacity
+              key={entry.id}
+              style={styles.entryRow}
+              onPress={onEditEntry ? () => onEditEntry(entry) : undefined}
+              activeOpacity={onEditEntry ? 0.7 : 1}
+            >
+              <View style={styles.entryInfo}>
+                <Text style={styles.foodName}>{entry.food_name}</Text>
+                <Text style={styles.servingInfo}>
+                  {entry.quantity} {entry.serving_size}
+                </Text>
+              </View>
+              <Text style={styles.foodCalories}>{Math.round(entry.calories_logged)} kcal</Text>
+              {index < entries.length - 1 && <View style={styles.rowDivider} />}
+            </TouchableOpacity>
+          ))}
+
+          {entries.length === 0 && (
+            <Text style={styles.emptyText}>Nothing logged yet</Text>
           )}
 
           <TouchableOpacity
-            style={styles.addButton}
+            style={styles.addTextButton}
             onPress={() => onAddFood(mealType)}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
-            <MaterialCommunityIcons name="plus" size={theme.iconSize.lg} color={theme.colors.text.inverse} style={styles.addButtonIcon} />
-            <Text style={styles.addButtonText}>Add Food</Text>
+            <Text style={styles.addTextButtonLabel}>+ {addLabel}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -122,83 +129,112 @@ export const MealAccordionCard: React.FC<MealAccordionCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.card,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.card,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
+    alignItems: 'flex-start',
+    paddingHorizontal: 18,
+    paddingVertical: 16,
   },
-  headerLeft: {
+  headerMain: {
+    flex: 1,
+  },
+  mealTitleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  mealIcon: {
-    marginRight: theme.spacing.md,
-  },
-  mealInfo: {
-    flex: 1,
+    alignItems: 'baseline',
   },
   mealName: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.semibold,
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 18,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    marginRight: 8,
   },
-  entryCount: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
-  headerRight: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-  },
-  calories: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
-  },
-  caloriesLabel: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-  },
-  content: {
-    padding: theme.spacing.md,
-    paddingTop: 0,
-  },
-  emptyText: {
-    fontSize: theme.fontSize.md,
+  mealTime: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 14,
     color: theme.colors.text.muted,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginVertical: theme.spacing.lg,
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginTop: theme.spacing.sm,
-    minHeight: theme.layout.minTouchTarget,
-    ...theme.shadows.sm,
+  metaText: {
+    marginTop: 2,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 14,
+    color: theme.colors.text.secondary,
   },
-  addButtonIcon: {},
-  addButtonText: {
-    ...theme.typography.presets.captionBold,
-    color: theme.colors.text.inverse,
+  metaTextItalic: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    color: theme.colors.text.muted,
   },
   chevronWrap: {
-    marginLeft: theme.spacing.sm,
+    marginTop: 8,
+    marginLeft: 10,
+  },
+  snackAddCircle: {
+    marginTop: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: theme.colors.primarySoft,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    paddingHorizontal: 18,
+    paddingBottom: 14,
+    paddingTop: 2,
+  },
+  entryRow: {
+    paddingVertical: 10,
+    position: 'relative',
+  },
+  entryInfo: {
+    marginRight: 96,
+  },
+  foodName: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 14,
+    color: theme.colors.text.primary,
+  },
+  servingInfo: {
+    marginTop: 2,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 14,
+    color: theme.colors.text.muted,
+  },
+  foodCalories: {
+    position: 'absolute',
+    right: 0,
+    top: 10,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 16,
+    color: theme.colors.text.primary,
+  },
+  rowDivider: {
+    marginTop: 12,
+    height: 1,
+    backgroundColor: '#EEE6DA',
+  },
+  emptyText: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontSize: 14,
+    color: theme.colors.text.muted,
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  addTextButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 34,
+    marginTop: 6,
+  },
+  addTextButtonLabel: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 14,
+    color: theme.colors.primary,
   },
 });

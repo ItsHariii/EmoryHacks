@@ -3,11 +3,11 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import { Card } from '../ui/Card';
-import { IconBadge } from './icons/IconBadge';
-import { TRIMESTER_ICONS, FEATURE_ICONS, ICON_BACKGROUNDS } from './icons/iconConstants';
+import { IconBadge } from '../icons/IconBadge';
+import { TRIMESTER_ICONS, FEATURE_ICONS, ICON_BACKGROUNDS } from '../icons/iconConstants';
 import { theme } from '../../theme';
-import { getTrimesterName, getWeekTip } from '../utils/pregnancyCalculations';
-import { createFadeInSlideUpAnimation, ANIMATION_CONFIG } from '../utils/animations';
+import { getTrimesterName, getWeekTip } from '../../utils/pregnancyCalculations';
+import { createFadeInSlideUpAnimation, ANIMATION_CONFIG } from '../../utils/animations';
 
 interface PregnancyWeekDisplayProps {
   week: number;

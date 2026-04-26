@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   label: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.medium,
     color: theme.colors.text.primary,
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.xs,
   },
   input: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
@@ -204,12 +206,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary, // Or inverse depending on background
   },
   helperText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,
     marginLeft: theme.spacing.xs,
   },
   errorText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.error,
     marginTop: theme.spacing.xs,

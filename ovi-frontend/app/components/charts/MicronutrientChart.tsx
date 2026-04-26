@@ -13,11 +13,7 @@ interface MicronutrientChartProps {
   onNutrientPress?: (nutrient: MicronutrientData) => void;
 }
 
-const getProgressColor = (percent: number) => {
-  if (percent >= 90) return theme.colors.success;
-  if (percent >= 70) return theme.colors.warning;
-  return theme.colors.error;
-};
+const getProgressColor = (_percent: number) => theme.colors.primary;
 
 const getIconName = (name: string) => {
   const key = name.toLowerCase().replace(/\s+/g, '_');
@@ -234,11 +230,7 @@ const NutrientDetailModal: React.FC<NutrientDetailModalProps> = ({
 
   if (!nutrient) return null;
 
-  const getBarColor = (percent: number): string => {
-    if (percent >= 90) return theme.colors.success;
-    if (percent >= 70) return theme.colors.warning;
-    return theme.colors.error;
-  };
+  const getBarColor = (_percent: number): string => theme.colors.primary;
 
   return (
     <Modal
@@ -429,9 +421,9 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   suggestionCard: {
-    backgroundColor: theme.colors.accentLight,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.colors.accent,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 0.5,
+    borderColor: theme.colors.border,
   },
   suggestionHeader: {
     flexDirection: 'row',

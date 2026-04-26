@@ -345,6 +345,7 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -359,6 +360,7 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xxl,
   },
   emptyText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
@@ -381,17 +383,20 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   summaryCalorieValue: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: 40,
     fontWeight: '800',
     color: theme.colors.text.primary,
   },
   summaryCalorieLabel: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: 18,
     color: theme.colors.text.secondary,
     fontWeight: '600',
     marginLeft: 6,
   },
   summaryTarget: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 14,
     color: theme.colors.text.muted,
   },
@@ -399,6 +404,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   sectionHeader: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -416,12 +422,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyCardText: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text.primary,
     marginTop: theme.spacing.md,
   },
   emptyCardSubtext: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,
@@ -430,6 +438,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   mealLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.secondary,
@@ -447,11 +456,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   foodName: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text.primary,
   },
   foodMacros: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginTop: 4,
@@ -470,6 +481,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   macroSourceLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
@@ -478,6 +490,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   macroSourceItem: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
   },
@@ -489,6 +502,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   infoLinkText: {
+    fontFamily: theme.typography.fontFamily.medium,
     fontSize: theme.fontSize.md,
     color: theme.colors.primary,
     fontWeight: theme.fontWeight.medium,

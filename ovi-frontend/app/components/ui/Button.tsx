@@ -219,6 +219,7 @@ const styles = StyleSheet.create({
   },
   // Text Styles
   text: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontWeight: theme.typography.fontWeight.semibold,
     textAlign: 'center',
   },

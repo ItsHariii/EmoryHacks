@@ -7,12 +7,6 @@ import { StatusBar } from 'expo-status-bar';
 import * as Notifications from 'expo-notifications';
 import {
   useFonts,
-  DMSans_400Regular,
-  DMSans_500Medium,
-  DMSans_600SemiBold,
-  DMSans_700Bold,
-} from '@expo-google-fonts/dm-sans';
-import {
   Fraunces_300Light,
   Fraunces_400Regular,
   Fraunces_400Regular_Italic,
@@ -46,7 +40,7 @@ const NotificationSettingsScreen = React.lazy(() => import('./app/screens/Notifi
 import { TrimesterTrackerScreen } from './app/screens/TrimesterTrackerScreen';
 
 import { useAuth } from './app/contexts/AuthContext';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
 import { theme } from './app/theme';
 import { setupNotificationListener } from './app/services/notificationService';
 import { CustomTabBar } from './app/components/layout/CustomTabBar';
@@ -148,19 +142,19 @@ function FoodStack() {
   return (
     <FoodStackNavigator.Navigator
       screenOptions={enhancedStackScreenOptions}
-      initialRouteName="SearchFood"
+      initialRouteName="FoodLoggingMain"
     >
       <FoodStackNavigator.Screen
-        name="SearchFood"
-        component={SearchFoodScreenWrapped}
+        name="FoodLoggingMain"
+        component={FoodLoggingScreenWrapped}
         options={{
           ...slideFromRightTransition,
           ...swipeBackGestureConfig,
         }}
       />
       <FoodStackNavigator.Screen
-        name="FoodLoggingMain"
-        component={FoodLoggingScreenWrapped}
+        name="SearchFood"
+        component={SearchFoodScreenWrapped}
         options={{
           ...slideFromRightTransition,
           ...swipeBackGestureConfig,
@@ -205,6 +199,7 @@ function JournalStack() {
         },
         headerTintColor: theme.colors.text.inverse,
         headerTitleStyle: {
+          fontFamily: theme.typography.fontFamily.semibold,
           fontWeight: theme.fontWeight.bold,
         },
         ...enhancedStackScreenOptions,
@@ -304,6 +299,7 @@ function AppNavigator() {
               },
               headerTintColor: theme.colors.text.inverse,
               headerTitleStyle: {
+                fontFamily: theme.typography.fontFamily.semibold,
                 fontWeight: theme.fontWeight.bold,
               },
               title: 'Notification Settings',
@@ -320,6 +316,7 @@ function AppNavigator() {
               },
               headerTintColor: theme.colors.text.inverse,
               headerTitleStyle: {
+                fontFamily: theme.typography.fontFamily.semibold,
                 fontWeight: theme.fontWeight.bold,
               },
               title: 'Profile',
@@ -349,10 +346,6 @@ export default function App() {
   const navigationRef = useRef<any>(null);
 
   const [fontsLoaded, fontError] = useFonts({
-    DMSans_400Regular,
-    DMSans_500Medium,
-    DMSans_600SemiBold,
-    DMSans_700Bold,
     Fraunces_300Light,
     Fraunces_400Regular,
     Fraunces_400Regular_Italic,
@@ -363,6 +356,15 @@ export default function App() {
     InstrumentSans_600SemiBold,
     InstrumentSans_700Bold,
   });
+
+  useEffect(() => {
+    // Global default text families to prevent system fallback fonts.
+    Text.defaultProps = Text.defaultProps || {};
+    Text.defaultProps.style = [{ fontFamily: theme.typography.fontFamily.regular }, Text.defaultProps.style];
+
+    TextInput.defaultProps = TextInput.defaultProps || {};
+    TextInput.defaultProps.style = [{ fontFamily: theme.typography.fontFamily.regular }, TextInput.defaultProps.style];
+  }, []);
 
   useEffect(() => {
     // Set up notification listener for handling notification taps

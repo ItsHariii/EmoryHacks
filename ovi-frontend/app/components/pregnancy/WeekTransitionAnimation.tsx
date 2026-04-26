@@ -107,7 +107,7 @@ export const WeekTransitionModal: React.FC<WeekTransitionModalProps> = ({
         y: new Animated.Value(SCREEN_HEIGHT / 3),
         opacity: new Animated.Value(1),
         rotation: new Animated.Value(0),
-        icon: ['star', 'heart', 'sparkles', 'star-four-points'][i % 4],
+        icon: ['star', 'heart', 'creation', 'star-four-points'][i % 4],
       }));
       setParticles(newParticles);
 

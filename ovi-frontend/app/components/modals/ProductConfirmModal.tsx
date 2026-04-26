@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.display,
     fontSize: theme.fontSize.xxl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.primary,
@@ -133,12 +134,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   productName: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   productBrand: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.md,
@@ -150,12 +153,14 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   nutritionLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.sm,
   },
   nutritionText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
@@ -176,6 +181,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   cancelModalButtonText: {
+    fontFamily: theme.typography.fontFamily.semibold,
     color: theme.colors.text.primary,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
@@ -184,6 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   confirmButtonText: {
+    fontFamily: theme.typography.fontFamily.semibold,
     color: theme.colors.text.light,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
@@ -207,12 +214,14 @@ const styles = StyleSheet.create({
     borderColor: '#F44336',
   },
   safetyBadgeText: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   safetyNotes: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,

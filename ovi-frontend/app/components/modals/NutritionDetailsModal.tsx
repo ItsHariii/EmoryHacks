@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
         borderBottomColor: theme.colors.border,
     },
     modalTitle: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: theme.fontSize.xl,
         fontWeight: theme.fontWeight.bold,
         color: theme.colors.text.primary,
@@ -184,11 +185,13 @@ const styles = StyleSheet.create({
         gap: theme.spacing.sm,
     },
     sectionHeader: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: theme.fontSize.lg,
         fontWeight: theme.fontWeight.bold,
         color: theme.colors.text.primary,
     },
     sectionDescription: {
+        fontFamily: theme.typography.fontFamily.regular,
         fontSize: theme.fontSize.md,
         color: theme.colors.text.secondary,
         marginBottom: theme.spacing.md,
@@ -201,12 +204,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     targetLabel: {
+        fontFamily: theme.typography.fontFamily.semibold,
         fontSize: theme.fontSize.sm,
         color: theme.colors.primary,
         fontWeight: theme.fontWeight.semibold,
         marginBottom: 4,
     },
     targetValue: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: theme.fontSize.xxl,
         fontWeight: theme.fontWeight.bold,
         color: theme.colors.primary,
@@ -219,6 +224,7 @@ const styles = StyleSheet.create({
         borderColor: theme.colors.border,
     },
     infoTitle: {
+        fontFamily: theme.typography.fontFamily.semibold,
         fontSize: theme.fontSize.md,
         fontWeight: theme.fontWeight.semibold,
         color: theme.colors.text.primary,
@@ -230,10 +236,12 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.xs,
     },
     label: {
+        fontFamily: theme.typography.fontFamily.regular,
         fontSize: theme.fontSize.md,
         color: theme.colors.text.secondary,
     },
     value: {
+        fontFamily: theme.typography.fontFamily.medium,
         fontSize: theme.fontSize.md,
         fontWeight: theme.fontWeight.medium,
         color: theme.colors.text.primary,
@@ -252,18 +260,21 @@ const styles = StyleSheet.create({
         ...theme.shadows.sm,
     },
     macroLabel: {
+        fontFamily: theme.typography.fontFamily.semibold,
         fontSize: theme.fontSize.md,
         fontWeight: theme.fontWeight.semibold,
         color: theme.colors.text.primary,
         marginBottom: 4,
     },
     macroValue: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: theme.fontSize.xl,
         fontWeight: theme.fontWeight.bold,
         color: theme.colors.primary,
         marginBottom: 4,
     },
     macroSub: {
+        fontFamily: theme.typography.fontFamily.regular,
         fontSize: theme.fontSize.xs,
         color: theme.colors.text.secondary,
         textAlign: 'center',
@@ -275,18 +286,21 @@ const styles = StyleSheet.create({
         borderBottomColor: theme.colors.border,
     },
     nutrientName: {
+        fontFamily: theme.typography.fontFamily.semibold,
         fontSize: theme.fontSize.md,
         fontWeight: theme.fontWeight.bold,
         color: theme.colors.text.primary,
         marginBottom: 2,
     },
     nutrientValue: {
+        fontFamily: theme.typography.fontFamily.semibold,
         fontSize: theme.fontSize.md,
         fontWeight: theme.fontWeight.semibold,
         color: theme.colors.secondary,
         marginBottom: 4,
     },
     nutrientSource: {
+        fontFamily: theme.typography.fontFamily.regular,
         fontSize: theme.fontSize.sm,
         color: theme.colors.text.secondary,
         lineHeight: 20,

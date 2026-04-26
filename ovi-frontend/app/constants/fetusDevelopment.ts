@@ -522,12 +522,26 @@ export function getAnimationPath(week: number): string {
 }
 
 /**
- * Map pregnancy week (4-40) to Ovi stage (1-24).
- * Divides the 37 weeks evenly across all 24 stage images.
+ * Map pregnancy week to Oviula stage (1-14) based on milestone weeks.
+ * Stage milestones:
+ * 1: week 1-2, 2: week 3, 3: week 4, 4: week 5, 5: week 7, 6: week 9,
+ * 7: week 11, 8: week 13, 9: week 16, 10: week 19, 11: week 22,
+ * 12: week 26, 13: week 30, 14: week 40.
  */
 export function getOviStage(week: number): number {
     if (week < 4) return 1;
-    if (week > 40) return 24;
-    const stage = Math.round(((week - 4) / 36) * 23) + 1;
-    return Math.min(24, Math.max(1, stage));
+    if (week >= 40) return 14;
+    if (week >= 30) return 13;
+    if (week >= 26) return 12;
+    if (week >= 22) return 11;
+    if (week >= 19) return 10;
+    if (week >= 16) return 9;
+    if (week >= 13) return 8;
+    if (week >= 11) return 7;
+    if (week >= 9) return 6;
+    if (week >= 7) return 5;
+    if (week >= 5) return 4;
+    if (week >= 4) return 3;
+    if (week >= 3) return 2;
+    return 1;
 }

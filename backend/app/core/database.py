@@ -8,7 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
 import logging
-from sqlalchemy.orm import Session, scoped_session
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from sqlalchemy.pool import StaticPool
@@ -79,7 +79,6 @@ engine = create_engine(
 # Session Factory
 # --------------------------------------------------
 SessionFactory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-SessionScoped = scoped_session(SessionFactory)
 
 # --------------------------------------------------
 # Base Model Class
@@ -91,7 +90,7 @@ Base = declarative_base()
 # --------------------------------------------------
 def get_db() -> Generator[Session, None, None]:
     """Provide a database session for dependency injection"""
-    db = SessionScoped()
+    db = SessionFactory()
     try:
         yield db
     except HTTPException:
@@ -102,7 +101,7 @@ def get_db() -> Generator[Session, None, None]:
         logger.error(f"Database error: {str(e)}")
         raise
     finally:
-        SessionScoped.remove()
+        db.close()
 
 # --------------------------------------------------
 # Context Manager for Manual Usage
@@ -110,7 +109,7 @@ def get_db() -> Generator[Session, None, None]:
 @contextmanager
 def session_scope():
     """Provide a transactional scope for custom scripts/services."""
-    session = SessionScoped()
+    session = SessionFactory()
     try:
         yield session
         session.commit()
@@ -119,7 +118,6 @@ def session_scope():
         raise
     finally:
         session.close()
-        SessionScoped.remove()
 
 # --------------------------------------------------
 # Initialize Database Tables

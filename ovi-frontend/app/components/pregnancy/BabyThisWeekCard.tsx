@@ -41,7 +41,6 @@ export const BabyThisWeekCard: React.FC<BabyThisWeekCardProps> = ({
         return () => float.stop();
     }, []);
 
-    // Derive trimester from week
     const trimester = week <= 13 ? 'First Trimester' : week <= 27 ? 'Second Trimester' : 'Third Trimester';
 
     return (
@@ -52,43 +51,42 @@ export const BabyThisWeekCard: React.FC<BabyThisWeekCardProps> = ({
             accessibilityLabel={`View baby development for week ${week}`}
         >
             <View style={styles.card}>
-                {/* Horizontal layout: image well | copy */}
+                {/* Honey corner accent — celebrates the milestone */}
+                <View style={styles.honeyCorner} />
+                <Text style={styles.weekChip}>week {week}</Text>
+
                 <View style={styles.row}>
-                    {/* Image well — fixed width, contained, no overflow */}
+                    {/* Image well */}
                     <View style={styles.imageWell}>
                         <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
                             <FetusDevelopmentAnimation week={week} size="small" />
                         </Animated.View>
                     </View>
 
-                    {/* Divider */}
-                    <View style={styles.wellDivider} />
-
                     {/* Copy */}
                     <View style={styles.textColumn}>
                         <Text style={styles.metaLabel} numberOfLines={1}>
-                            Week {week} · {trimester}
+                            {trimester}
                         </Text>
                         <Text style={styles.headline}>
-                            Your baby is{'\n'}
-                            <Text style={styles.headlineItalic}>
-                                the size of a {sizeComparison}
-                            </Text>
+                            About the size of{'\n'}
+                            <Text style={styles.headlineItalic}>a {sizeComparison}</Text>
+                            <Text style={styles.headlineDot}>.</Text>
                         </Text>
-                        <View style={styles.statsRow}>
-                            {milestones.slice(0, 1).map((m, i) => (
-                                <View key={i} style={styles.statItem}>
+                        {milestones.length > 0 && (
+                            <View style={styles.statsRow}>
+                                <View style={styles.statItem}>
                                     <MaterialCommunityIcons
                                         name="heart-outline"
                                         size={12}
-                                        color={theme.colors.text.muted}
+                                        color="#9C8E80"
                                     />
                                     <Text style={styles.statText} numberOfLines={2}>
-                                        {m}
+                                        {milestones[0]}
                                     </Text>
                                 </View>
-                            ))}
-                        </View>
+                            </View>
+                        )}
                     </View>
                 </View>
             </View>
@@ -98,56 +96,81 @@ export const BabyThisWeekCard: React.FC<BabyThisWeekCardProps> = ({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.borderRadius.card,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
         borderWidth: 0.5,
-        borderColor: theme.colors.border,
-        ...theme.shadows.card,
+        borderColor: '#E8E0D5',
         overflow: 'hidden',
+        position: 'relative',
+    },
+    honeyCorner: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 78,
+        height: 78,
+        backgroundColor: '#F8EFD9',
+        borderBottomLeftRadius: 78,
+        zIndex: 0,
+    },
+    weekChip: {
+        position: 'absolute',
+        top: 12,
+        right: 14,
+        zIndex: 2,
+        fontFamily: theme.typography.fontFamily.displayItalic,
+        fontStyle: 'italic',
+        fontSize: 11,
+        color: '#8C6B2A',
+        letterSpacing: 0.2,
     },
     row: {
         flexDirection: 'row',
         alignItems: 'stretch',
+        zIndex: 1,
     },
     imageWell: {
-        width: 128,
+        width: 132,
         flexShrink: 0,
-        backgroundColor: theme.colors.backgroundDark,
+        backgroundColor: '#EFE7DC',
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 16,
-    },
-    wellDivider: {
-        width: 0.5,
-        backgroundColor: theme.colors.border,
+        borderRightWidth: 0.5,
+        borderRightColor: '#E8E0D5',
     },
     textColumn: {
         flex: 1,
-        padding: 18,
+        paddingTop: 18,
+        paddingHorizontal: 18,
+        paddingBottom: 16,
         gap: 6,
         minWidth: 0,
     },
     metaLabel: {
         fontFamily: theme.typography.fontFamily.semibold,
         fontSize: 10,
-        color: theme.colors.text.muted,
+        color: '#9C8E80',
         textTransform: 'uppercase',
         letterSpacing: 1.2,
     },
     headline: {
         fontFamily: theme.typography.fontFamily.display,
-        fontSize: 20,
-        fontWeight: '400',
-        color: theme.colors.text.primary,
+        fontSize: 22,
+        color: '#2B221B',
         letterSpacing: -0.4,
         lineHeight: 24,
+        marginTop: 4,
     },
     headlineItalic: {
         fontFamily: theme.typography.fontFamily.displayItalic,
         fontStyle: 'italic',
     },
+    headlineDot: {
+        color: '#B84C3F',
+    },
     statsRow: {
-        marginTop: 4,
+        marginTop: 12,
         gap: 4,
     },
     statItem: {
@@ -158,7 +181,7 @@ const styles = StyleSheet.create({
     statText: {
         fontFamily: theme.typography.fontFamily.regular,
         fontSize: 11,
-        color: theme.colors.text.secondary,
+        color: '#6A5D52',
         flex: 1,
         lineHeight: 16,
     },

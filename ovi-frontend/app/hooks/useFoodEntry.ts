@@ -21,9 +21,10 @@ interface UseFoodEntryProps {
  * Manages food entry form state and calculations
  */
 export const useFoodEntry = ({ food, entry, mealType }: UseFoodEntryProps) => {
-  const [servingSize, setServingSize] = useState(
-    entry?.serving_size || food?.serving_size || '100g'
-  );
+  const [servingSize, setServingSize] = useState(() => {
+    const raw = entry?.serving_size ?? food?.serving_size ?? '100g';
+    return typeof raw === 'string' ? raw : `${raw}g`;
+  });
   const [selectedMealType, setSelectedMealType] = useState<MealType>(
     entry?.meal_type || mealType || 'breakfast'
   );

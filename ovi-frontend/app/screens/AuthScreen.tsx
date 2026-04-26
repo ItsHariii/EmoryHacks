@@ -1,56 +1,68 @@
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Animated,
   Pressable,
   ActivityIndicator,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { useAuth } from '../contexts/AuthContext';
 import { RegistrationWizard } from '../components/auth/RegistrationWizard';
 import { theme } from '../theme';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
 import { GoogleLogo } from '../components/auth/GoogleLogo';
 
+const Wordmark: React.FC = () => (
+  <View style={{ alignItems: 'center' }}>
+    <Text style={styles.wordmark}>
+      Ovi<Text style={styles.wordmarkAccent}>ula</Text>
+    </Text>
+    <Text style={styles.tagline}>nourish the two of you</Text>
+  </View>
+);
+
+const ProgressRing: React.FC = () => (
+  <Svg width={220} height={220} viewBox="0 0 220 220">
+    <Circle cx="110" cy="110" r="104" fill="#F4E4DF" />
+    <Circle cx="110" cy="110" r="86" fill="#F6F1EA" />
+    <Circle cx="110" cy="110" r="86" fill="none" stroke="#E8E0D5" strokeWidth="1" />
+    <Circle
+      cx="110"
+      cy="110"
+      r="86"
+      fill="none"
+      stroke="#B84C3F"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeDasharray="270 540"
+      transform="rotate(-90 110 110)"
+    />
+    <Circle cx="110" cy="110" r="4.5" fill="#B84C3F" />
+  </Svg>
+);
+
 export const AuthScreen: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const formCardOpacity = useRef(new Animated.Value(0)).current;
-  const formCardTranslateY = useRef(new Animated.Value(24)).current;
 
   const { login, register, loginWithGoogle, loginWithApple } = useAuth();
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(formCardOpacity, {
-        toValue: 1,
-        duration: theme.animations.duration.normal,
-        useNativeDriver: true,
-      }),
-      Animated.timing(formCardTranslateY, {
-        toValue: 0,
-        duration: theme.animations.duration.normal,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
-
     setLoading(true);
     try {
       await login(email, password);
@@ -67,8 +79,7 @@ export const AuthScreen: React.FC = () => {
       await loginWithGoogle();
     } catch (error: any) {
       const msg = error?.message?.toLowerCase() || '';
-      const isCancelled = msg.includes('cancel') || msg.includes('dismiss');
-      if (!isCancelled) {
+      if (!(msg.includes('cancel') || msg.includes('dismiss'))) {
         Alert.alert('Sign In Failed', 'Google sign-in could not be completed. Please try again.');
       }
     } finally {
@@ -82,8 +93,7 @@ export const AuthScreen: React.FC = () => {
       await loginWithApple();
     } catch (error: any) {
       const msg = error?.message?.toLowerCase() || '';
-      const isCancelled = msg.includes('cancel') || msg.includes('dismiss');
-      if (!isCancelled) {
+      if (!(msg.includes('cancel') || msg.includes('dismiss'))) {
         Alert.alert('Sign In Failed', 'Apple sign-in could not be completed. Please try again.');
       }
     } finally {
@@ -119,7 +129,7 @@ export const AuthScreen: React.FC = () => {
 
   if (showWizard) {
     return (
-      <ScreenWrapper>
+      <ScreenWrapper backgroundColor="#F6F1EA">
         <RegistrationWizard
           onComplete={handleRegistrationComplete}
           onCancel={() => setShowWizard(false)}
@@ -129,187 +139,268 @@ export const AuthScreen: React.FC = () => {
   }
 
   return (
-    <ScreenWrapper backgroundColor={theme.colors.background}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>
-              Ovi<Text style={styles.titleAccent}>ula</Text>
-            </Text>
-            <Text style={styles.subtitle}>nourish the two of you</Text>
-          </View>
-
-          <Animated.View
-            style={[
-              styles.formCard,
-              {
-                opacity: formCardOpacity,
-                transform: [{ translateY: formCardTranslateY }],
-              },
-            ]}
-          >
-            <View style={styles.socialSection}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.googleButton,
-                  pressed && !loading && styles.googleButtonPressed,
-                  loading && styles.googleButtonDisabled,
-                ]}
-                onPress={handleGoogleLogin}
-                disabled={loading}
-                accessibilityRole="button"
-                accessibilityLabel="Continue with Google"
-              >
-                {loading ? (
-                  <ActivityIndicator color={theme.colors.text.primary} size="small" />
-                ) : (
-                  <>
-                    <View style={styles.googleIconWrap}>
-                      <GoogleLogo size={22} />
-                    </View>
-                    <Text style={styles.googleButtonText}>Continue with Google</Text>
-                  </>
-                )}
-              </Pressable>
-              {Platform.OS === 'ios' ? (
-                <Button
-                  title={loading ? 'Please wait...' : 'Continue with Apple'}
-                  onPress={handleAppleLogin}
-                  loading={loading}
-                  disabled={loading}
-                  variant="secondary"
-                />
-              ) : null}
-            </View>
-
-            <Input
-              label="Email"
-              placeholder="Enter your email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-
-            <Button
-              title={loading ? 'Signing In...' : 'Sign In'}
-              onPress={handleLogin}
-              loading={loading}
-              disabled={loading}
-              variant="primary"
-              style={styles.loginButton}
-            />
-
-            <Button
-              title="Don't have an account? Sign Up"
-              onPress={() => setShowWizard(true)}
-              variant="ghost"
-              style={styles.switchButton}
-            />
-          </Animated.View>
+    <ScreenWrapper backgroundColor="#F6F1EA">
+      <View style={styles.container}>
+        {/* Top: wordmark */}
+        <View style={styles.top}>
+          <Wordmark />
         </View>
-      </KeyboardAvoidingView>
+
+        {/* Middle: progress ring */}
+        <View style={styles.middle}>
+          <ProgressRing />
+        </View>
+
+        {/* Bottom: actions */}
+        <View style={styles.bottom}>
+          <Pressable
+            style={({ pressed }) => [styles.primaryCta, pressed && styles.primaryCtaPressed]}
+            onPress={() => setShowEmailForm(true)}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Continue with email"
+          >
+            <Text style={styles.primaryCtaText}>Continue with email</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.secondaryCta, pressed && styles.secondaryCtaPressed]}
+            onPress={handleGoogleLogin}
+            disabled={loading}
+            accessibilityRole="button"
+            accessibilityLabel="Continue with Google"
+          >
+            {loading ? (
+              <ActivityIndicator color="#2B221B" size="small" />
+            ) : (
+              <>
+                <GoogleLogo size={16} />
+                <Text style={styles.secondaryCtaText}>Continue with Google</Text>
+              </>
+            )}
+          </Pressable>
+
+          {Platform.OS === 'ios' && (
+            <Pressable
+              style={({ pressed }) => [styles.secondaryCta, pressed && styles.secondaryCtaPressed]}
+              onPress={handleAppleLogin}
+              disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Continue with Apple"
+            >
+              <Text style={styles.secondaryCtaText}>Continue with Apple</Text>
+            </Pressable>
+          )}
+
+          <Text style={styles.terms}>
+            By continuing you agree to our{'\n'}
+            <Text style={styles.termsLink}>Terms</Text>
+            {' & '}
+            <Text style={styles.termsLink}>Privacy Policy</Text>
+          </Text>
+        </View>
+      </View>
+
+      {/* Email sign-in modal */}
+      <Modal visible={showEmailForm} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <Pressable style={styles.modalScrim} onPress={() => setShowEmailForm(false)} />
+          <View style={styles.modalSheet}>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              <View style={styles.sheetHandle} />
+              <Text style={styles.sheetTitle}>
+                Welcome <Text style={styles.sheetTitleItalic}>back</Text>
+                <Text style={styles.sheetTitleDot}>.</Text>
+              </Text>
+              <View style={{ height: 14 }} />
+              <Input
+                label="Email"
+                placeholder="you@hello.co"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+              <Input
+                label="Password"
+                placeholder="••••••••"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+              <Pressable
+                style={({ pressed }) => [styles.primaryCta, pressed && styles.primaryCtaPressed, { marginTop: 12 }]}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                <Text style={styles.primaryCtaText}>{loading ? 'Signing in…' : 'Sign in'}</Text>
+              </Pressable>
+              <Pressable
+                style={styles.linkButton}
+                onPress={() => {
+                  setShowEmailForm(false);
+                  setShowWizard(true);
+                }}
+              >
+                <Text style={styles.linkText}>
+                  Don't have an account? <Text style={styles.linkTextBold}>Sign up</Text>
+                </Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboardView: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    justifyContent: 'space-between',
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: theme.layout.screenPadding,
-  },
-  header: {
+  top: {
+    paddingTop: 40,
     alignItems: 'center',
-    marginBottom: theme.spacing.xxxl,
   },
-  title: {
+  middle: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bottom: {
+    gap: 10,
+  },
+  wordmark: {
     fontFamily: theme.typography.fontFamily.displayLight,
     fontSize: 56,
-    fontWeight: '300',
-    color: theme.colors.text.primary,
+    color: '#2B221B',
     textAlign: 'center',
     letterSpacing: -2,
     lineHeight: 60,
-    marginBottom: theme.spacing.xs,
   },
-  titleAccent: {
+  wordmarkAccent: {
     fontFamily: theme.typography.fontFamily.displayItalic,
-    color: theme.colors.primary,
     fontStyle: 'italic',
+    color: '#B84C3F',
   },
-  subtitle: {
+  tagline: {
     fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
     fontSize: 15,
-    fontWeight: '400',
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
+    color: '#6A5D52',
+    marginTop: 14,
     letterSpacing: 0.2,
-    marginTop: 4,
   },
-  formCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
-    ...theme.shadows.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    gap: theme.spacing.lg,
+  primaryCta: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 100,
+    backgroundColor: '#2B221B',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  socialSection: {
-    gap: theme.spacing.md,
+  primaryCtaPressed: {
+    opacity: 0.9,
   },
-  googleButton: {
+  primaryCtaText: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  secondaryCta: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: Math.max(48, theme.layout.minTouchTarget),
-    paddingHorizontal: theme.spacing.xl,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: theme.colors.googleBorderColor,
-    ...theme.shadows.sm,
+    gap: 8,
   },
-  googleButtonPressed: {
-    backgroundColor: theme.colors.backgroundDark,
-    opacity: 0.96,
+  secondaryCtaPressed: {
+    backgroundColor: '#EFE7DC',
   },
-  googleButtonDisabled: {
-    opacity: 0.65,
-  },
-  googleIconWrap: {
-    marginRight: theme.spacing.md,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleButtonText: {
+  secondaryCtaText: {
     fontFamily: theme.typography.fontFamily.semibold,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.googleTextColor,
-    letterSpacing: 0.15,
+    fontSize: 14,
+    color: '#2B221B',
+    letterSpacing: 0.2,
   },
-  loginButton: {
-    marginTop: theme.spacing.xl,
+  terms: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#6A5D52',
+    marginTop: 8,
+    lineHeight: 18,
+    fontFamily: theme.typography.fontFamily.regular,
   },
-  switchButton: {
-    marginTop: theme.spacing.lg,
+  termsLink: {
+    color: '#2B221B',
+    fontFamily: theme.typography.fontFamily.semibold,
+    textDecorationLine: 'underline',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(43,34,27,0.4)',
+  },
+  modalSheet: {
+    backgroundColor: '#F6F1EA',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 36,
+    maxHeight: '88%',
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D9CEBF',
+    marginBottom: 16,
+  },
+  sheetTitle: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 28,
+    color: '#2B221B',
+    letterSpacing: -0.6,
+    lineHeight: 32,
+  },
+  sheetTitleItalic: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
+  },
+  sheetTitleDot: {
+    color: '#B84C3F',
+  },
+  linkButton: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  linkText: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 13,
+    color: '#6A5D52',
+  },
+  linkTextBold: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    color: '#2B221B',
   },
 });

@@ -127,7 +127,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
               <MaterialCommunityIcons
                 name={action.icon as any}
                 size={24}
-                color={action.color || theme.colors.primary}
+                color={action.color || theme.colors.text.primary}
               />
             </TouchableOpacity>
           ))}

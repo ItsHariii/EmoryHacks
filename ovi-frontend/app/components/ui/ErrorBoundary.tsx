@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { theme } from '../../theme';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.lg,
     },
     title: {
+        fontFamily: theme.typography.fontFamily.display,
         fontSize: theme.fontSize.xl,
         fontWeight: theme.fontWeight.bold,
         color: theme.colors.text.primary,
@@ -95,6 +96,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     subtitle: {
+        fontFamily: theme.typography.fontFamily.regular,
         fontSize: theme.fontSize.md,
         color: theme.colors.text.secondary,
         marginBottom: theme.spacing.lg,
@@ -109,9 +111,9 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.lg,
     },
     errorText: {
+        fontFamily: theme.typography.fontFamily.regular,
         fontSize: theme.fontSize.xs,
         color: theme.colors.text.muted,
-        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     },
     button: {
         backgroundColor: theme.colors.primary,
@@ -122,6 +124,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buttonText: {
+        fontFamily: theme.typography.fontFamily.semibold,
         color: theme.colors.text.inverse,
         fontSize: theme.fontSize.md,
         fontWeight: theme.fontWeight.bold,
