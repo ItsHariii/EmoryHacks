@@ -308,10 +308,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#2B221B',
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadows.lg,
+    borderWidth: 3,
+    borderColor: '#F6F1EA',
   },
   badge: {
     position: 'absolute',
@@ -355,6 +356,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerIconText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 20,
   },
   headerTitle: {
@@ -401,6 +403,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.xs,
   },
   botIconText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 16,
   },
   messageContent: {

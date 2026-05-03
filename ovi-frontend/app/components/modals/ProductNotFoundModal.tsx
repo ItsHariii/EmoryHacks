@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xxl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.primary,
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   notFoundText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
@@ -93,6 +95,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   cancelModalButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.primary,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
@@ -101,6 +104,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   confirmButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.light,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,

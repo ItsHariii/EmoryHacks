@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   label: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
@@ -123,6 +124,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   amountInput: {
+    fontFamily: theme.typography.fontFamily.regular,
     padding: theme.spacing.md,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.semibold,
@@ -142,10 +144,12 @@ const styles = StyleSheet.create({
     height: 50,
   },
   pickerItem: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.primary,
   },
   preview: {
+    fontFamily: theme.typography.fontFamily.regular,
     marginTop: theme.spacing.sm,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,

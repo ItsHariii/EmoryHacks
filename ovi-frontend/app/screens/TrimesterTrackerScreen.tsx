@@ -185,7 +185,7 @@ export const TrimesterTrackerScreen: React.FC = () => {
 
         {/* Disclaimer */}
         <View style={styles.disclaimer}>
-          <MaterialCommunityIcons name="information-outline" size={14} color="#9C8E80" />
+          <MaterialCommunityIcons name="information-outline" size={14} color="#8C7E70" />
           <Text style={styles.disclaimerText}>
             These visualizations are approximate, not exact medical illustrations.
           </Text>
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   kicker: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.displayItalic,
     fontStyle: 'italic',
     fontSize: 14,
-    color: '#6A5D52',
+    color: '#5A4D42',
     letterSpacing: 0.2,
   },
   heroWeekText: {
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.displayItalic,
     fontStyle: 'italic',
     fontSize: 14,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 14,
     lineHeight: 20,
     textAlign: 'center',
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   sliderLabelMuted: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 10,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1,
   },
   sliderLabelInk: {
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   trimText: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 10,
-    color: '#9C8E80',
+    color: '#8C7E70',
   },
   statsRow: {
     flexDirection: 'row',
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 10,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
@@ -421,14 +421,14 @@ const styles = StyleSheet.create({
   },
   statUnit: {
     fontSize: 13,
-    color: '#9C8E80',
+    color: '#8C7E70',
     fontFamily: theme.typography.fontFamily.regular,
   },
   statSub: {
     fontFamily: theme.typography.fontFamily.displayItalic,
     fontStyle: 'italic',
     fontSize: 11,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 2,
   },
   sectionLabelWrap: {
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     lineHeight: 16,
   },
 });

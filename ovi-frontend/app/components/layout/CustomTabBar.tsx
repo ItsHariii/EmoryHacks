@@ -31,7 +31,7 @@ interface TabIconProps {
 
 const TabIcon: React.FC<TabIconProps> = ({ name, label, focused, badgeCount }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(focused ? 1 : 0.62)).current;
+  const opacityAnim = useRef(new Animated.Value(focused ? 1 : 0.85)).current;
   const badgeScaleAnim = useRef(new Animated.Value(badgeCount ? 1 : 0)).current;
   const badgeFadeAnim = useRef(new Animated.Value(badgeCount ? 1 : 0)).current;
 
@@ -44,7 +44,7 @@ const TabIcon: React.FC<TabIconProps> = ({ name, label, focused, badgeCount }) =
         bounciness: ANIMATION_CONFIG.spring.bounciness,
       }),
       Animated.timing(opacityAnim, {
-        toValue: focused ? 1 : 0.62,
+        toValue: focused ? 1 : 0.85,
         duration: ANIMATION_CONFIG.normal,
         useNativeDriver: true,
       }),
@@ -95,7 +95,7 @@ const TabIcon: React.FC<TabIconProps> = ({ name, label, focused, badgeCount }) =
       <MaterialCommunityIcons
         name={name as any}
         size={22}
-        color={focused ? theme.colors.primary : theme.colors.text.secondary}
+        color={focused ? '#B84C3F' : '#C4B8AC'}
       />
       <RNText style={[styles.tabLabel, focused && styles.tabLabelFocused]}>
         {label}
@@ -349,13 +349,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 8,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: '#F0E9E0',
     borderRadius: 35,
     borderWidth: 0.5,
     borderColor: '#E8E0D5',
   },
   androidTabBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F0E9E0',
   },
   tab: {
     flex: 1,
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 10,
-    color: '#9C8E80',
+    color: '#C4B8AC',
     letterSpacing: 0.2,
   },
   tabLabelFocused: {
@@ -395,6 +395,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFF',
   },
   badgeText: {
+    fontFamily: theme.typography.fontFamily.bold,
     color: '#FFF',
     fontSize: 9,
     fontWeight: '800',

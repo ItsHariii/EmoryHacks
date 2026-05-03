@@ -183,12 +183,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     letterSpacing: -0.5,
   },
   subtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginTop: 2,
@@ -228,6 +230,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.xs,
   },
   searchInput: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.primary,

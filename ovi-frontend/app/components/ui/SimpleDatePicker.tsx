@@ -265,12 +265,14 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   triggerText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.primary,
     fontWeight: theme.fontWeight.medium,
     flex: 1,
   },
   icon: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 20,
     marginLeft: theme.spacing.sm,
   },
@@ -290,6 +292,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -305,6 +308,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pickerLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
@@ -327,6 +331,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   pickerItemText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.primary,
   },
@@ -358,6 +363,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   cancelButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.secondary,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.medium,
@@ -366,6 +372,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   confirmButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,

@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   loadingText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.muted,
     fontStyle: 'italic',
@@ -289,6 +290,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.md,
   },
   saveButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.bold,

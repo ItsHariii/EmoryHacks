@@ -55,7 +55,7 @@ export function WaitlistModal({ onClose, onSuccess, formspreeEndpoint }: Waitlis
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.98, opacity: 0 }}
         transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-        className="relative w-full max-w-md p-8 sm:p-10 bg-white rounded-2xl shadow-xl border border-ovi-border/60"
+        className="relative w-full max-w-md p-8 sm:p-10 bg-ovi-surface rounded-2xl shadow-xl border border-ovi-border/60"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-labelledby="modal-title"

@@ -13,7 +13,22 @@ interface MicronutrientChartProps {
   onNutrientPress?: (nutrient: MicronutrientData) => void;
 }
 
-const getProgressColor = (_percent: number) => theme.colors.primary;
+const getProgressColor = (percent: number) =>
+  percent >= 80 ? '#6F8C6F' : percent >= 50 ? '#C69348' : '#B84C3F';
+
+// Nutrient-specific bar colors per design spec
+const NUTRIENT_BAR_COLORS: Record<string, string> = {
+  folate: '#8A9A7B',     // sage
+  iron: '#D19B4E',       // ochre
+  calcium: '#B84C3F',    // terracotta
+  'vit d': '#C4A882',    // warm tan
+  'vitamin d': '#C4A882',
+};
+
+const getNutrientBarColor = (name: string): string => {
+  const key = name.toLowerCase().trim();
+  return NUTRIENT_BAR_COLORS[key] || '#C4A882';
+};
 
 const getIconName = (name: string) => {
   const key = name.toLowerCase().replace(/\s+/g, '_');
@@ -40,17 +55,27 @@ export const MicronutrientChart: React.FC<MicronutrientChartProps> = ({
 
   const lowNutrients = nutrients.filter(n => n.percentOfTarget < 70);
 
+  // 2x2 grid prioritizes the design's canonical four nutrients
+  const PRIORITY = ['folate', 'iron', 'calcium', 'vitamin d', 'vit d'];
+  const byKey = (n: { name: string }) => n.name.toLowerCase();
+  const priorityNutrients = PRIORITY
+    .map((p) => nutrients.find((n) => byKey(n).startsWith(p)))
+    .filter((n): n is MicronutrientData => !!n);
+  const remaining = nutrients.filter((n) => !priorityNutrients.includes(n));
+  const gridNutrients = [...priorityNutrients, ...remaining].slice(0, 4);
+
   return (
     <View style={styles.container}>
-      {/* Grid of nutrient cards */}
-      <View style={styles.grid}>
-        {nutrients.map((nutrient, index) => (
-          <NutrientCard
-            key={nutrient.name}
-            nutrient={nutrient}
-            onPress={() => handleNutrientPress(nutrient)}
-          />
-        ))}
+      <View style={styles.gridCard}>
+        <View style={styles.grid}>
+          {gridNutrients.map((nutrient) => (
+            <NutrientCard
+              key={nutrient.name}
+              nutrient={nutrient}
+              onPress={() => handleNutrientPress(nutrient)}
+            />
+          ))}
+        </View>
       </View>
 
       {lowNutrients.length > 0 && (
@@ -74,52 +99,44 @@ const NutrientCard: React.FC<{
   onPress: () => void;
 }> = ({ nutrient, onPress }) => {
   const percent = Math.min(nutrient.percentOfTarget, 100);
-  const barColor = getProgressColor(percent);
+  const barColor = getNutrientBarColor(nutrient.name);
   const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     createProgressFillAnimation(progressAnim, percent).start();
   }, [percent]);
 
+  // Round to int when value is whole-ish, else 1 decimal
+  const fmt = (n: number) => (Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n).toString() : n.toFixed(1));
+
   return (
     <TouchableOpacity
-      style={styles.nutrientCard}
+      style={styles.nutrientCell}
       onPress={onPress}
       activeOpacity={0.8}
       accessibilityLabel={`${nutrient.name}: ${Math.round(percent)}% of target`}
       accessibilityRole="button"
     >
-      <View style={styles.nutrientCardHeader}>
-        <View style={[styles.iconWrapper, { backgroundColor: ICON_BACKGROUNDS.cream }]}>
-          <MaterialCommunityIcons
-            name={getIconName(nutrient.name) as any}
-            size={18}
-            color={ICON_COLORS.accent}
-          />
-        </View>
+      <View style={styles.nutrientCellHeader}>
         <Text style={styles.nutrientName} numberOfLines={1}>{nutrient.name}</Text>
+        <Text style={styles.percentText}>{Math.round(percent)}%</Text>
       </View>
-      <View style={styles.progressRow}>
-        <View style={styles.progressTrack}>
-          <Animated.View
-            style={[
-              styles.progressFill,
-              {
-                width: progressAnim.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: ['0%', '100%'],
-                }),
-                backgroundColor: barColor,
-              },
-            ]}
-          />
-        </View>
-        <Text style={[styles.percentText, { color: barColor }]}>
-          {Math.round(percent)}%
-        </Text>
+      <View style={styles.progressTrack}>
+        <Animated.View
+          style={[
+            styles.progressFill,
+            {
+              width: progressAnim.interpolate({
+                inputRange: [0, 100],
+                outputRange: ['0%', '100%'],
+              }),
+              backgroundColor: barColor,
+            },
+          ]}
+        />
       </View>
       <Text style={styles.currentTarget}>
-        {nutrient.current.toFixed(1)} / {nutrient.target.toFixed(1)} {nutrient.unit}
+        {fmt(nutrient.current)} / {fmt(nutrient.target)} {nutrient.unit}
       </Text>
     </TouchableOpacity>
   );
@@ -348,27 +365,29 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
+  gridCard: {
+    backgroundColor: '#FDFAF6',
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    padding: 20,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    columnGap: 20,
+    rowGap: 16,
   },
-  nutrientCard: {
-    flex: 1,
-    minWidth: '45%',
-    maxWidth: '48%',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    ...theme.shadows.sm,
+  nutrientCell: {
+    flexBasis: '46%',
+    flexGrow: 1,
+    backgroundColor: 'transparent',
   },
-  nutrientCardHeader: {
+  nutrientCellHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-    gap: theme.spacing.xs,
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 6,
   },
   iconWrapper: {
     width: 28,
@@ -378,39 +397,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nutrientName: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 13,
+    color: '#2B221B',
     flex: 1,
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.text.primary,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: 4,
+    minWidth: 0,
   },
   progressTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: theme.colors.borderLight,
-    borderRadius: 3,
+    height: 4,
+    backgroundColor: '#EDE6DC',
+    borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 2,
   },
   percentText: {
-    fontSize: theme.fontSize.sm,
-    fontWeight: theme.fontWeight.bold,
-    minWidth: 36,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 12,
+    color: '#B84C3F',
     textAlign: 'right',
   },
   currentTarget: {
-    fontSize: 10,
-    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 11,
+    color: '#8C7E70',
+    marginTop: 4,
   },
   sectionTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -431,12 +447,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   suggestionTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
     marginLeft: theme.spacing.sm,
   },
   suggestionSubtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.md,
@@ -445,12 +463,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   suggestionNutrientName: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   suggestionFoods: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     lineHeight: 20,
@@ -466,12 +486,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: theme.borderRadius.xxl,
-    borderTopRightRadius: theme.borderRadius.xxl,
-    padding: theme.spacing.xl,
+    backgroundColor: '#F6F1EA',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 24,
     maxHeight: '80%',
-    ...theme.shadows.lg,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
   },
   modalHeader: {
     alignItems: 'center',
@@ -487,6 +508,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xxl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -512,11 +534,13 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border,
   },
   modalStatLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   modalStatValue: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -525,12 +549,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   modalSectionTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   modalSectionText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     lineHeight: 22,
@@ -543,18 +569,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   foodSourceText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     flex: 1,
   },
   modalCloseButton: {
-    backgroundColor: theme.colors.primary,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: '#2B221B',
+    paddingVertical: 16,
+    borderRadius: 100,
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: 12,
   },
   modalCloseButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,

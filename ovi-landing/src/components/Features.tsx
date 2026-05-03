@@ -57,7 +57,7 @@ export function Features() {
                 delay: reducedMotion ? 0 : feature.delay,
                 ease: EASE,
               }}
-              className="group p-8 rounded-2xl bg-white border border-ovi-border-light shadow-sm border-ovi-border/60 transition-shadow duration-300"
+              className="group p-8 rounded-2xl bg-ovi-surface border border-ovi-border/60 transition-colors duration-300"
             >
               <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-ovi-cream text-ovi-primary mb-6 group-hover:bg-ovi-primary-soft transition-colors duration-200">
                 <FeatureIcon type={feature.icon} className="w-5 h-5" />

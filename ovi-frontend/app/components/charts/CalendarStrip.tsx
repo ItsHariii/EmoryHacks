@@ -215,13 +215,13 @@ export const CalendarStrip: React.FC<CalendarStripProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        height: 78,
+        height: 68,
         backgroundColor: '#F6F1EA',
     },
     contentContainer: {
         paddingHorizontal: (Dimensions.get('window').width - FULL_ITEM_WIDTH) / 2,
         alignItems: 'center',
-        paddingVertical: 6,
+        paddingVertical: 4,
     },
     touchable: {
         marginRight: DATE_ITEM_MARGIN,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     dayName: {
         fontFamily: theme.typography.fontFamily.semibold,
         fontSize: 10,
-        color: '#9C8E80',
+        color: '#8C7E70',
         letterSpacing: 0.5,
     },
     dayNumber: {
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     todayButtonText: {
         fontFamily: theme.typography.fontFamily.semibold,
         fontSize: 10,
-        color: '#6A5D52',
+        color: '#5A4D42',
         letterSpacing: 0.5,
     },
 });

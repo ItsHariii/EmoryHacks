@@ -91,6 +91,7 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   input: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,

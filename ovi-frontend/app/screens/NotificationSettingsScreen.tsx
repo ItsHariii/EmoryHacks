@@ -229,7 +229,7 @@ export const NotificationSettingsScreen: React.FC = () => {
             </View>
             <View style={[styles.card, styles.quietCard]}>
               <View style={styles.quietRow}>
-                <MaterialCommunityIcons name="weather-night" size={18} color="#6A5D52" />
+                <MaterialCommunityIcons name="weather-night" size={18} color="#5A4D42" />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rowLabel}>Do not disturb</Text>
                   <Text style={styles.rowSub}>10:00 PM — 7:00 AM</Text>
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   masterSub: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 12,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 4,
     lineHeight: 18,
   },
@@ -325,14 +325,14 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   sectionMeta: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -362,13 +362,13 @@ const styles = StyleSheet.create({
   rowSub: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 2,
   },
   timeLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     minWidth: 64,
     textAlign: 'right',
   },
@@ -393,6 +393,6 @@ const styles = StyleSheet.create({
   savingText: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
   },
 });

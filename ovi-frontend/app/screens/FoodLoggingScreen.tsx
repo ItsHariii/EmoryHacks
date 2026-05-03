@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
@@ -41,9 +42,12 @@ type FoodLoggingScreenNavigationProp = StackNavigationProp<
   'FoodLoggingMain'
 >;
 
+const TAB_BAR_HEIGHT = 70;
+
 export const FoodLoggingScreen: React.FC = () => {
   const navigation = useNavigation<FoodLoggingScreenNavigationProp>();
   const route = useRoute<any>();
+  const { bottom: safeBottom } = useSafeAreaInsets();
   const { targets, fetchTargets } = useNutritionStore();
   const [selectedDate] = useState<Date>(() => {
     const routeDate = route.params?.date;
@@ -176,7 +180,7 @@ export const FoodLoggingScreen: React.FC = () => {
     <ScreenWrapper edges={['bottom']} backgroundColor={theme.colors.background}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
+        contentContainerStyle={[styles.scrollViewContent, { paddingBottom: TAB_BAR_HEIGHT + safeBottom + 32 }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
         }
@@ -200,7 +204,13 @@ export const FoodLoggingScreen: React.FC = () => {
           </View>
         </View>
 
-        <View style={styles.summaryCard}>
+        <TouchableOpacity
+          style={styles.summaryCard}
+          activeOpacity={0.9}
+          onPress={() => (navigation as any).navigate('FullNutrientBreakdown', { scrollTo: 'macros' })}
+          accessibilityRole="button"
+          accessibilityLabel="View full nutrient breakdown"
+        >
           <View style={styles.summaryTopRow}>
             <View style={styles.summaryBlock}>
               <Text style={styles.summaryLabel}>CALORIES</Text>
@@ -215,7 +225,7 @@ export const FoodLoggingScreen: React.FC = () => {
             </View>
           </View>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            <View style={[styles.progressFill, { width: `${progress * 100}%`, minWidth: 4 }]} />
           </View>
           <View style={styles.macroRow}>
             <View style={styles.macroItemWrap}>
@@ -231,7 +241,7 @@ export const FoodLoggingScreen: React.FC = () => {
               <Text style={styles.macroText}>Fats {Math.round(nutritionSummary?.fat_g || 0)}g</Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <Text style={styles.sectionLabel}>TODAY'S MEALS</Text>
 
@@ -253,6 +263,9 @@ export const FoodLoggingScreen: React.FC = () => {
             );
           })}
         </View>
+        {foodEntries.length === 0 && (
+          <Text style={styles.emptyHint}>Tap + to start logging</Text>
+        )}
       </ScrollView>
     </ScreenWrapper>
   );
@@ -264,7 +277,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F1EA',
   },
   scrollViewContent: {
-    paddingBottom: 96,
+    paddingBottom: 120,
     backgroundColor: '#F6F1EA',
   },
   header: {
@@ -405,5 +418,13 @@ const styles = StyleSheet.create({
   mealsContainer: {
     paddingHorizontal: theme.layout.screenPadding,
     gap: 12,
+  },
+  emptyHint: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontSize: 13,
+    color: theme.colors.text.muted,
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 8,
   },
 });

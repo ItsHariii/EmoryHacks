@@ -69,6 +69,7 @@ export const MealAccordionCard: React.FC<MealAccordionCardProps> = ({
 
   return (
     <View style={styles.container}>
+      <View style={styles.leftAccent} />
       <TouchableOpacity style={styles.header} onPress={toggleExpanded} activeOpacity={0.7}>
         <View style={styles.headerMain}>
           <View style={styles.mealTitleRow}>
@@ -129,10 +130,21 @@ export const MealAccordionCard: React.FC<MealAccordionCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FDFAF6',
     borderRadius: 20,
     borderWidth: 0.5,
     borderColor: '#E8E0D5',
+    overflow: 'hidden',
+  },
+  leftAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: '#B84C3F',
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
   },
   header: {
     flexDirection: 'row',

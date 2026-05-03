@@ -97,14 +97,22 @@ export function getTrimesterName(trimester: number): string {
 
 /**
  * Get size comparison for a specific week
+ * Always returns a complete fruit/vegetable comparison.
+ * Falls back to nearest valid week if exact week missing, never returns "developing".
  * @param week - Current pregnancy week
- * @returns Size comparison text
+ * @returns Size comparison text (e.g. "banana", "lime")
  */
 export function getSizeComparison(week: number): string {
-  // Import from fetusDevelopment for consistency
-  const { getWeekData } = require('../constants/fetusDevelopment');
-  const weekData = getWeekData(week);
-  return weekData?.sizeComparison || 'developing';
+  const { getWeekData, FETUS_DEVELOPMENT_DATA } = require('../constants/fetusDevelopment');
+  const exact = getWeekData(week);
+  if (exact?.sizeComparison) return exact.sizeComparison;
+  // Clamp + find nearest week with data
+  const target = Math.max(4, Math.min(40, week));
+  const known = Object.keys(FETUS_DEVELOPMENT_DATA).map(Number).sort((a, b) => a - b);
+  const nearest = known.reduce((prev, curr) =>
+    Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev
+  );
+  return FETUS_DEVELOPMENT_DATA[nearest]?.sizeComparison || 'poppy seed';
 }
 
 /**

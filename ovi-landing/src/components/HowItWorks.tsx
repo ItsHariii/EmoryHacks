@@ -47,7 +47,7 @@ export function HowItWorks() {
   const item = staggerItemHorizontal(reducedMotion)
 
   return (
-    <section id="how-it-works" className="py-24 sm:py-32 px-6 bg-white">
+    <section id="how-it-works" className="py-24 sm:py-32 px-6 bg-ovi-surface">
       <div className="max-w-6xl mx-auto">
         <motion.h2
           initial={reducedMotion ? false : { y: 24, opacity: 0 }}

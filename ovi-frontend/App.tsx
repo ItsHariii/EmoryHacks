@@ -36,6 +36,7 @@ const JournalScreen = React.lazy(() => import('./app/screens/JournalScreen').the
 const JournalEntryScreen = React.lazy(() => import('./app/screens/JournalEntryScreen').then(module => ({ default: module.JournalEntryScreen })));
 const ChatJournalScreen = React.lazy(() => import('./app/screens/ChatJournalScreen').then(module => ({ default: module.ChatJournalScreen })));
 const NotificationSettingsScreen = React.lazy(() => import('./app/screens/NotificationSettingsScreen').then(module => ({ default: module.NotificationSettingsScreen })));
+const FullNutrientBreakdownScreen = React.lazy(() => import('./app/screens/FullNutrientBreakdownScreen').then(module => ({ default: module.FullNutrientBreakdownScreen })));
 
 import { TrimesterTrackerScreen } from './app/screens/TrimesterTrackerScreen';
 
@@ -89,6 +90,7 @@ const JournalScreenWrapped = withSuspense(JournalScreen);
 const JournalEntryScreenWrapped = withSuspense(JournalEntryScreen);
 const ChatJournalScreenWrapped = withSuspense(ChatJournalScreen);
 const NotificationSettingsScreenWrapped = withSuspense(NotificationSettingsScreen);
+const FullNutrientBreakdownScreenWrapped = withSuspense(FullNutrientBreakdownScreen);
 
 
 function MainTabs() {
@@ -310,16 +312,15 @@ function AppNavigator() {
             name="Profile"
             component={ProfileScreenWrapped}
             options={{
-              headerShown: true,
-              headerStyle: {
-                backgroundColor: theme.colors.primary,
-              },
-              headerTintColor: theme.colors.text.inverse,
-              headerTitleStyle: {
-                fontFamily: theme.typography.fontFamily.semibold,
-                fontWeight: theme.fontWeight.bold,
-              },
-              title: 'Profile',
+              headerShown: false,
+              ...slideFromRightTransition,
+            }}
+          />
+          <RootStack.Screen
+            name="FullNutrientBreakdown"
+            component={FullNutrientBreakdownScreenWrapped}
+            options={{
+              headerShown: false,
               ...slideFromRightTransition,
             }}
           />

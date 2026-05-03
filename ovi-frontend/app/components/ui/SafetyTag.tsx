@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
   },
   tagSafe: {
-    backgroundColor: theme.colors.success,
+    backgroundColor: '#8A9A7B',
   },
   tagCaution: {
     backgroundColor: theme.colors.warning,
@@ -75,13 +75,15 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.error,
   },
   tagText: {
-    color: theme.colors.text.light,
+    color: '#FDFAF6',
     fontWeight: theme.fontWeight.medium,
   },
   tagTextSmall: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xs,
   },
   tagTextMedium: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
   },
 });

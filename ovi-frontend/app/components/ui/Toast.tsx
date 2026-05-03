@@ -109,10 +109,10 @@ export const Toast: React.FC<ToastProps> = ({
   if (!visible) return null;
 
   const backgroundColor = {
-    success: theme.colors.success,
-    error: theme.colors.error,
-    warning: theme.colors.warning,
-    info: theme.colors.info,
+    success: '#8A9A7B',
+    error: '#B84C3F',
+    warning: '#D19B4E',
+    info: '#2B221B',
   }[variant];
 
   const icon = {
@@ -146,27 +146,26 @@ export const Toast: React.FC<ToastProps> = ({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 50,
-    left: theme.spacing.md,
-    right: theme.spacing.md,
+    top: 60,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    ...theme.shadows.md,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
     zIndex: 9999,
   },
   icon: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.typography.fontSize.lg,
-    color: theme.colors.text.inverse,
-    marginRight: theme.spacing.sm,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginRight: 10,
   },
   message: {
     fontFamily: theme.typography.fontFamily.medium,
     flex: 1,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.inverse,
-    fontWeight: theme.typography.fontWeight.medium,
+    fontSize: 14,
+    color: '#FFFFFF',
   },
 });

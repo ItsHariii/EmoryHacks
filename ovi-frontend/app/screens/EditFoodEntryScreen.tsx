@@ -52,7 +52,7 @@ const navBarStyles = StyleSheet.create({
   kicker: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 10,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -93,6 +93,7 @@ interface RouteParams {
 export const EditFoodEntryScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { bottom: safeBottom } = useSafeAreaInsets();
   const { showToast } = useToast();
   const { celebrate, dismissCelebration, currentCelebration, showCelebration } = useCelebrations();
 
@@ -259,7 +260,7 @@ export const EditFoodEntryScreen: React.FC = () => {
         onBack={() => navigation.goBack()}
         right={
           <TouchableOpacity style={styles.iconCircle} accessibilityLabel="Favorite">
-            <MaterialCommunityIcons name="star-outline" size={18} color="#9C8E80" />
+            <MaterialCommunityIcons name="star-outline" size={18} color="#8C7E70" />
           </TouchableOpacity>
         }
       />
@@ -312,68 +313,72 @@ export const EditFoodEntryScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Meal Type Selector - Chip Pills */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Meal Type</Text>
-          <View style={styles.mealChipRow}>
-            {mealTypes.map(({ value, label }) => (
-              <TouchableOpacity
-                key={value}
-                style={[
-                  styles.mealChip,
-                  selectedMealType === value && styles.mealChipSelected,
-                ]}
-                onPress={() => setSelectedMealType(value)}
-                activeOpacity={0.8}
-                accessibilityRole="button"
-                accessibilityLabel={`${label}${selectedMealType === value ? ', selected' : ''}`}
-              >
-                <Text
-                  style={[
-                    styles.mealChipText,
-                    selectedMealType === value && styles.mealChipTextSelected,
-                  ]}
-                >
-                  {label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        {/* Meal Type chip selector */}
+        <Text style={styles.sectionLabel}>Meal</Text>
+        <View style={styles.mealChipRow}>
+          {mealTypes.map(({ value, label }) => (
+            <TouchableOpacity
+              key={value}
+              style={[styles.mealChip, selectedMealType === value && styles.mealChipSelected]}
+              onPress={() => setSelectedMealType(value)}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`${label}${selectedMealType === value ? ', selected' : ''}`}
+            >
+              <Text style={[styles.mealChipText, selectedMealType === value && styles.mealChipTextSelected]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Serving Size Input */}
-        <View style={styles.section}>
-          <ServingSizeInput
-            value={servingSize}
-            onChange={setServingSize}
-          />
+        {/* Serving */}
+        <Text style={styles.sectionLabel}>Serving</Text>
+        <View style={styles.servingCard}>
+          <ServingSizeInput value={servingSize} onChange={setServingSize} />
         </View>
 
-        {/* Nutrition Preview */}
-        <NutritionPreview nutrition={nutrition} />
+        {/* Nutrition preview */}
+        <Text style={styles.sectionLabel}>Nutrition facts</Text>
+        <View style={styles.nutritionCardWrap}>
+          <NutritionPreview nutrition={nutrition} />
+        </View>
 
-        {/* Save Button */}
-        <Button
-          title={isNewEntry ? 'Log Food' : 'Update Entry'}
-          onPress={handleSave}
-          loading={loading}
-          disabled={!isValid}
-          style={styles.saveButtonLarge}
-        />
-
-        {/* Delete Button (Edit Mode Only) */}
+        {/* Delete (edit mode only) */}
         {!isNewEntry && entry && (
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={handleDelete}
-            accessible={true}
             accessibilityRole="button"
             accessibilityLabel="Delete food entry"
           >
-            <Text style={styles.deleteButtonText}>Delete Entry</Text>
+            <Text style={styles.deleteButtonText}>Delete entry</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Sticky save CTA */}
+      <View style={[styles.stickyCta, { bottom: safeBottom + 82 }]}>
+        <TouchableOpacity
+          style={[styles.primaryCta, (!isValid || loading) && { opacity: 0.6 }]}
+          onPress={handleSave}
+          disabled={!isValid || loading}
+          accessibilityRole="button"
+          accessibilityLabel={isNewEntry ? 'Log food' : 'Update entry'}
+        >
+          <Text style={styles.primaryCtaText}>
+            {loading
+              ? 'Saving…'
+              : (
+                <>
+                  {isNewEntry ? 'Add to ' : 'Update '}
+                  <Text style={styles.primaryCtaTextItalic}>{ctaMealLabel}</Text>
+                  <Text style={styles.primaryCtaTextMute}>  + {ctaKcal} kcal</Text>
+                </>
+              )}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Safety Warning Modal */}
       <SafetyWarningModal
@@ -402,117 +407,191 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loadingText: {
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 16,
+    color: '#2B221B',
+    padding: 24,
   },
   scrollContent: {
-    padding: theme.layout.screenPadding,
-    paddingBottom: 100, // Extra space to clear floating tab bar (70px height + 20px margin)
+    paddingHorizontal: 16,
+    paddingBottom: 110,
   },
-  foodInfo: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.layout.cardPadding,
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.card,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  foodHeader: {
+  heroCard: {
+    backgroundColor: '#FDFAF6',
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    padding: 20,
+    marginBottom: 16,
+  },
+  heroBrand: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#8C7E70',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  heroName: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 28,
+    color: '#2B221B',
+    letterSpacing: -0.6,
+    lineHeight: 30,
+    marginTop: 6,
+  },
+  heroNameItalic: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
+  },
+  heroKcalRow: {
+    marginTop: 18,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'baseline',
+    gap: 8,
   },
-  foodNameIcon: {
-    marginRight: theme.spacing.md,
+  heroKcal: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 36,
+    color: '#2B221B',
+    letterSpacing: -1,
   },
-  foodTitleContainer: {
-    flex: 1,
-    marginRight: theme.spacing.md,
+  heroKcalLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: '#8C7E70',
   },
-  foodName: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+  macroBars: {
+    marginTop: 14,
+    flexDirection: 'row',
+    gap: 8,
   },
-  foodBrand: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.secondary,
+  macroBarTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 6,
   },
-  section: {
-    marginBottom: theme.spacing.xl,
+  macroValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  macroValue: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 13,
+    color: '#2B221B',
+  },
+  macroLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 10,
+    color: '#8C7E70',
+    letterSpacing: 0.5,
   },
   sectionLabel: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-    marginLeft: theme.spacing.xs,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#8C7E70',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    paddingHorizontal: 4,
+    marginBottom: 10,
+    marginTop: 6,
   },
   mealChipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: 8,
+    marginBottom: 16,
   },
   mealChip: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.chip,
-    backgroundColor: theme.colors.surfaceHighlight,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
   },
   mealChipSelected: {
-    backgroundColor: theme.colors.primarySoft,
-    borderColor: theme.colors.primary,
+    backgroundColor: '#B84C3F',
+    borderColor: '#B84C3F',
   },
   mealChipText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.medium,
-    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 13,
+    color: '#2B221B',
   },
   mealChipTextSelected: {
-    color: theme.colors.primary,
-    fontWeight: theme.fontWeight.bold,
+    color: '#FFFFFF',
   },
-  customServingInput: {
-    marginTop: theme.spacing.md,
+  servingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    padding: 8,
+    marginBottom: 16,
   },
-  inputLabel: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-  },
-  saveButtonLarge: {
-    marginTop: theme.spacing.lg,
-    ...theme.shadows.md,
+  nutritionCardWrap: {
+    marginBottom: 12,
   },
   deleteButton: {
-    marginTop: theme.spacing.lg,
-    padding: theme.spacing.md,
+    marginTop: 16,
+    padding: 14,
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.error,
-    ...theme.shadows.sm,
+    backgroundColor: 'transparent',
   },
   deleteButtonText: {
-    color: theme.colors.error,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
+    fontFamily: theme.typography.fontFamily.semibold,
+    color: '#B84C3F',
+    fontSize: 13,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.layout.screenPadding,
+    padding: 20,
   },
   errorText: {
-    fontSize: theme.fontSize.lg,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.lg,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 16,
+    color: '#5A4D42',
+    marginBottom: 16,
+  },
+  stickyCta: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 18,
+  },
+  primaryCta: {
+    paddingVertical: 16,
+    borderRadius: 100,
+    backgroundColor: '#2B221B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryCtaText: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  primaryCtaTextItalic: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
+  },
+  primaryCtaTextMute: {
+    color: 'rgba(255,255,255,0.6)',
+    fontFamily: theme.typography.fontFamily.medium,
   },
 });

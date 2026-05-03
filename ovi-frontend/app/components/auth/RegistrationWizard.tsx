@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   stepSubtitle: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 13,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginBottom: 24,
     lineHeight: 20,
   },
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.displayItalic,
     fontStyle: 'italic',
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     marginTop: 4,
     marginBottom: 12,
   },

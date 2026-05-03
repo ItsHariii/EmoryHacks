@@ -58,43 +58,17 @@ export const Card: React.FC<CardProps> = ({
 
   const getContainerStyle = (): StyleProp<ViewStyle> => {
     const baseStyle: ViewStyle = {
-      borderRadius: theme.borderRadius[borderRadius],
-      overflow: 'hidden', // Essential for BlurView and Gradient to respect border radius
+      borderRadius: 20,
+      overflow: 'hidden',
+      backgroundColor: '#FFFFFF',
+      borderWidth: 0.5,
+      borderColor: '#E8E0D5',
       ...(margin && { margin: theme.spacing[margin] }),
     };
 
-    // Shadow handling
-    if (shadow !== 'none' && variant !== 'glass') {
-      Object.assign(baseStyle, theme.shadows[shadow]);
-    }
-
-    // Variant specific base styles
-    switch (variant) {
-      case 'default':
-      case 'elevated':
-        baseStyle.backgroundColor = theme.colors.surface;
-        break;
-      case 'outlined':
-        baseStyle.backgroundColor = theme.colors.surface;
-        baseStyle.borderWidth = 1;
-        baseStyle.borderColor = theme.colors.border;
-        break;
-      case 'glass':
-        // Background handled by BlurView
-        baseStyle.backgroundColor = 'transparent';
-        if (shadow !== 'none') {
-          // Subtle shadow for glass
-          baseStyle.shadowColor = '#000';
-          baseStyle.shadowOffset = { width: 0, height: 4 };
-          baseStyle.shadowOpacity = 0.1;
-          baseStyle.shadowRadius = 12;
-          baseStyle.elevation = 2;
-        }
-        break;
-      case 'gradient':
-        // Background handled by LinearGradient
-        baseStyle.backgroundColor = 'transparent';
-        break;
+    if (variant === 'glass' || variant === 'gradient') {
+      baseStyle.backgroundColor = 'transparent';
+      baseStyle.borderWidth = 0;
     }
 
     return [baseStyle, style];

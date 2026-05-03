@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   profileEmail: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 12,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 2,
   },
   editChip: {
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     paddingHorizontal: 4,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   rowSub: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 2,
   },
   signOut: {
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
   datePickerLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 8,

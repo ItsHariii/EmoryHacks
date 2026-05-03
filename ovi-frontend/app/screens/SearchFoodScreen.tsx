@@ -152,24 +152,23 @@ export const SearchFoodScreen: React.FC = () => {
       {/* Search bar */}
       <View style={styles.searchBarWrap}>
         <View style={styles.searchBar}>
-          <MaterialCommunityIcons name="magnify" size={18} color="#9C8E80" />
+          <MaterialCommunityIcons name="magnify" size={18} color="#8C7E70" />
           <TextInput
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholder="Search foods..."
-            placeholderTextColor="#9C8E80"
+            placeholderTextColor="#8C7E70"
             autoFocus
           />
           <TouchableOpacity accessibilityLabel="Voice search">
-            <MaterialCommunityIcons name="microphone-outline" size={18} color="#9C8E80" />
+            <MaterialCommunityIcons name="microphone-outline" size={18} color="#8C7E70" />
           </TouchableOpacity>
         </View>
       </View>
 
       <FlatList
         data={searched ? searchResults : []}
-        renderItem={({ item, index }) => renderFoodRow({ item, last: index === searchResults.length - 1 })}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
@@ -184,7 +183,7 @@ export const SearchFoodScreen: React.FC = () => {
                       style={styles.recentChip}
                       onPress={() => setSearchQuery(r)}
                     >
-                      <MaterialCommunityIcons name="magnify" size={11} color="#9C8E80" />
+                      <MaterialCommunityIcons name="magnify" size={11} color="#8C7E70" />
                       <Text style={styles.recentChipText}>{r}</Text>
                     </TouchableOpacity>
                   ))}
@@ -290,7 +289,7 @@ const styles = StyleSheet.create({
   navKicker: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 10,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -329,7 +328,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
     paddingHorizontal: 20,
@@ -345,7 +344,7 @@ const styles = StyleSheet.create({
   sectionMeta: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     paddingHorizontal: 20,
   },
   chipsWrap: {
@@ -367,7 +366,7 @@ const styles = StyleSheet.create({
   recentChipText: {
     fontFamily: theme.typography.fontFamily.medium,
     fontSize: 12,
-    color: '#6A5D52',
+    color: '#5A4D42',
   },
   card: {
     marginHorizontal: 16,
@@ -415,7 +414,7 @@ const styles = StyleSheet.create({
   foodMeta: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     marginTop: 3,
   },
   foodMetaTnum: {
@@ -429,7 +428,7 @@ const styles = StyleSheet.create({
   foodKcalLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 9,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 0.6,
   },
   addCircle: {
@@ -465,7 +464,7 @@ const styles = StyleSheet.create({
   manualSub: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 2,
   },
   manualCta: {

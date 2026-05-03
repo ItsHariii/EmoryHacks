@@ -79,7 +79,7 @@ export const BabyThisWeekCard: React.FC<BabyThisWeekCardProps> = ({
                                     <MaterialCommunityIcons
                                         name="heart-outline"
                                         size={12}
-                                        color="#9C8E80"
+                                        color="#8C7E70"
                                     />
                                     <Text style={styles.statText} numberOfLines={2}>
                                         {milestones[0]}
@@ -118,11 +118,11 @@ const styles = StyleSheet.create({
         top: 12,
         right: 14,
         zIndex: 2,
-        fontFamily: theme.typography.fontFamily.displayItalic,
-        fontStyle: 'italic',
-        fontSize: 11,
+        fontFamily: theme.typography.fontFamily.semibold,
+        fontSize: 10,
         color: '#8C6B2A',
-        letterSpacing: 0.2,
+        letterSpacing: 1.2,
+        textTransform: 'uppercase',
     },
     row: {
         flexDirection: 'row',
@@ -135,22 +135,22 @@ const styles = StyleSheet.create({
         backgroundColor: '#EFE7DC',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 16,
+        paddingVertical: 10,
         borderRightWidth: 0.5,
         borderRightColor: '#E8E0D5',
     },
     textColumn: {
         flex: 1,
-        paddingTop: 18,
-        paddingHorizontal: 18,
-        paddingBottom: 16,
-        gap: 6,
+        paddingTop: 12,
+        paddingHorizontal: 14,
+        paddingBottom: 10,
+        gap: 4,
         minWidth: 0,
     },
     metaLabel: {
         fontFamily: theme.typography.fontFamily.semibold,
         fontSize: 10,
-        color: '#9C8E80',
+        color: '#8C7E70',
         textTransform: 'uppercase',
         letterSpacing: 1.2,
     },
@@ -160,17 +160,16 @@ const styles = StyleSheet.create({
         color: '#2B221B',
         letterSpacing: -0.4,
         lineHeight: 24,
-        marginTop: 4,
+        marginTop: 2,
     },
     headlineItalic: {
         fontFamily: theme.typography.fontFamily.displayItalic,
-        fontStyle: 'italic',
     },
     headlineDot: {
         color: '#B84C3F',
     },
     statsRow: {
-        marginTop: 12,
+        marginTop: 8,
         gap: 4,
     },
     statItem: {
@@ -181,7 +180,7 @@ const styles = StyleSheet.create({
     statText: {
         fontFamily: theme.typography.fontFamily.regular,
         fontSize: 11,
-        color: '#6A5D52',
+        color: '#5A4D42',
         flex: 1,
         lineHeight: 16,
     },

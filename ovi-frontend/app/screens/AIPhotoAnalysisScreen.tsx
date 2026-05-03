@@ -15,9 +15,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ScreenWrapper } from '../components/layout/ScreenWrapper';
-import { HeaderBar } from '../components/layout/HeaderBar';
-import { Button } from '../components/ui/Button';
 import { theme } from '../theme';
 import { CameraPermissionScreen } from '../components/camera/CameraPermissionScreen';
 import { photoAPI } from '../services/api';
@@ -36,7 +33,7 @@ const CaptureButton: React.FC<{ onPress: () => void }> = ({ onPress }) => {
     return () => loop.stop();
   }, [scale]);
   return (
-    <TouchableOpacity style={styles.captureButton} onPress={onPress} activeOpacity={0.9}>
+    <TouchableOpacity style={styles.captureButton} onPress={onPress} activeOpacity={0.9} accessibilityLabel="Take photo">
       <Animated.View style={[styles.captureButtonInner, { transform: [{ scale }] }]} />
     </TouchableOpacity>
   );
@@ -55,18 +52,11 @@ export const AIPhotoAnalysisScreen: React.FC = () => {
 
   const handleTakePhoto = async () => {
     if (!cameraRef.current) return;
-
     try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-      });
-
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
       setCapturedPhoto(photo.uri);
-
-      // Automatically start analysis
       await analyzePhoto(photo.uri);
     } catch (err: any) {
-      console.error('Error taking photo:', err);
       Alert.alert('Error', 'Failed to capture photo. Please try again.');
     }
   };
@@ -74,18 +64,11 @@ export const AIPhotoAnalysisScreen: React.FC = () => {
   const analyzePhoto = async (photoUri: string) => {
     setAnalyzing(true);
     setError(null);
-
     try {
-      // Send to backend for analysis (skipping compression for now)
       const result = await photoAPI.analyzePhoto(photoUri);
-
-      if (result.success) {
-        setAnalysisResult(result);
-      } else {
-        setError(result.error || 'Failed to analyze photo');
-      }
+      if (result.success) setAnalysisResult(result);
+      else setError(result.error || 'Failed to analyze photo');
     } catch (err: any) {
-      console.error('Error analyzing photo:', err);
       setError(err.message || 'Failed to analyze photo. Please try again.');
     } finally {
       setAnalyzing(false);
@@ -100,212 +83,186 @@ export const AIPhotoAnalysisScreen: React.FC = () => {
 
   const handleLogFood = () => {
     if (!analysisResult?.food) return;
-
-    // Navigate to SearchFood with the analyzed food pre-selected
     (navigation as any).navigate('SearchFood', {
       preselectedFood: analysisResult.food,
       aiAnalysis: analysisResult.ai_analysis,
     });
   };
 
-  const handleCancel = () => {
-    navigation.goBack();
-  };
+  const handleCancel = () => navigation.goBack();
 
-  // Show permission screens
   if (!permission) {
     return <CameraPermissionScreen loading onRequestPermission={requestPermission} onGoBack={handleCancel} />;
   }
-
   if (!permission.granted) {
     return <CameraPermissionScreen denied onRequestPermission={requestPermission} onGoBack={handleCancel} />;
   }
 
-  // Show analysis results
+  // Result sheet
   if (analysisResult && capturedPhoto) {
     const { ai_analysis, food } = analysisResult;
-
+    const kcal = Math.round(food?.calories || 0);
     return (
-      <ScreenWrapper edges={['bottom']}>
-        <HeaderBar
-          title="Analysis Results"
-          showBack
-          onBack={handleCancel}
-        />
-        <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.resultsContent}>
-          {/* Photo Preview */}
-          <Image source={{ uri: capturedPhoto }} style={styles.photoPreview} />
+      <View style={styles.container}>
+        <Image source={{ uri: capturedPhoto }} style={StyleSheet.absoluteFillObject} blurRadius={2} />
+        <View style={styles.dimVeil} />
 
-          {/* AI Analysis */}
-          <View style={styles.section}>
-            <View style={styles.foodHeader}>
-              <MaterialCommunityIcons name="food-apple" size={32} color={theme.colors.primary} />
-              <View style={styles.foodInfo}>
-                <Text style={styles.foodName}>{ai_analysis.food_name}</Text>
-                <Text style={styles.confidence}>
-                  {ai_analysis.confidence}% confidence
-                </Text>
-              </View>
+        <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+          <TouchableOpacity onPress={handleCancel} style={styles.cancelHit} accessibilityLabel="Cancel">
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+          <Text style={styles.topKicker}>AI ESTIMATION</Text>
+          <View style={{ width: 56 }} />
+        </View>
+
+        <View style={styles.sheet}>
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: 18 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.handle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetKicker}>DETECTED</Text>
+              <Text style={styles.confidence}>
+                {ai_analysis?.confidence || 0}% confidence
+              </Text>
             </View>
+            <Text style={styles.foodName}>
+              <Text style={styles.foodNameItalic}>{ai_analysis?.food_name || 'Unknown'}</Text>
+            </Text>
 
-            {/* Safety Badge */}
-            {food.safety_status && (
-              <View style={styles.safetyContainer}>
-                <FoodSafetyBadge
-                  status={food.safety_status}
-                  notes={food.safety_notes}
-                />
+            {food?.safety_status && (
+              <View style={{ marginTop: 10 }}>
+                <FoodSafetyBadge status={food.safety_status} notes={food.safety_notes} />
               </View>
             )}
 
-            {/* Portion Estimate */}
-            {ai_analysis.estimated_portion_size && (
-              <View style={styles.infoCard}>
-                <Text style={styles.infoLabel}>Estimated Portion</Text>
-                <Text style={styles.infoValue}>
-                  {ai_analysis.estimated_portion_size} {ai_analysis.estimated_portion_unit}
-                </Text>
-              </View>
+            {ai_analysis?.estimated_portion_size && (
+              <Text style={styles.portion}>
+                ~{ai_analysis.estimated_portion_size} {ai_analysis.estimated_portion_unit}
+              </Text>
             )}
 
-            {/* Nutrition Info */}
-            <View style={styles.nutritionCard}>
-              <Text style={styles.sectionTitle}>Nutrition (per {food.serving_size}{food.serving_unit})</Text>
-              <View style={styles.nutritionGrid}>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionLabel}>Calories</Text>
-                  <Text style={styles.nutritionValue}>{Math.round(food.calories)}</Text>
-                </View>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionLabel}>Protein</Text>
-                  <Text style={styles.nutritionValue}>{food.nutrients.protein.amount}g</Text>
-                </View>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionLabel}>Carbs</Text>
-                  <Text style={styles.nutritionValue}>{food.nutrients.carbs.amount}g</Text>
-                </View>
-                <View style={styles.nutritionItem}>
-                  <Text style={styles.nutritionLabel}>Fat</Text>
-                  <Text style={styles.nutritionValue}>{food.nutrients.fat.amount}g</Text>
-                </View>
-              </View>
+            <View style={styles.kcalRow}>
+              <Text style={styles.kcalValue}>{kcal}</Text>
+              <Text style={styles.kcalUnit}>kcal estimated</Text>
             </View>
 
-            {/* Ingredients */}
-            {ai_analysis.detected_ingredients && ai_analysis.detected_ingredients.length > 0 && (
-              <View style={styles.ingredientsCard}>
-                <Text style={styles.sectionTitle}>Detected Ingredients</Text>
-                <View style={styles.ingredientsList}>
-                  {ai_analysis.detected_ingredients.map((ingredient: string, index: number) => (
-                    <View key={index} style={styles.ingredientChip}>
-                      <Text style={styles.ingredientText}>{ingredient}</Text>
+            <View style={styles.macroRow}>
+              {[
+                { l: 'Protein', v: Math.round(food?.nutrients?.protein?.amount || 0) },
+                { l: 'Carbs', v: Math.round(food?.nutrients?.carbs?.amount || 0) },
+                { l: 'Fats', v: Math.round(food?.nutrients?.fat?.amount || 0) },
+              ].map((m, i, arr) => (
+                <View key={m.l} style={[styles.macroItem, i < arr.length - 1 && styles.macroDivider]}>
+                  <Text style={styles.macroValue}>{m.v}<Text style={styles.macroValueG}>g</Text></Text>
+                  <Text style={styles.macroLabel}>{m.l}</Text>
+                </View>
+              ))}
+            </View>
+
+            {ai_analysis?.detected_ingredients?.length > 0 && (
+              <View style={{ marginTop: 18 }}>
+                <Text style={styles.subsectionLabel}>Ingredients</Text>
+                <View style={styles.ingredientsWrap}>
+                  {ai_analysis.detected_ingredients.map((ing: string, i: number) => (
+                    <View key={i} style={styles.ingredientChip}>
+                      <Text style={styles.ingredientText}>{ing}</Text>
                     </View>
                   ))}
                 </View>
               </View>
             )}
+          </ScrollView>
 
-            {/* Pregnancy Concerns */}
-            {ai_analysis.pregnancy_concerns && ai_analysis.pregnancy_concerns.length > 0 && (
-              <View style={styles.warningCard}>
-                <MaterialCommunityIcons name="alert" size={20} color={theme.colors.warning} />
-                <Text style={styles.warningText}>
-                  {ai_analysis.pregnancy_concerns.join(', ')}
-                </Text>
-              </View>
-            )}
-          </View>
-        </ScrollView>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.retakeButton} onPress={handleRetake}>
-            <MaterialCommunityIcons name="camera-retake" size={theme.iconSize.md} color={theme.colors.text.secondary} />
-            <Text style={styles.retakeButtonText}>Retake</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.logButton} onPress={handleLogFood}>
-            <Text style={styles.logButtonText}>Log This Food</Text>
-          </TouchableOpacity>
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
-  // Show error state
-  if (error && capturedPhoto) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.errorContainer}>
-          <Image source={{ uri: capturedPhoto }} style={styles.errorPhoto} />
-          <View style={styles.errorCard}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={theme.iconSize.massive} color={theme.colors.error} />
-            <Text style={styles.errorTitle}>Analysis Failed</Text>
-            <Text style={styles.errorMessage}>{error}</Text>
-          </View>
-          <View style={styles.errorButtons}>
-            <Button title="Try Again" onPress={handleRetake} variant="outline" style={styles.errorButton} />
-            <Button
-              title="Manual Search"
-              onPress={() => {
-                navigation.goBack();
-                (navigation as any).navigate('SearchFood');
-              }}
-              style={styles.errorButton}
-            />
-          </View>
-        </View>
-      </ScreenWrapper>
-    );
-  }
-
-  // Show analyzing state
-  if (analyzing && capturedPhoto) {
-    return (
-      <View style={styles.container}>
-        <Image source={{ uri: capturedPhoto }} style={styles.analyzingPhoto} />
-        <View style={styles.analyzingOverlay}>
-          <View style={styles.analyzingCard}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={styles.analyzingText}>Analyzing your food...</Text>
-            <Text style={styles.analyzingSubtext}>This may take a few seconds</Text>
+          <View style={styles.sheetActions}>
+            <TouchableOpacity style={styles.secondaryCta} onPress={handleRetake} activeOpacity={0.85}>
+              <Text style={styles.secondaryCtaText}>Retake</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.cta, { flex: 2 }]} onPress={handleLogFood} activeOpacity={0.9}>
+              <Text style={styles.ctaText}>Confirm</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
     );
   }
 
-  // Show camera view
+  // Error state
+  if (error && capturedPhoto) {
+    return (
+      <View style={styles.container}>
+        <Image source={{ uri: capturedPhoto }} style={StyleSheet.absoluteFillObject} blurRadius={2} />
+        <View style={styles.dimVeil} />
+        <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+          <TouchableOpacity onPress={handleCancel} style={styles.cancelHit}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+          <View />
+        </View>
+        <View style={styles.sheet}>
+          <View style={styles.handle} />
+          <Text style={styles.foodName}>
+            Couldn't <Text style={styles.foodNameItalic}>read it</Text>
+          </Text>
+          <Text style={styles.portion}>{error}</Text>
+          <View style={styles.sheetActions}>
+            <TouchableOpacity style={styles.secondaryCta} onPress={handleRetake} activeOpacity={0.85}>
+              <Text style={styles.secondaryCtaText}>Retake</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.cta, { flex: 2 }]}
+              onPress={() => (navigation as any).navigate('SearchFood')}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.ctaText}>Search instead</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Analyzing state
+  if (analyzing && capturedPhoto) {
+    return (
+      <View style={styles.container}>
+        <Image source={{ uri: capturedPhoto }} style={StyleSheet.absoluteFillObject} blurRadius={2} />
+        <View style={styles.dimVeil} />
+        <View style={styles.analyzingPill}>
+          <ActivityIndicator size="small" color="#B84C3F" />
+          <Text style={styles.analyzingText}>Analyzing your food…</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Camera capture
   return (
     <View style={styles.container}>
-      <CameraView
-        ref={cameraRef}
-        facing="back"
-        style={StyleSheet.absoluteFillObject}
-      />
+      <CameraView ref={cameraRef} facing="back" style={StyleSheet.absoluteFillObject} />
 
-      {/* Overlay */}
-      <View style={styles.overlay}>
-        {/* Cancel Button */}
-        <TouchableOpacity
-          style={[styles.cancelButton, { top: insets.top + 10 }]}
-          onPress={handleCancel}
-        >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity onPress={handleCancel} style={styles.cancelHit} accessibilityLabel="Cancel">
+          <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
+        <Text style={styles.topKicker}>AI ESTIMATION</Text>
+        <View style={{ width: 56 }} />
+      </View>
 
-        {/* Instructions */}
-        <View style={styles.instructionsContainer}>
-          <MaterialCommunityIcons name="camera-iris" size={48} color={theme.colors.surface} />
-          <Text style={styles.instructionsTitle}>AI Food Analysis</Text>
-          <Text style={styles.instructionsText}>
-            Position your food in the frame and take a photo
-          </Text>
+      {/* Center frame brackets */}
+      <View style={styles.frameWrap} pointerEvents="none">
+        <View style={styles.frame}>
+          <View style={[styles.corner, styles.topLeft]} />
+          <View style={[styles.corner, styles.topRight]} />
+          <View style={[styles.corner, styles.bottomLeft]} />
+          <View style={[styles.corner, styles.bottomRight]} />
         </View>
+        <Text style={styles.frameHint}>Center your food in the frame</Text>
+      </View>
 
-        {/* Capture Button */}
-        <View style={styles.captureContainer}>
-          <CaptureButton onPress={handleTakePhoto} />
-        </View>
+      <View style={[styles.captureWrap, { bottom: 60 + insets.bottom }]}>
+        <CaptureButton onPress={handleTakePhoto} />
       </View>
     </View>
   );
@@ -314,359 +271,282 @@ export const AIPhotoAnalysisScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#0F0C09',
   },
-  overlay: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  cancelButton: {
-    position: 'absolute',
-    left: theme.layout.screenPadding,
-    backgroundColor: theme.colors.cameraOverlay,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.full,
-    ...theme.shadows.sm,
-  },
-  cancelButtonText: {
-    fontFamily: theme.typography.fontFamily.semibold,
-    color: theme.colors.text.inverse,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-  },
-  instructionsContainer: {
-    alignItems: 'center',
-    marginTop: 120,
-    paddingHorizontal: theme.spacing.xxl,
-  },
-  instructionsTitle: {
-    ...theme.typography.presets.heading3,
-    color: theme.colors.text.inverse,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
-    textAlign: 'center',
-  },
-  instructionsText: {
-    ...theme.typography.presets.body,
-    fontSize: theme.typography.fontSize.md,
-    color: theme.colors.text.inverse,
-    opacity: theme.opacity.medium,
-    textAlign: 'center',
-  },
-  captureContainer: {
-    alignItems: 'center',
-    marginBottom: 60,
-  },
-  captureButton: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 4,
-    borderColor: theme.colors.text.inverse,
-  },
-  captureButtonInner: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: theme.colors.text.inverse,
-  },
-  analyzingPhoto: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  analyzingOverlay: {
+  dimVeil: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(15,12,9,0.45)',
   },
-  analyzingCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.xl,
-    borderRadius: theme.borderRadius.xl,
-    alignItems: 'center',
-    minWidth: 280,
-    ...theme.shadows.card,
-  },
-  analyzingText: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.lg,
-  },
-  analyzingSubtext: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
-  },
-  resultsContainer: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  resultsContent: {
-    paddingBottom: 120,
-  },
-  photoPreview: {
-    width: '100%',
-    height: 300,
-    resizeMode: 'cover',
-    borderRadius: theme.borderRadius.xl,
-    ...theme.shadows.card,
-    marginHorizontal: theme.layout.screenPadding,
-    marginTop: theme.spacing.md,
-    overflow: 'hidden',
-  },
-  section: {
-    padding: theme.layout.screenPadding,
-    marginTop: -theme.spacing.xl,
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: theme.borderRadius.xxl,
-    borderTopRightRadius: theme.borderRadius.xxl,
-  },
-  foodHeader: {
+  topBar: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
-    ...theme.shadows.card,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    justifyContent: 'space-between',
+    zIndex: 10,
   },
-  foodInfo: {
-    marginLeft: theme.spacing.md,
+  cancelHit: {
+    paddingVertical: 8,
+    minWidth: 56,
+  },
+  cancelText: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    color: '#F6F1EA',
+    fontSize: 14,
+    letterSpacing: 0.2,
+  },
+  topKicker: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: 'rgba(246,241,234,0.7)',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  frameWrap: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  frame: {
+    width: 280,
+    height: 280,
+    position: 'relative',
+  },
+  corner: {
+    position: 'absolute',
+    width: 32,
+    height: 32,
+    borderColor: '#B84C3F',
+  },
+  topLeft: {
+    top: 0, left: 0,
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderTopLeftRadius: 8,
+  },
+  topRight: {
+    top: 0, right: 0,
+    borderTopWidth: 2.5,
+    borderRightWidth: 2.5,
+    borderTopRightRadius: 8,
+  },
+  bottomLeft: {
+    bottom: 0, left: 0,
+    borderBottomWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderBottomLeftRadius: 8,
+  },
+  bottomRight: {
+    bottom: 0, right: 0,
+    borderBottomWidth: 2.5,
+    borderRightWidth: 2.5,
+    borderBottomRightRadius: 8,
+  },
+  frameHint: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 16,
+    marginTop: 24,
+    textAlign: 'center',
+  },
+  captureWrap: {
+    position: 'absolute',
+    left: 0, right: 0,
+    alignItems: 'center',
+  },
+  captureButton: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  captureButtonInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+  },
+  analyzingPill: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  analyzingText: {
+    fontFamily: theme.typography.fontFamily.medium,
+    color: '#2B221B',
+    fontSize: 14,
+    marginTop: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    backgroundColor: '#F6F1EA',
+    borderRadius: 100,
+    overflow: 'hidden',
+  },
+  sheet: {
+    position: 'absolute',
+    left: 0, right: 0, bottom: 0,
+    maxHeight: '78%',
+    backgroundColor: '#F6F1EA',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E8E0D5',
+    marginBottom: 14,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  sheetKicker: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#8C7E70',
+    letterSpacing: 1.4,
+  },
+  confidence: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 11,
+    color: '#8C7E70',
   },
   foodName: {
     fontFamily: theme.typography.fontFamily.display,
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
+    fontSize: 26,
+    color: '#2B221B',
+    letterSpacing: -0.6,
+    lineHeight: 30,
+    marginTop: 4,
   },
-  confidence: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    fontWeight: theme.fontWeight.medium,
+  foodNameItalic: {
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
   },
-  safetyContainer: {
-    marginBottom: theme.spacing.lg,
+  portion: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: '#8C7E70',
+    marginTop: 6,
   },
-  infoCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-  },
-  infoLabel: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
-    fontWeight: theme.fontWeight.medium,
-  },
-  infoValue: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-  },
-  nutritionCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-  },
-  sectionTitle: {
-    fontFamily: theme.typography.fontFamily.display,
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.lg,
-  },
-  nutritionGrid: {
+  kcalRow: {
+    marginTop: 14,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    alignItems: 'baseline',
+    gap: 8,
   },
-  nutritionItem: {
-    flex: 1,
-    minWidth: '45%',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surfaceHighlight,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
+  kcalValue: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 38,
+    color: '#2B221B',
+    letterSpacing: -1,
+    lineHeight: 42,
   },
-  nutritionLabel: {
+  kcalUnit: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: '#8C7E70',
+  },
+  macroRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    backgroundColor: '#FCF8F1',
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    paddingVertical: 12,
+  },
+  macroItem: { flex: 1, alignItems: 'center' },
+  macroDivider: { borderRightWidth: 0.5, borderRightColor: '#E8E0D5' },
+  macroValue: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 18,
+    color: '#2B221B',
+  },
+  macroValueG: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 11,
+    color: '#8C7E70',
+  },
+  macroLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
-    fontSize: theme.fontSize.xs,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.xs,
+    fontSize: 10,
+    color: '#8C7E70',
+    letterSpacing: 1,
+    marginTop: 2,
     textTransform: 'uppercase',
-    fontWeight: theme.fontWeight.bold,
   },
-  nutritionValue: {
-    fontFamily: theme.typography.fontFamily.display,
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.primary,
+  subsectionLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#8C7E70',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
-  ingredientsCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-  },
-  ingredientsList: {
+  ingredientsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: 6,
   },
   ingredientChip: {
-    backgroundColor: theme.colors.primarySoft,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.full,
+    backgroundColor: '#EFE7DC',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 100,
   },
   ingredientText: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.primary,
-    fontWeight: theme.fontWeight.medium,
-  },
-  warningCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.warning,
-    padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
-    gap: theme.spacing.md,
-    borderWidth: 1,
-    borderColor: theme.colors.warningDark,
-  },
-  warningText: {
-    fontFamily: theme.typography.fontFamily.regular,
-    flex: 1,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.warningDark,
-    lineHeight: 20,
-  },
-  actionButtons: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    padding: theme.layout.screenPadding,
-    paddingBottom: 40,
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.borderLight,
-    gap: theme.spacing.md,
-    ...theme.shadows.lg,
-  },
-  retakeButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    gap: theme.spacing.xs,
-    ...theme.shadows.sm,
-  },
-  retakeButtonText: {
     fontFamily: theme.typography.fontFamily.semibold,
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.primary,
-    fontWeight: theme.fontWeight.bold,
+    fontSize: 11,
+    color: '#2B221B',
+    letterSpacing: 0.2,
   },
-  logButton: {
-    flex: 2,
-    backgroundColor: theme.colors.primary,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: theme.layout.minTouchTarget,
-    ...theme.shadows.lg,
-  },
-  logButtonText: {
-    fontFamily: theme.typography.fontFamily.semibold,
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.inverse,
-    fontWeight: theme.fontWeight.bold,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: theme.layout.screenPadding,
-    backgroundColor: theme.colors.background,
-  },
-  errorPhoto: {
-    width: 200,
-    height: 200,
-    borderRadius: theme.borderRadius.xl,
-    marginBottom: theme.spacing.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    ...theme.shadows.sm,
-  },
-  errorCard: {
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
-    marginBottom: theme.spacing.xl,
-    width: '100%',
-    maxWidth: 320,
-    ...theme.shadows.card,
-  },
-  errorTitle: {
-    fontFamily: theme.typography.fontFamily.display,
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
-  },
-  errorMessage: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: theme.spacing.xl,
-    lineHeight: 24,
-  },
-  errorButtons: {
+  sheetActions: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    width: '100%',
-    maxWidth: 320,
+    gap: 10,
+    marginTop: 18,
   },
-  errorButton: {
+  secondaryCta: {
     flex: 1,
+    paddingVertical: 16,
+    borderRadius: 100,
+    backgroundColor: '#FCF8F1',
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryCtaText: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 14,
+    color: '#2B221B',
+  },
+  cta: {
+    paddingVertical: 16,
+    borderRadius: 100,
+    backgroundColor: '#2B221B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
 });

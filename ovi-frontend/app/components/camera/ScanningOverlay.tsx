@@ -6,27 +6,21 @@ import { theme } from '../../theme';
 const { width } = Dimensions.get('window');
 const SCAN_AREA_SIZE = width * 0.7;
 
-export const ScanningOverlay: React.FC = () => {
+export const ScanningOverlay: React.FC<{ instruction?: string; subInstruction?: string }> = ({
+  instruction = 'Align the barcode within the frame',
+  subInstruction,
+}) => {
   return (
-    <View style={styles.overlay}>
-      <View style={styles.topOverlay} />
-      <View style={styles.middleRow}>
-        <View style={styles.sideOverlay} />
-        <View style={styles.scanArea}>
-          <View style={[styles.corner, styles.topLeft]} />
-          <View style={[styles.corner, styles.topRight]} />
-          <View style={[styles.corner, styles.bottomLeft]} />
-          <View style={[styles.corner, styles.bottomRight]} />
-        </View>
-        <View style={styles.sideOverlay} />
+    <View style={styles.overlay} pointerEvents="none">
+      <View style={styles.scanFrame}>
+        <View style={[styles.corner, styles.topLeft]} />
+        <View style={[styles.corner, styles.topRight]} />
+        <View style={[styles.corner, styles.bottomLeft]} />
+        <View style={[styles.corner, styles.bottomRight]} />
       </View>
-      <View style={styles.bottomOverlay}>
-        <Text style={styles.instructionText}>
-          Position barcode within the frame
-        </Text>
-        <Text style={styles.subInstructionText}>
-          Supports UPC and EAN formats
-        </Text>
+      <View style={styles.captionWrap}>
+        <Text style={styles.instructionText}>{instruction}</Text>
+        {subInstruction ? <Text style={styles.subInstructionText}>{subInstruction}</Text> : null}
       </View>
     </View>
   );
@@ -35,73 +29,64 @@ export const ScanningOverlay: React.FC = () => {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  topOverlay: {
-    flex: 1,
-    backgroundColor: theme.colors.cameraOverlay,
-  },
-  middleRow: {
-    flexDirection: 'row',
-    height: SCAN_AREA_SIZE,
-  },
-  sideOverlay: {
-    flex: 1,
-    backgroundColor: theme.colors.cameraOverlay,
-  },
-  scanArea: {
+  scanFrame: {
     width: SCAN_AREA_SIZE,
-    height: SCAN_AREA_SIZE,
+    height: SCAN_AREA_SIZE * 0.74,
     position: 'relative',
   },
   corner: {
     position: 'absolute',
-    width: 40,
-    height: 40,
-    borderColor: theme.colors.primary,
+    width: 32,
+    height: 32,
+    borderColor: '#B84C3F',
   },
   topLeft: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 4,
-    borderLeftWidth: 4,
+    top: 0, left: 0,
+    borderTopWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderTopLeftRadius: 8,
   },
   topRight: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 4,
-    borderRightWidth: 4,
+    top: 0, right: 0,
+    borderTopWidth: 2.5,
+    borderRightWidth: 2.5,
+    borderTopRightRadius: 8,
   },
   bottomLeft: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 4,
-    borderLeftWidth: 4,
+    bottom: 0, left: 0,
+    borderBottomWidth: 2.5,
+    borderLeftWidth: 2.5,
+    borderBottomLeftRadius: 8,
   },
   bottomRight: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 4,
-    borderRightWidth: 4,
+    bottom: 0, right: 0,
+    borderBottomWidth: 2.5,
+    borderRightWidth: 2.5,
+    borderBottomRightRadius: 8,
   },
-  bottomOverlay: {
-    flex: 1,
-    backgroundColor: theme.colors.cameraOverlay,
-    justifyContent: 'center',
+  captionWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -56,
     alignItems: 'center',
-    paddingBottom: theme.spacing.xxl,
   },
   instructionText: {
-    color: theme.colors.text.inverse,
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
+    fontFamily: theme.typography.fontFamily.displayItalic,
+    fontStyle: 'italic',
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 16,
     textAlign: 'center',
-    marginBottom: theme.spacing.sm,
+    letterSpacing: 0.1,
   },
   subInstructionText: {
-    color: theme.colors.text.inverse,
-    fontSize: theme.typography.fontSize.sm,
+    fontFamily: theme.typography.fontFamily.regular,
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
     textAlign: 'center',
-    opacity: 0.8,
+    marginTop: 6,
   },
 });

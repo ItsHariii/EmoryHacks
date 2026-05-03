@@ -35,6 +35,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
   },
   message: {
+    fontFamily: theme.typography.fontFamily.regular,
     marginTop: theme.spacing.md,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,

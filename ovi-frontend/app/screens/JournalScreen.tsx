@@ -205,6 +205,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
                 { backgroundColor: moodPositive ? '#E9EEE2' : '#F4E4DF' },
               ]}>
                 <Text style={{
+                  fontFamily: theme.typography.fontFamily.regular,
                   fontSize: 13,
                   color: moodPositive ? '#4F6148' : '#8F3A31',
                 }}>{moodGlyph}</Text>
@@ -300,7 +301,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
               ) : (
                 <TouchableOpacity style={styles.dateFilterButton} onPress={() => setStartDate(new Date())}>
                   <Text style={styles.dateFilterPlaceholder}>Select start date</Text>
-                  <MaterialCommunityIcons name="calendar" size={20} color="#9C8E80" />
+                  <MaterialCommunityIcons name="calendar" size={20} color="#8C7E70" />
                 </TouchableOpacity>
               )}
             </View>
@@ -312,7 +313,7 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
               ) : (
                 <TouchableOpacity style={styles.dateFilterButton} onPress={() => setEndDate(new Date())}>
                   <Text style={styles.dateFilterPlaceholder}>Select end date</Text>
-                  <MaterialCommunityIcons name="calendar" size={20} color="#9C8E80" />
+                  <MaterialCommunityIcons name="calendar" size={20} color="#8C7E70" />
                 </TouchableOpacity>
               )}
             </View>
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
   kicker: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
   checkInKicker: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#6A5D52',
+    color: '#5A4D42',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 6,
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F6F1EA',
     borderWidth: 0.5,
     borderColor: '#E8E0D5',
   },
@@ -433,17 +434,17 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   listContent: {
-    paddingBottom: 130,
+    paddingBottom: 150,
   },
   entryCard: {
     marginHorizontal: 16,
     marginBottom: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FDFAF6',
     borderRadius: 20,
     padding: 18,
     borderWidth: 0.5,
@@ -464,7 +465,7 @@ const styles = StyleSheet.create({
   entryFullDate: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     marginTop: 2,
   },
   entryMoodWrap: {
@@ -482,13 +483,13 @@ const styles = StyleSheet.create({
   entryMoodLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#6A5D52',
+    color: '#5A4D42',
   },
   entryQuote: {
     fontFamily: theme.typography.fontFamily.displayItalic,
     fontStyle: 'italic',
     fontSize: 13,
-    color: '#6A5D52',
+    color: '#5A4D42',
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   chip: {
-    backgroundColor: '#EFE7DC',
+    backgroundColor: '#F5EAE8',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 100,
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
   chipText: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#2B221B',
+    color: '#B84C3F',
     letterSpacing: 0.2,
   },
   metricsWrap: {
@@ -523,7 +524,7 @@ const styles = StyleSheet.create({
   metricText: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
   },
   metricBold: {
     fontFamily: theme.typography.fontFamily.semibold,
@@ -562,7 +563,7 @@ const styles = StyleSheet.create({
   dateFilterLabel: {
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 11,
-    color: '#9C8E80',
+    color: '#8C7E70',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 8,
@@ -582,7 +583,7 @@ const styles = StyleSheet.create({
   dateFilterPlaceholder: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 14,
-    color: '#9C8E80',
+    color: '#8C7E70',
   },
   modalActions: {
     flexDirection: 'row',

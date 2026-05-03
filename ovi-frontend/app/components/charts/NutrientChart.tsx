@@ -191,10 +191,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   percentageText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.bold,
   },
   nutrientName: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xs,
     color: theme.colors.text.primary,
     textAlign: 'center',
@@ -202,6 +204,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fontWeight.medium,
   },
   nutrientValue: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 10,
     color: theme.colors.text.muted,
     textAlign: 'center',
@@ -223,6 +226,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xxl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.primary,
@@ -242,11 +246,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalStatLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginBottom: theme.spacing.xs,
   },
   modalStatValue: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -255,12 +261,14 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   modalSectionTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.sm,
   },
   modalSectionText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     lineHeight: 22,
@@ -273,6 +281,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
   },
   modalCloseButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.inverse,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,

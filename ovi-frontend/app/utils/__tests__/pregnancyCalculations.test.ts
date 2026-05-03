@@ -17,6 +17,9 @@ jest.mock('../../constants/fetusDevelopment', () => ({
         }
         return null;
     },
+    FETUS_DEVELOPMENT_DATA: {
+        10: { sizeComparison: 'Strawberry' },
+    },
 }));
 
 describe('pregnancyCalculations', () => {
@@ -100,8 +103,11 @@ describe('pregnancyCalculations', () => {
             expect(getSizeComparison(10)).toBe('Strawberry');
         });
 
-        it('returns default for unknown week', () => {
-            expect(getSizeComparison(5)).toBe('developing');
+        it('falls back to nearest known week instead of "developing"', () => {
+            // With mocked module returning Strawberry for week 10 and undefined for others,
+            // the nearest fallback is the only known entry — must not be "developing".
+            expect(getSizeComparison(5)).not.toBe('developing');
+            expect(getSizeComparison(5)).toBe('Strawberry');
         });
     });
 

@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.md,
   },
   label: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
@@ -192,11 +193,13 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   selectedChipText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.light,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.medium,
   },
   removeIcon: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.light,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
@@ -221,6 +224,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   symptomText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
   },
@@ -240,6 +244,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addCustomText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.primary,
     fontWeight: theme.fontWeight.medium,
@@ -260,12 +265,14 @@ const styles = StyleSheet.create({
     ...theme.shadows.lg,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.md,
   },
   input: {
+    fontFamily: theme.typography.fontFamily.regular,
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
@@ -293,6 +300,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   cancelButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.secondary,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.medium,
@@ -301,6 +309,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   addButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.light,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,

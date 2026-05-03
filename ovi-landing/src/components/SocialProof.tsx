@@ -56,7 +56,7 @@ export function SocialProof() {
   const item = staggerItem(reducedMotion)
 
   return (
-    <section className="py-24 sm:py-32 px-6 bg-white border-b border-ovi-border/60">
+    <section className="py-24 sm:py-32 px-6 bg-ovi-surface border-b border-ovi-border/60">
       <motion.div
         variants={container}
         initial="hidden"

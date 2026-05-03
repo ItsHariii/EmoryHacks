@@ -69,14 +69,14 @@ export function CtaSection({ onSuccess, formspreeEndpoint }: CtaSectionProps) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             required
-            className="flex-1 px-4 py-3.5 text-[1.0625rem] rounded-lg border border-ovi-border bg-white focus:outline-none focus:ring-2 focus:ring-ovi-primary/30 focus:border-ovi-primary transition-all duration-200"
+            className="flex-1 px-4 py-3.5 text-[1.0625rem] rounded-lg border border-ovi-border bg-ovi-surface focus:outline-none focus:ring-2 focus:ring-ovi-primary/30 focus:border-ovi-primary transition-all duration-200"
           />
           <motion.button
             type="submit"
             disabled={isSubmitting}
             whileHover={reducedMotion ? undefined : { scale: 1.02 }}
             whileTap={reducedMotion ? undefined : { scale: 0.98 }}
-            className="cta-shimmer-btn px-8 py-3.5 text-base font-medium text-white rounded-lg bg-ovi-primary hover:bg-ovi-primary-dark shadow-sm transition-colors duration-200 disabled:opacity-70 whitespace-nowrap"
+            className="cta-shimmer-btn px-8 py-3.5 text-base font-medium text-white rounded-lg bg-ovi-primary hover:bg-ovi-primary-dark transition-colors duration-200 disabled:opacity-70 whitespace-nowrap"
           >
             {isSubmitting ? 'Joining...' : 'Join Waitlist'}
           </motion.button>

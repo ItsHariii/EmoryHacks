@@ -334,14 +334,15 @@ export const DashboardScreen: React.FC = () => {
           </Animated.View>
         ) : null}
 
+        <View style={styles.warmDivider} />
 
         {/* Macronutrients Section - Clickable for breakdown */}
         <TouchableOpacity
           activeOpacity={0.9}
-          onPress={() => setShowNutritionBreakdownModal(true)}
+          onPress={() => (navigation as any).navigate('FullNutrientBreakdown', { scrollTo: 'macros' })}
           accessible={true}
-          accessibilityLabel="View nutrition breakdown"
-          accessibilityHint="Double tap to see food breakdown and macro sources"
+          accessibilityLabel="View full nutrient breakdown"
+          accessibilityHint="Double tap to see complete macro and micronutrient breakdown"
         >
           <NutritionSection opacity={macroOpacity} translateY={macroTranslateY} />
         </TouchableOpacity>
@@ -354,30 +355,35 @@ export const DashboardScreen: React.FC = () => {
         ) : micronutrients.length > 0 ? (
           <TouchableOpacity
             activeOpacity={0.9}
-            onPress={() => setShowNutritionModal(true)}
+            onPress={() => (navigation as any).navigate('FullNutrientBreakdown')}
           >
             <Animated.View
               style={[
-                styles.section,
+                styles.microSection,
                 {
                   opacity: microOpacity,
                   transform: [{ translateY: microTranslateY }],
                 },
               ]}
             >
-              <View style={styles.sectionHeaderRow}>
-                <View>
-                  <Text style={styles.sectionTitle}>Key Pregnancy Nutrients</Text>
-                  <Text style={styles.sectionSubtitle}>
-                    Tap for detailed guidelines
-                  </Text>
-                </View>
-                <MaterialCommunityIcons name="information-outline" size={24} color={theme.colors.primary} />
+              <View style={styles.microHeaderRow}>
+                <Text style={styles.microSectionLabel}>KEY NUTRIENTS</Text>
+                <TouchableOpacity
+                  onPress={() => (navigation as any).navigate('FullNutrientBreakdown')}
+                  accessibilityLabel="View nutrient details"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <MaterialCommunityIcons name="information-outline" size={16} color="#8C7E70" />
+                </TouchableOpacity>
               </View>
               <MicronutrientChart nutrients={micronutrients} />
             </Animated.View>
           </TouchableOpacity>
-        ) : summary && summary.total_calories === 0 ? (
+        ) : null}
+
+        {(micronutrients.length > 0 || (summary && summary.total_calories === 0)) && <View style={styles.warmDivider} />}
+
+        {summary && summary.total_calories === 0 ? (
           <Animated.View
             style={[
               styles.section,
@@ -409,6 +415,8 @@ export const DashboardScreen: React.FC = () => {
             onWeightUpdate={handleWeightUpdate}
           />
         </Animated.View>
+
+        {todayJournalEntry && <View style={styles.warmDivider} />}
 
         {/* Today's Journal Summary */}
         {todayJournalEntry && (
@@ -507,8 +515,8 @@ export const DashboardScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   calendarContainer: {
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
+    paddingTop: 6,
+    paddingBottom: 4,
     paddingHorizontal: theme.spacing.sm,
     backgroundColor: theme.colors.background,
     zIndex: 1,
@@ -524,52 +532,80 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   scrollViewContent: {
-    paddingTop: theme.spacing.sectionSpacing,
+    paddingTop: theme.spacing.xs,
     paddingHorizontal: 0,
   },
   todayInWeekRow: {
     paddingHorizontal: theme.layout.screenPadding,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 4,
   },
   todayInWeekText: {
-    ...theme.typography.presets.sectionTitle,
-    color: theme.colors.text.secondary,
     fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#B84C3F',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   pregnancySection: {
     paddingHorizontal: theme.layout.screenPadding,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.sectionSpacing,
+    paddingTop: 4,
+    paddingBottom: theme.spacing.lg,
+  },
+  warmDivider: {
+    marginHorizontal: theme.layout.screenPadding * 2,
+    marginVertical: 4,
+    height: 1,
+    backgroundColor: '#EAE0D1',
+  },
+  microSection: {
+    paddingHorizontal: theme.layout.screenPadding,
+    marginBottom: theme.spacing.lg,
+  },
+  microHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    marginBottom: 6,
+  },
+  microSectionLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#8C7E70',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
   },
   section: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FCF8F1',
     marginHorizontal: theme.layout.screenPadding,
     marginTop: theme.spacing.sectionTitleTop,
     marginBottom: theme.spacing.sectionSpacing,
     padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.card,
-    ...theme.shadows.card,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#E8DFD2',
   },
   sectionTitle: {
-    ...theme.typography.presets.sectionTitle,
-    color: theme.colors.text.primary,
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 20,
+    color: '#2B221B',
+    letterSpacing: -0.3,
     marginTop: 0,
     marginBottom: theme.spacing.sectionTitleBottom,
   },
   sectionSubtitle: {
-    ...theme.typography.presets.sectionSubtitle,
-    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: 12,
+    color: '#5A4D42',
     marginBottom: 0,
+    letterSpacing: 0.1,
   },
   journalSummary: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FCF8F1',
     padding: theme.layout.cardPadding,
-    borderRadius: theme.borderRadius.xl,
+    borderRadius: 20,
     borderWidth: 0.5,
-    borderColor: theme.colors.border,
-    ...theme.shadows.sm,
+    borderColor: '#E8DFD2',
   },
   journalHeader: {
     flexDirection: 'row',
@@ -578,15 +614,17 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   journalMood: {
-    fontSize: theme.typography.fontSize.xxxl,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 28,
   },
   journalTitle: {
-    ...theme.typography.presets.body,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.primary,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 14,
+    color: '#B84C3F',
   },
   journalSymptoms: {
-    ...theme.typography.presets.caption,
-    color: theme.colors.text.secondary,
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 13,
+    color: '#5A4D42',
   },
 });

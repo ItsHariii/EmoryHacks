@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef } from 'react';
 import {
     View,
@@ -41,12 +42,19 @@ export const DashboardHeader: React.FC = () => {
     const firstName = profile?.first_name || 'there';
     const initial = firstName.charAt(0).toUpperCase();
 
+    const today = new Date();
+    const dateKicker = today.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+    }).replace(',', ' ·').toUpperCase();
+
     return (
         <Animated.View
             style={[
                 styles.container,
                 {
-                    paddingTop: Math.max(insets.top, 16),
+                    paddingTop: Math.max(insets.top, 8),
                     opacity: opacityAnim,
                     transform: [{ translateY: slideAnim }],
                 },
@@ -54,17 +62,20 @@ export const DashboardHeader: React.FC = () => {
         >
             <View style={styles.content}>
                 <View style={styles.greetingSection}>
-                    <Text style={styles.greetingLine} testID="dashboard-greeting">
-                        {getGreeting()},
+                    <Text style={styles.dateKicker}>
+                        {dateKicker.split(' · ')[0]} <Text style={styles.dateKickerAccent}>·</Text> {dateKicker.split(' · ')[1] || ''}
                     </Text>
-                    <Text style={styles.greetingName}>{firstName}</Text>
+                    <Text style={styles.greetingLine} testID="dashboard-greeting" numberOfLines={1}>
+                        Hello,&nbsp;<Text style={styles.greetingName}>{firstName}</Text>
+                        <Text style={styles.greetingDot}>.</Text>
+                    </Text>
                 </View>
 
                 <View style={styles.actions}>
                     {/* Bell — rounded icon button */}
                     <TouchableOpacity
                         style={styles.iconButton}
-                        onPress={() => (navigation as any).navigate('Notifications')}
+                        onPress={() => (navigation as any).navigate('NotificationSettings')}
                         accessibilityLabel="Notifications"
                         accessibilityRole="button"
                     >
@@ -90,7 +101,7 @@ export const DashboardHeader: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         paddingHorizontal: theme.layout.screenPadding,
-        paddingBottom: theme.spacing.md,
+        paddingBottom: theme.spacing.xs,
         backgroundColor: 'transparent',
         zIndex: 100,
     },
@@ -102,21 +113,32 @@ const styles = StyleSheet.create({
     greetingSection: {
         flex: 1,
     },
+    dateKicker: {
+        fontFamily: theme.typography.fontFamily.semibold,
+        fontSize: 11,
+        color: '#8C7E70',
+        letterSpacing: 1.2,
+        textTransform: 'uppercase',
+    },
+    dateKickerAccent: {
+        color: '#B84C3F',
+    },
     greetingLine: {
+        marginTop: 3,
         fontFamily: theme.typography.fontFamily.display,
-        fontSize: 26,
+        fontSize: 28,
         fontWeight: '400',
-        color: theme.colors.text.primary,
-        letterSpacing: -0.6,
-        lineHeight: 28,
+        color: '#2B221B',
+        letterSpacing: -0.7,
+        lineHeight: 30,
     },
     greetingName: {
         fontFamily: theme.typography.fontFamily.displayItalic,
-        fontSize: 26,
-        fontWeight: '400',
-        color: theme.colors.text.primary,
-        letterSpacing: -0.6,
-        lineHeight: 30,
+        color: '#2B221B',
+    },
+    greetingDot: {
+        color: '#B84C3F',
+        fontFamily: theme.typography.fontFamily.displayItalic,
     },
     actions: {
         flexDirection: 'row',

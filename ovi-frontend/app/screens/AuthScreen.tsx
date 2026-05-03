@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.displayItalic,
     fontStyle: 'italic',
     fontSize: 15,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 14,
     letterSpacing: 0.2,
   },
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   terms: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#6A5D52',
+    color: '#5A4D42',
     marginTop: 8,
     lineHeight: 18,
     fontFamily: theme.typography.fontFamily.regular,
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   linkText: {
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: 13,
-    color: '#6A5D52',
+    color: '#5A4D42',
   },
   linkTextBold: {
     fontFamily: theme.typography.fontFamily.semibold,

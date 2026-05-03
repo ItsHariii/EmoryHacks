@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   label: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
@@ -96,6 +97,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
   },
   optionText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.secondary,
   },

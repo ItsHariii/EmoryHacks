@@ -328,12 +328,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
+    backgroundColor: '#F6F1EA',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     height: '90%',
-    padding: theme.spacing.lg,
-    ...theme.shadows.lg,
+    padding: 20,
   },
   modalHeader: {
     flexDirection: 'row',

@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.md,
   },
   label: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,

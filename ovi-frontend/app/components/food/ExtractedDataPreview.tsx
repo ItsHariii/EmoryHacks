@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   title: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.primary,
@@ -115,12 +116,14 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   dataLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
     minWidth: 80,
   },
   dataValue: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
@@ -140,6 +143,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   symptomText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xs,
     color: theme.colors.text.secondary,
     fontWeight: theme.fontWeight.medium,

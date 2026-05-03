@@ -70,22 +70,9 @@ export const Button: React.FC<ButtonProps> = ({
     onPress();
   };
 
-  const getGradientColors = () => {
-    if (disabled) return [theme.colors.surface, theme.colors.surface]; // Handled by opacity
-    switch (variant) {
-      case 'primary':
-        return theme.gradients.primary;
-      case 'secondary':
-        return theme.gradients.secondary;
-      case 'danger':
-        return [theme.colors.error, theme.colors.primaryDark];
-      default:
-        return undefined;
-    }
-  };
-
-  const gradientColors = getGradientColors();
-  const isGradient = !!gradientColors && variant !== 'outline' && variant !== 'ghost';
+  // No gradients — design uses flat colors only
+  const isGradient = false;
+  const gradientColors = undefined;
 
   const containerStyles = [
     styles.container,
@@ -159,9 +146,7 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    ...theme.shadows.sm,
-  },
+  container: {},
   touchable: {
     borderRadius: theme.borderRadius.full,
   },
@@ -200,22 +185,23 @@ const styles = StyleSheet.create({
   },
   // Variants (Solid/Outline)
   outlineSolid: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
   },
   ghostSolid: {
     backgroundColor: 'transparent',
   },
   primarySolid: {
-    // Fallback if gradient fails or for specific cases
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#2B221B',
   },
   secondarySolid: {
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
   },
   dangerSolid: {
-    backgroundColor: theme.colors.error,
+    backgroundColor: '#B84C3F',
   },
   // Text Styles
   text: {
@@ -224,28 +210,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   smText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.sm,
   },
   mdText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
   },
   lgText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.lg,
   },
   primaryText: {
-    color: theme.colors.text.inverse,
+    color: '#FFFFFF',
   },
   secondaryText: {
-    color: theme.colors.text.inverse,
+    color: '#2B221B',
   },
   dangerText: {
-    color: theme.colors.text.inverse,
+    color: '#FFFFFF',
   },
   outlineText: {
-    color: theme.colors.primary,
+    color: '#2B221B',
   },
   ghostText: {
-    color: theme.colors.primary,
+    color: '#2B221B',
   },
   disabled: {
     opacity: 0.6,

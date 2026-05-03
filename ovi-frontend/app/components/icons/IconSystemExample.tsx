@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   sectionTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -159,6 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xl,
   },
   subtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.lg,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
@@ -174,11 +176,13 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   label: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,
   },
   selectedText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.primary,
     marginTop: theme.spacing.md,

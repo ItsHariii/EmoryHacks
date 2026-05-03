@@ -69,12 +69,14 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.md,
   },
   foodName: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.medium,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   servingInfo: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
   },
@@ -85,9 +87,10 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.semibold,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.secondary,
+    color: '#2B221B',
   },
   caloriesLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xs,
     color: theme.colors.text.secondary,
   },
@@ -97,6 +100,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
   },
   macroText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     fontWeight: theme.fontWeight.medium,

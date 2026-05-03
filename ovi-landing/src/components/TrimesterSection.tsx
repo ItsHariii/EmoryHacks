@@ -52,7 +52,7 @@ export function TrimesterSection() {
             <motion.div
               key={t.title}
               variants={item}
-              className={`min-w-[260px] sm:min-w-0 p-8 rounded-2xl border ${t.bg} ${t.border} shadow-sm`}
+              className={`min-w-[260px] sm:min-w-0 p-8 rounded-2xl border ${t.bg} ${t.border}`}
             >
               <h3 className="font-semibold text-lg text-ovi-text-primary mb-2">{t.title}</h3>
               <p className="text-ovi-text-secondary text-[1.0625rem] leading-relaxed">{t.subtitle}</p>

@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   input: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.primary,

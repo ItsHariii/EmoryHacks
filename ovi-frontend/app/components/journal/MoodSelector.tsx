@@ -53,6 +53,7 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.md,
   },
   label: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
@@ -81,10 +82,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   emoji: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 32,
     marginBottom: theme.spacing.xs,
   },
   moodLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.xs,
     color: theme.colors.text.secondary,
     textAlign: 'center',

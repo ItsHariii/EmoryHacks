@@ -154,11 +154,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   trimesterLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.lg,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
   },
   daysLabel: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     marginTop: 2,
@@ -179,11 +181,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weekNumber: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: 32,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.primary,
   },
   weekLabel: {
+    fontFamily: theme.typography.fontFamily.semibold,
     fontSize: 12,
     color: theme.colors.text.secondary,
     textTransform: 'uppercase',
@@ -202,11 +206,13 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   tipTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.primary,
   },
   tipText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     lineHeight: 20,

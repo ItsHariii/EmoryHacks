@@ -68,22 +68,22 @@ export const Input: React.FC<InputProps> = ({
   const showHelper = !showError && helperText;
 
   const getBorderColor = () => {
-    if (validationState === 'error') return theme.colors.error;
-    if (validationState === 'success') return theme.colors.success;
-    if (isFocused) return theme.colors.primary;
-    return theme.colors.border;
+    if (validationState === 'error') return '#B84C3F';
+    if (validationState === 'success') return '#6F8C6F';
+    if (isFocused) return '#2B221B';
+    return '#E8E0D5';
   };
 
   const getBackgroundColor = () => {
     switch (variant) {
       case 'filled':
-        return theme.colors.background;
+        return '#F6F1EA';
       case 'glass':
         return 'transparent';
       case 'outlined':
       case 'default':
       default:
-        return theme.colors.surface;
+        return '#FFFFFF';
     }
   };
 
@@ -174,11 +174,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   inputContainer: {
-    minHeight: theme.layout.minTouchTarget,
-    borderRadius: theme.borderRadius.md,
+    minHeight: 48,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: theme.colors.border,
+    borderColor: '#E8E0D5',
   },
   glassContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
@@ -186,12 +186,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   label: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.medium,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.xs,
-    marginLeft: theme.spacing.xs,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#8C7E70',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
     fontFamily: theme.typography.fontFamily.regular,

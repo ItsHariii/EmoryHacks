@@ -88,12 +88,13 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
   },
   modalContent: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.xl,
-    padding: theme.spacing.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
     width: '100%',
     maxWidth: 400,
-    ...theme.shadows.lg,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
   },
   modalHeader: {
     alignItems: 'center',
@@ -103,6 +104,7 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -112,6 +114,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   modalText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.primary,
     lineHeight: theme.typography.lineHeight.relaxed * theme.typography.fontSize.md,
@@ -126,17 +129,20 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   safetyNotesTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,
     color: theme.colors.text.primary,
     marginBottom: theme.spacing.xs,
   },
   safetyNotesText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.lineHeight.relaxed * theme.typography.fontSize.sm,
   },
   modalFooterText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.secondary,
     lineHeight: theme.typography.lineHeight.relaxed * theme.typography.fontSize.sm,

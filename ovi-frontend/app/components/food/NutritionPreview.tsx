@@ -1,9 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../theme';
-import { MACRONUTRIENT_ICONS } from '../icons/iconConstants';
 
 interface NutritionData {
   calories: number;
@@ -16,70 +14,28 @@ interface NutritionPreviewProps {
   nutrition: NutritionData | null;
 }
 
-/**
- * NutritionPreview Component
- * 
- * Displays calculated nutrition information before logging
- */
 export const NutritionPreview: React.FC<NutritionPreviewProps> = ({ nutrition }) => {
-  if (!nutrition) {
-    return null;
-  }
+  if (!nutrition) return null;
 
   const nutrients = [
-    {
-      name: 'Calories',
-      value: Math.round(nutrition?.calories || 0),
-      unit: 'kcal',
-      icon: MACRONUTRIENT_ICONS.calories,
-      color: theme.colors.primary,
-    },
-    {
-      name: 'Protein',
-      value: Math.round(nutrition?.protein || 0),
-      unit: 'g',
-      icon: MACRONUTRIENT_ICONS.protein,
-      color: theme.colors.accent,
-    },
-    {
-      name: 'Carbs',
-      value: Math.round(nutrition?.carbs || 0),
-      unit: 'g',
-      icon: MACRONUTRIENT_ICONS.carbs,
-      color: theme.colors.success,
-    },
-    {
-      name: 'Fat',
-      value: Math.round(nutrition?.fat || 0),
-      unit: 'g',
-      icon: MACRONUTRIENT_ICONS.fat,
-      color: theme.colors.warning,
-    },
+    { name: 'Calories', value: Math.round(nutrition?.calories || 0), unit: 'kcal', color: '#B84C3F' },
+    { name: 'Protein',  value: Math.round(nutrition?.protein  || 0), unit: 'g',    color: '#B84C3F' },
+    { name: 'Carbs',    value: Math.round(nutrition?.carbs    || 0), unit: 'g',    color: '#D19B4E' },
+    { name: 'Fat',      value: Math.round(nutrition?.fat      || 0), unit: 'g',    color: '#8A9A7B' },
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nutrition Preview</Text>
+      <Text style={styles.title}>Nutrition facts</Text>
       <View style={styles.grid}>
-        {nutrients.map((nutrient) => (
-          <View key={nutrient.name} style={styles.nutrientCard}>
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: `${nutrient.color}20` },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={nutrient.icon as any}
-                size={20}
-                color={nutrient.color}
-              />
-            </View>
-            <Text style={styles.nutrientValue}>
-              {nutrient.value}
-              <Text style={styles.nutrientUnit}> {nutrient.unit}</Text>
+        {nutrients.map((n) => (
+          <View key={n.name} style={styles.card}>
+            <View style={[styles.colorBar, { backgroundColor: n.color }]} />
+            <Text style={styles.value}>
+              {n.value}
+              <Text style={styles.unit}> {n.unit}</Text>
             </Text>
-            <Text style={styles.nutrientName}>{nutrient.name}</Text>
+            <Text style={styles.label}>{n.name}</Text>
           </View>
         ))}
       </View>
@@ -89,52 +45,63 @@ export const NutritionPreview: React.FC<NutritionPreviewProps> = ({ nutrition })
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    backgroundColor: '#FDFAF6',
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    padding: 16,
     marginBottom: theme.spacing.lg,
-    ...theme.shadows.sm,
   },
   title: {
-    fontSize: theme.typography.fontSize.lg,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.md,
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#8C7E70',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 12,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.md,
+    gap: 8,
   },
-  nutrientCard: {
+  card: {
     flex: 1,
     minWidth: '45%',
-    alignItems: 'center',
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
+    backgroundColor: '#F6F1EA',
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: '#E8E0D5',
+    padding: 12,
+    overflow: 'hidden',
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: theme.borderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
+  colorBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
-  nutrientValue: {
-    fontSize: theme.typography.fontSize.xl,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.text.primary,
+  value: {
+    fontFamily: theme.typography.fontFamily.display,
+    fontSize: 22,
+    color: '#2B221B',
+    letterSpacing: -0.3,
+    marginTop: 6,
   },
-  nutrientUnit: {
-    fontSize: theme.typography.fontSize.sm,
-    fontWeight: theme.typography.fontWeight.regular,
-    color: theme.colors.text.secondary,
+  unit: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: 12,
+    color: '#8C7E70',
   },
-  nutrientName: {
-    fontSize: theme.typography.fontSize.sm,
-    color: theme.colors.text.secondary,
-    marginTop: theme.spacing.xs,
+  label: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 10,
+    color: '#8C7E70',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginTop: 2,
   },
 });

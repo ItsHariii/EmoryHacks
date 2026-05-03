@@ -235,6 +235,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.xs - 2, // 6px spacing
   },
   label: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.medium,
   },
@@ -275,6 +276,7 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   modalTitle: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.text.primary,
@@ -294,10 +296,12 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   statusBadgeText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,
   },
   notesText: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.md,
     color: theme.colors.text.primary,
     lineHeight: theme.typography.fontSize.md * theme.typography.lineHeight.relaxed,
@@ -316,6 +320,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   warningText: {
+    fontFamily: theme.typography.fontFamily.regular,
     flex: 1,
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
@@ -328,6 +333,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeModalButtonText: {
+    fontFamily: theme.typography.fontFamily.regular,
     color: theme.colors.text.inverse,
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.semibold,

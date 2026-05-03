@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   text: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.fontSize.md,
     lineHeight: 20,
   },
@@ -64,6 +65,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
   },
   timestamp: {
+    fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.fontSize.xs,
     marginTop: theme.spacing.xs,
     fontWeight: theme.typography.fontWeight.medium,

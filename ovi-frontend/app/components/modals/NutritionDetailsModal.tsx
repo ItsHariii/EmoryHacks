@@ -147,12 +147,11 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: theme.colors.background,
-        borderTopLeftRadius: theme.borderRadius.xl,
-        borderTopRightRadius: theme.borderRadius.xl,
+        backgroundColor: '#F6F1EA',
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
         height: '85%',
-        padding: theme.spacing.lg,
-        ...theme.shadows.lg,
+        padding: 20,
     },
     modalHeader: {
         flexDirection: 'row',
@@ -253,11 +252,12 @@ const styles = StyleSheet.create({
     },
     macroItem: {
         flex: 1,
-        backgroundColor: theme.colors.surface,
-        padding: theme.spacing.md,
-        borderRadius: theme.borderRadius.lg,
+        backgroundColor: '#FFFFFF',
+        padding: 14,
+        borderRadius: 16,
         alignItems: 'center',
-        ...theme.shadows.sm,
+        borderWidth: 0.5,
+        borderColor: '#E8E0D5',
     },
     macroLabel: {
         fontFamily: theme.typography.fontFamily.semibold,

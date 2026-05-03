@@ -52,5 +52,6 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList>;
   NotificationSettings: undefined;
   Profile: undefined;
+  FullNutrientBreakdown: { scrollTo?: 'macros' | 'vitamins' | 'minerals' } | undefined;
 };
 

@@ -146,7 +146,7 @@ function DashboardScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
             delay: stagger,
             ease: EASE,
           }}
-          className="rounded-2xl bg-white p-3 shadow-sm border border-ovi-border/40"
+          className="rounded-2xl bg-ovi-surface p-3 border border-ovi-border/40"
         >
           <p className="text-[11px] font-bold text-ovi-text-primary mb-2 tracking-wide">
             Today&apos;s Nutrition
@@ -162,7 +162,7 @@ function DashboardScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
                   cy="18"
                   r="15"
                   fill="none"
-                  stroke="#F0E6E0"
+                  stroke="#E8DFD2"
                   strokeWidth="4"
                 />
                 <motion.circle
@@ -170,7 +170,7 @@ function DashboardScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
                   cy="18"
                   r="15"
                   fill="none"
-                  stroke="#D65A5A"
+                  stroke="#B84C3F"
                   strokeWidth="4"
                   strokeLinecap="round"
                   strokeDasharray={94}
@@ -265,7 +265,7 @@ function DashboardScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
               delay: stagger * (5 + i),
               ease: EASE,
             }}
-            className="rounded-xl bg-white/90 p-2.5 flex items-center gap-2 border border-ovi-border/40"
+            className="rounded-xl bg-ovi-surface/90 p-2.5 flex items-center gap-2 border border-ovi-border/40"
           >
             <span className="text-base">{entry.emoji}</span>
             <div className="flex-1 min-w-0">
@@ -321,7 +321,7 @@ function FoodSafetyScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
             delay: stagger * 2,
             ease: EASE,
           }}
-          className="rounded-2xl bg-white p-3 shadow-sm border border-ovi-border/40"
+          className="rounded-2xl bg-ovi-surface p-3 border border-ovi-border/40"
         >
           <div className="flex items-start gap-2.5">
             <span className="text-2xl">🍣</span>
@@ -375,7 +375,7 @@ function FoodSafetyScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
             Key Nutrients
           </p>
           <div className="flex gap-2">
-            <div className="flex-1 rounded-xl bg-white p-2.5 border border-ovi-border/40">
+            <div className="flex-1 rounded-xl bg-ovi-surface p-2.5 border border-ovi-border/40">
               <p className="text-[8px] text-ovi-text-muted font-medium">
                 Omega-3
               </p>
@@ -395,7 +395,7 @@ function FoodSafetyScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
                 />
               </div>
             </div>
-            <div className="flex-1 rounded-xl bg-white p-2.5 border border-ovi-border/40">
+            <div className="flex-1 rounded-xl bg-ovi-surface p-2.5 border border-ovi-border/40">
               <p className="text-[8px] text-ovi-text-muted font-medium">
                 Mercury
               </p>
@@ -426,7 +426,7 @@ function FoodSafetyScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
             delay: stagger * 6,
             ease: EASE,
           }}
-          className="rounded-2xl bg-white p-3 shadow-sm border border-ovi-border/40"
+          className="rounded-2xl bg-ovi-surface p-3 border border-ovi-border/40"
         >
           <div className="flex items-center gap-2.5">
             <span className="text-xl">🧀</span>
@@ -506,7 +506,7 @@ function AIChatScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
           }}
           className="flex justify-start"
         >
-          <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-white px-3 py-2.5 shadow-sm border border-ovi-border/40">
+          <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-ovi-surface px-3 py-2.5 border border-ovi-border/40">
             <p className="text-[10px] text-ovi-text-primary leading-relaxed">
               Raw salmon sushi is generally advised against during pregnancy due
               to potential parasites. Consider these alternatives:
@@ -557,7 +557,7 @@ function AIChatScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
           }}
           className="flex justify-start"
         >
-          <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-white px-3 py-2.5 shadow-sm border border-ovi-border/40">
+          <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-ovi-surface px-3 py-2.5 border border-ovi-border/40">
             <p className="text-[10px] text-ovi-text-primary leading-relaxed">
               Cooked shrimp is safe and nutritious! Great source of protein and
               omega-3s.
@@ -579,7 +579,7 @@ function AIChatScreen({ stagger, reducedMotion, EASE }: ScreenProps) {
             delay: stagger * 8,
             ease: EASE,
           }}
-          className="rounded-xl bg-white px-3 py-2.5 border border-ovi-border/40 flex items-center gap-2"
+          className="rounded-xl bg-ovi-surface px-3 py-2.5 border border-ovi-border/40 flex items-center gap-2"
         >
           <span className="text-[9px] text-ovi-text-muted/60">
             Ask about any food…

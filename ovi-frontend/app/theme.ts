@@ -17,12 +17,13 @@ export const theme = {
     // Neutrals - Warm bone palette
     background: '#F6F1EA', // warm bone canvas
     backgroundDark: '#EFE7DC', // secondary surface
-    surface: '#FFFFFF',
+    surface: '#FCF8F1', // warm-tinted card (was #FFFFFF — pure white made cards invisible)
     surfaceHighlight: '#FFFFFF',
     surfaceTint: 'rgba(255, 255, 255, 0.6)',
     border: '#E8DFD2', // hairline on bone
-    borderLight: '#F0E8DC', // lighter hairline on white
+    borderLight: '#EFE5D5', // lighter hairline on white (warmed)
     borderDark: '#D9CEBF',
+    divider: '#EAE0D1', // warm tinted section divider
 
     // Accents
     accent: '#8A9A7B', // muted sage (kept for non-primary accents)
@@ -32,12 +33,12 @@ export const theme = {
     accentGreenLight: '#E9EEE2',
     secondaryLight: '#EFE7DC', // warm bone tint (legacy alias)
 
-    // Text Colors - warm ink
+    // Text Colors - warm ink (with stronger contrast on labels)
     text: {
       primary: '#2B221B', // deep ink
-      secondary: '#6A5D52', // inkSoft
-      muted: '#9C8E80', // inkMute
-      light: '#D9CEBF', // inkLine
+      secondary: '#5A4D42', // inkSoft (darkened from #6A5D52 for stronger contrast)
+      muted: '#8C7E70', // inkMute (darkened from #9C8E80 for label legibility)
+      light: '#C4B8AC', // inkLine (used for inactive icons)
       inverse: '#FFFFFF',
       link: '#B84C3F',
       onPrimary: '#FFFFFF',
@@ -301,85 +302,20 @@ export const theme = {
     full: 9999,
   },
 
-  // Shadow Styles - Soft & Diffused
+  // Shadows — design uses 0.5px borders only, no shadows/glows
+  // All shadow presets resolve to no visible shadow for API compatibility.
   shadows: {
-    card: {
-      shadowColor: 'rgba(74, 59, 50, 0.08)',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 16,
-      elevation: 4,
-    },
-    xs: {
-      shadowColor: 'rgba(74, 59, 50, 0.04)',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 1,
-    },
-    sm: {
-      shadowColor: 'rgba(74, 59, 50, 0.06)',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    md: {
-      shadowColor: 'rgba(74, 59, 50, 0.08)',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 3,
-    },
-    lg: {
-      shadowColor: 'rgba(74, 59, 50, 0.1)',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.1,
-      shadowRadius: 24,
-      elevation: 6,
-    },
-    xl: {
-      shadowColor: 'rgba(74, 59, 50, 0.12)',
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.12,
-      shadowRadius: 32,
-      elevation: 8,
-    },
-    soft: {
-      shadowColor: 'rgba(214, 90, 90, 0.1)',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.1,
-      shadowRadius: 20,
-      elevation: 5,
-    },
-    glow: {
-      shadowColor: 'rgba(220, 214, 255, 0.4)',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.4,
-      shadowRadius: 16,
-      elevation: 4,
-    },
-    glowLavender: {
-      shadowColor: 'rgba(220, 214, 255, 0.5)',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.5,
-      shadowRadius: 24,
-      elevation: 6,
-    },
-    glowPeach: {
-      shadowColor: 'rgba(255, 214, 201, 0.4)',
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.4,
-      shadowRadius: 20,
-      elevation: 5,
-    },
-    inner: {
-      shadowColor: 'rgba(74, 59, 50, 0.05)',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 0,
-    },
+    card: { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    xs:   { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    sm:   { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    md:   { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    lg:   { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    xl:   { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    soft: { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    glow: { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    glowLavender: { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    glowPeach:    { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
+    inner: { shadowColor: 'transparent', shadowOpacity: 0, elevation: 0 },
   },
 
   // Animation Timings
