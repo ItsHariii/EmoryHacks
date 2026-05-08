@@ -39,16 +39,7 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({ currentWeight, onW
 
   useEffect(() => {
     if (currentWeight) setWeightInput(currentWeight.toString());
-    fetchWeightHistory();
   }, [currentWeight]);
-
-  const fetchWeightHistory = async () => {
-    const mockHistory = Array.from({ length: 7 }, (_, i) => ({
-      date: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString(),
-      weight: (currentWeight || 150) + (Math.random() * 2 - 1),
-    }));
-    setHistory(mockHistory);
-  };
 
   const handleSave = async () => {
     if (!weightInput || isNaN(Number(weightInput))) return;
@@ -58,7 +49,6 @@ export const WeightTracker: React.FC<WeightTrackerProps> = ({ currentWeight, onW
       await journalAPI.logWeight(weightNum, new Date().toISOString().split('T')[0]);
       onWeightUpdate?.(weightNum);
       setShowLogModal(false);
-      fetchWeightHistory();
     } catch (error) {
       Alert.alert('Save Failed', 'Could not save your weight. Please try again.');
     } finally {

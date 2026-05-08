@@ -41,7 +41,32 @@ const FullNutrientBreakdownScreen = React.lazy(() => import('./app/screens/FullN
 import { TrimesterTrackerScreen } from './app/screens/TrimesterTrackerScreen';
 
 import { useAuth } from './app/contexts/AuthContext';
-import { View, Text, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View as RNView,
+  Text as RNText,
+  TextInput as RNTextInput,
+  StyleSheet,
+  ActivityIndicator as RNActivityIndicator,
+} from 'react-native';
+import type {
+  ViewProps,
+  TextProps,
+  TextInputProps,
+  ActivityIndicatorProps,
+} from 'react-native';
+
+// React 19 + RN 0.81 ship incompatible class-component constructor signatures
+// for these primitives, so JSX rejects them and `defaultProps` is not exposed
+// on the class type. Cast to ComponentType + add defaultProps to keep runtime
+// behavior intact while satisfying the type checker.
+const View = RNView as unknown as React.ComponentType<ViewProps>;
+const Text = RNText as unknown as React.ComponentType<TextProps> & {
+  defaultProps?: { style?: TextProps['style'] };
+};
+const TextInput = RNTextInput as unknown as React.ComponentType<TextInputProps> & {
+  defaultProps?: { style?: TextInputProps['style'] };
+};
+const ActivityIndicator = RNActivityIndicator as unknown as React.ComponentType<ActivityIndicatorProps>;
 import { theme } from './app/theme';
 import { setupNotificationListener } from './app/services/notificationService';
 import { CustomTabBar } from './app/components/layout/CustomTabBar';
@@ -240,15 +265,6 @@ function JournalStack() {
 
 function AppNavigator() {
   const { user, loading } = useAuth();
-  const navigationRef = useRef<any>(null);
-
-  useEffect(() => {
-    // Set up notification listener for handling notification taps
-    if (navigationRef.current) {
-      const subscription = setupNotificationListener(navigationRef);
-      return () => subscription.remove();
-    }
-  }, [navigationRef.current]);
 
   if (loading) {
     return (

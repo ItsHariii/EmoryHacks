@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import threading
 import time
 from typing import Any, Optional, Sequence, Union
 
@@ -9,6 +10,11 @@ from app.core.config import settings
 
 
 logger = logging.getLogger(__name__)
+
+# google-generativeai 0.3.x stores api_key at module scope. Different
+# GeminiClient instances may carry different keys, so configure() + the
+# subsequent call must run as a single critical section per process.
+_GENAI_GLOBAL_LOCK = threading.Lock()
 
 
 class AIServiceUnavailable(Exception):
@@ -74,6 +80,12 @@ class GeminiClient:
             self.name,
             self.cool_down_seconds,
         )
+        # Lazy import — avoid circular at module load.
+        try:
+            from app.middleware.metrics import metrics_collector
+            metrics_collector.record_circuit_open(self.name)
+        except Exception:
+            pass
 
     def _ensure_available(self) -> None:
         if not self.is_configured:
@@ -90,13 +102,14 @@ class GeminiClient:
         parts: Union[str, Sequence[Any]],
         **kwargs: Any,
     ):
+        """Run a Gemini call. Holds a global lock for the duration of
+        configure → model construct → generate, since the underlying SDK keeps
+        the API key in module-level state.
         """
-        Synchronous wrapper around the SDK call.
-        This is executed in a thread so it can be awaited with a timeout.
-        """
-        genai.configure(api_key=self.api_key)
-        model = genai.GenerativeModel(self.model_name)
-        return model.generate_content(parts, **kwargs)
+        with _GENAI_GLOBAL_LOCK:
+            genai.configure(api_key=self.api_key)
+            model = genai.GenerativeModel(self.model_name)
+            return model.generate_content(parts, **kwargs)
 
     async def generate_content(
         self,
@@ -209,6 +222,14 @@ chatbot_gemini_client = GeminiClient(
     name="wellness",
 )
 
-# Vision currently shares the same configuration as the food client
-vision_gemini_client = food_gemini_client
+# Vision uses its own client instance so its circuit-breaker state is
+# independent of the food/text-extraction flow.
+vision_gemini_client = GeminiClient(
+    api_key=settings.GEMINI_FOOD_API_KEY or settings.GEMINI_API_KEY,
+    model_name=_default_model,
+    timeout_seconds=settings.GEMINI_TIMEOUT_SECONDS,
+    max_retries=settings.GEMINI_MAX_RETRIES,
+    cool_down_seconds=settings.GEMINI_COOL_DOWN_SECONDS,
+    name="vision",
+)
 

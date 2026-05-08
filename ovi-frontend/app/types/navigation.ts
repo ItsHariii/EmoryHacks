@@ -12,6 +12,7 @@ export type FoodStackParamList = {
         mealType?: MealType;
         preselectedFood?: FoodItem;
         aiAnalysis?: unknown;
+        date?: string;
       }
     | undefined;
   FoodLoggingMain: undefined;
@@ -20,10 +21,12 @@ export type FoodStackParamList = {
     food?: FoodItem;
     mealType?: MealType;
     isNewEntry?: boolean;
+    date?: string;
   };
   BarcodeScanner:
     | {
         mealType?: MealType;
+        date?: string;
       }
     | undefined;
   AIPhotoAnalysis: undefined;

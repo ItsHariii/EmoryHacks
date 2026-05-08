@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { ScreenWrapper } from '../components/layout/ScreenWrapper';
 import { SimpleDatePicker } from '../components/ui/SimpleDatePicker';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -64,11 +65,11 @@ export const JournalScreen: React.FC<JournalScreenProps> = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    loadEntries();
-    const unsubscribe = navigation.addListener('focus', () => loadEntries());
-    return unsubscribe;
-  }, [navigation, startDate, endDate]);
+  useFocusEffect(
+    useCallback(() => {
+      loadEntries();
+    }, [startDate, endDate])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

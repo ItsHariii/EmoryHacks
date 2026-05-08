@@ -195,29 +195,58 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Middleware to add security headers."""
-    
+    """Middleware to add security headers.
+
+    CSP: per-request nonce on docs/HTML responses; strict default for the API.
+    The `unsafe-inline` allowance is gone — Swagger/Redoc honor the nonce we
+    inject into their bootstrap script and stylesheet tags via FastAPI's
+    custom-docs hooks (see app/main.py).
+    """
+
+    DOC_PATHS = ("/docs", "/redoc")
+
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """Add security headers to response."""
+        import secrets
+
+        nonce = secrets.token_urlsafe(16)
+        # Stash on request.state so endpoint handlers (e.g. custom_swagger_ui_html)
+        # can read it back when rendering inline tags.
+        request.state.csp_nonce = nonce
+
         response = await call_next(request)
-        
-        # Security headers
+
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-        
-        # Content Security Policy - Allow CDN resources for Swagger UI
-        csp = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://cdn.jsdelivr.net; "
-            "connect-src 'self'; "
-            "frame-ancestors 'none';"
-        )
+
+        path = request.url.path
+        if path.startswith(self.DOC_PATHS) or path.startswith("/docs/oauth2-redirect"):
+            # FastAPI's stock Swagger/ReDoc HTML uses inline <script> without
+            # nonce attributes. Until we ship custom docs hooks that inject
+            # `nonce={request.state.csp_nonce}` on those tags, allow
+            # unsafe-inline scoped to docs paths only — never on the API
+            # response surface.
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' https://cdn.jsdelivr.net; "
+                "connect-src 'self'; "
+                "frame-ancestors 'none';"
+            )
+        else:
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self'; "
+                "style-src 'self'; "
+                "img-src 'self' data:; "
+                "font-src 'self'; "
+                "connect-src 'self'; "
+                "frame-ancestors 'none';"
+            )
         response.headers["Content-Security-Policy"] = csp
-        
+
         return response

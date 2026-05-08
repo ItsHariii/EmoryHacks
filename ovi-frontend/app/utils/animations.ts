@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Animated, Easing } from 'react-native';
 import { theme } from '../theme';
 
@@ -233,18 +234,18 @@ export const createRotationAnimation = (
  */
 
 export const useScaleAnimation = () => {
-  const scaleValue = new Animated.Value(1);
-  
+  const scaleValue = useRef(new Animated.Value(1)).current;
+
   const scaleDown = () => scaleDownAnimation(scaleValue).start();
   const scaleUp = () => scaleUpAnimation(scaleValue).start();
-  
+
   return { scaleValue, scaleDown, scaleUp };
 };
 
 export const useFadeInSlideUp = (delay: number = 0) => {
-  const opacity = new Animated.Value(0);
-  const translateY = new Animated.Value(ANIMATION_CONFIG.slideDistance);
-  
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(ANIMATION_CONFIG.slideDistance)).current;
+
   const animate = () => {
     createFadeInSlideUpAnimation(
       opacity,
@@ -253,15 +254,15 @@ export const useFadeInSlideUp = (delay: number = 0) => {
       delay
     ).start();
   };
-  
+
   return { opacity, translateY, animate };
 };
 
 export const usePulseAnimation = () => {
-  const pulseValue = new Animated.Value(1);
-  
+  const pulseValue = useRef(new Animated.Value(1)).current;
+
   const startPulse = () => createPulseAnimation(pulseValue).start();
   const stopPulse = () => pulseValue.stopAnimation();
-  
+
   return { pulseValue, startPulse, stopPulse };
 };

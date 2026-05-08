@@ -7,6 +7,15 @@ export interface User {
   trimester?: number;
   babies?: number;
   onboarding_completed?: boolean;
+  // Backend also returns these snake_case fields from /users/me.
+  // All weights stored in kg, height in cm.
+  pre_pregnancy_weight?: number;
+  current_weight?: number;
+  height?: number;
+  blood_type?: string;
+  allergies?: string[];
+  conditions?: string[];
+  dietary_preferences?: string;
 }
 
 export interface FoodItem {

@@ -76,8 +76,14 @@ class Food(Base):
     )
     is_verified = Column(Boolean, nullable=False, server_default='false')
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), 
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(),
                       onupdate=func.now(), nullable=False)
+    # When this row's cached external data is considered stale.
+    # Set on cache_food() based on settings.CACHE_TTL_HOURS[source].
+    cache_expires_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    # Soft-delete tombstone. Foods are RESTRICT'd from food_logs (Phase 1.10),
+    # so we keep the row and flip deleted_at instead of cascading.
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     
     # Relationships
     # logs = relationship("FoodLog", back_populates="food")
@@ -256,11 +262,30 @@ class FoodLog(Base):
     __tablename__ = "food_logs"
     __table_args__ = (
         sa.Index('ix_food_log_deleted_at', 'deleted_at'),
+        # Composite indexes covering the hot query patterns:
+        #  - per-user log lists (any range): (user_id, consumed_at)
+        #  - daily/weekly summaries that filter out soft-deletes:
+        #      (user_id, deleted_at, consumed_at)
+        sa.Index('ix_food_logs_user_consumed', 'user_id', 'consumed_at'),
+        sa.Index(
+            'ix_food_logs_user_active_consumed',
+            'user_id', 'deleted_at', 'consumed_at',
+        ),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    food_id = Column(UUID(as_uuid=True), ForeignKey("foods.id"), nullable=False, index=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    food_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("foods.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     serving_size = Column(Float, nullable=False)  # User-specified serving size
     serving_unit = Column(String(20), nullable=False)  # User-specified serving unit
     quantity = Column(Float, nullable=False)

@@ -45,86 +45,124 @@ interface ReminderRowProps {
   on: boolean;
   time?: string;
   onToggle: () => void;
+  onTimePress?: () => void;
   divider?: boolean;
 }
-const ReminderRow: React.FC<ReminderRowProps> = ({ label, sub, on, time, onToggle, divider = true }) => (
+const ReminderRow: React.FC<ReminderRowProps> = ({ label, sub, on, time, onToggle, onTimePress, divider = true }) => (
   <View style={[styles.row, divider && styles.rowDivider]}>
     <View style={{ flex: 1, minWidth: 0 }}>
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowSub}>{sub}</Text>
     </View>
-    {time ? <Text style={[styles.timeLabel, on && styles.timeLabelActive]}>{time}</Text> : null}
+    {time ? (
+      <TouchableOpacity onPress={onTimePress} disabled={!onTimePress} accessibilityRole={onTimePress ? 'button' : undefined}>
+        <Text style={[styles.timeLabel, on && styles.timeLabelActive]}>{time}</Text>
+      </TouchableOpacity>
+    ) : null}
     <Toggle on={on} onPress={onToggle} />
   </View>
 );
+
+const parseHHmm = (timeString: string): Date => {
+  const date = new Date();
+  if (!timeString) return date;
+  const [h, m] = timeString.split(':').map(Number);
+  date.setHours(isNaN(h) ? 0 : h);
+  date.setMinutes(isNaN(m) ? 0 : m);
+  date.setSeconds(0);
+  return date;
+};
+
+const formatHHmm = (timeString: string): string => {
+  if (!timeString) return '—';
+  const [h, m] = timeString.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return '—';
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${m.toString().padStart(2, '0')} ${period}`;
+};
+
+const dateToHHmm = (d: Date): string => {
+  const hh = d.getHours().toString().padStart(2, '0');
+  const mm = d.getMinutes().toString().padStart(2, '0');
+  return `${hh}:${mm}`;
+};
 
 export const NotificationSettingsScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const {
-    settings,
+    preferences,
     loading,
-    updateSettings,
-    scheduleAllNotifications,
-    cancelAllNotifications,
+    permissionsGranted,
+    updatePreferences,
+    enableNotifications,
+    disableNotifications,
   } = useNotifications();
 
   const [saving, setSaving] = useState(false);
-  const [localSettings, setLocalSettings] = useState(settings);
   const [showMealTime, setShowMealTime] = useState(false);
   const [showSupplementTime, setShowSupplementTime] = useState(false);
 
-  useEffect(() => {
-    setLocalSettings(settings);
-  }, [settings]);
-
-  const handleToggle = async (key: keyof typeof localSettings) => {
-    const next = { ...localSettings, [key]: !localSettings[key] };
-    setLocalSettings(next);
+  const handleToggleMaster = async () => {
     try {
       setSaving(true);
-      await updateSettings(next);
-      if (next.enabled) {
-        await scheduleAllNotifications();
-      } else if (key === 'enabled') {
-        await cancelAllNotifications();
+      if (preferences.enabled) {
+        await disableNotifications();
+      } else {
+        await enableNotifications();
       }
     } catch (error) {
       Alert.alert('Error', 'Could not save changes');
-      setLocalSettings(settings);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleTimeChange = async (key: keyof typeof localSettings, time: Date) => {
-    const hours = time.getHours().toString().padStart(2, '0');
-    const minutes = time.getMinutes().toString().padStart(2, '0');
-    const next = { ...localSettings, [key]: `${hours}:${minutes}` };
-    setLocalSettings(next);
+  const handleToggleSection = async (section: 'meals' | 'hydration' | 'supplements') => {
     try {
-      await updateSettings(next);
-      if (next.enabled) await scheduleAllNotifications();
+      setSaving(true);
+      const next = {
+        ...preferences,
+        [section]: { ...preferences[section], enabled: !preferences[section].enabled },
+      };
+      await updatePreferences(next);
     } catch (error) {
-      Alert.alert('Error', 'Could not save time');
+      Alert.alert('Error', 'Could not save changes');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const parseTime = (timeString: string) => {
-    if (!timeString) return new Date();
-    const [hours, minutes] = timeString.split(':').map(Number);
-    const date = new Date();
-    date.setHours(hours);
-    date.setMinutes(minutes);
-    return date;
+  const handleMealTimeChange = async (date: Date) => {
+    try {
+      setSaving(true);
+      const time = dateToHHmm(date);
+      await updatePreferences({
+        meals: {
+          ...preferences.meals,
+          breakfast: time,
+        },
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Could not save time');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const formatTime = (timeString: string) => {
-    if (!timeString) return '—';
-    const [h, m] = timeString.split(':').map(Number);
-    const period = h >= 12 ? 'PM' : 'AM';
-    const hour12 = h % 12 || 12;
-    return `${hour12}:${m.toString().padStart(2, '0')} ${period}`;
+  const handleSupplementTimeChange = async (date: Date) => {
+    try {
+      setSaving(true);
+      const time = dateToHHmm(date);
+      await updatePreferences({
+        supplements: { ...preferences.supplements, time },
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Could not save time');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -139,9 +177,9 @@ export const NotificationSettingsScreen: React.FC = () => {
   }
 
   const remindersActive = [
-    localSettings.meal_reminders,
-    localSettings.hydration_reminders,
-    localSettings.supplement_reminders,
+    preferences.meals.enabled,
+    preferences.hydration.enabled,
+    preferences.supplements.enabled,
   ].filter(Boolean).length;
 
   return (
@@ -149,7 +187,6 @@ export const NotificationSettingsScreen: React.FC = () => {
       <NavBar title="Notifications" onBack={() => navigation.goBack()} insetsTop={insets.top} />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Master toggle */}
         <View style={styles.masterCard}>
           <View style={{ flex: 1 }}>
             <Text style={styles.masterTitle}>
@@ -158,11 +195,16 @@ export const NotificationSettingsScreen: React.FC = () => {
             <Text style={styles.masterSub}>
               We'll only nudge when it's truly helpful. Quiet by default.
             </Text>
+            {!permissionsGranted && preferences.enabled && (
+              <Text style={styles.permissionWarn}>
+                System notification permission not granted. Enable in Settings.
+              </Text>
+            )}
           </View>
-          <Toggle on={!!localSettings.enabled} onPress={() => handleToggle('enabled')} />
+          <Toggle on={!!preferences.enabled} onPress={handleToggleMaster} />
         </View>
 
-        {localSettings.enabled && (
+        {preferences.enabled && (
           <>
             <View style={styles.sectionLabelWrap}>
               <Text style={styles.sectionLabel}>Daily reminders</Text>
@@ -172,70 +214,44 @@ export const NotificationSettingsScreen: React.FC = () => {
             <View style={styles.card}>
               <ReminderRow
                 label="Meal logging"
-                sub="A gentle prompt to log meals"
-                on={!!localSettings.meal_reminders}
-                time={formatTime(localSettings.meal_reminder_time || '12:00')}
-                onToggle={() => handleToggle('meal_reminders')}
+                sub="Breakfast, lunch & dinner prompts"
+                on={!!preferences.meals.enabled}
+                time={formatHHmm(preferences.meals.breakfast)}
+                onToggle={() => handleToggleSection('meals')}
+                onTimePress={preferences.meals.enabled ? () => setShowMealTime(v => !v) : undefined}
               />
-              {localSettings.meal_reminders && showMealTime && (
+              {preferences.meals.enabled && showMealTime && (
                 <View style={styles.timePickerWrap}>
                   <SimpleTimePicker
-                    value={parseTime(localSettings.meal_reminder_time || '12:00')}
-                    onChange={(date) => handleTimeChange('meal_reminder_time', date)}
+                    value={parseHHmm(preferences.meals.breakfast || '08:00')}
+                    onChange={handleMealTimeChange}
                   />
                 </View>
               )}
               <ReminderRow
                 label="Hydration"
-                sub="Hourly nudge during waking hours"
-                on={!!localSettings.hydration_reminders}
-                time={localSettings.hydration_reminders ? 'Hourly' : '—'}
-                onToggle={() => handleToggle('hydration_reminders')}
+                sub={`Every ${preferences.hydration.intervalHours}h during waking hours`}
+                on={!!preferences.hydration.enabled}
+                time={preferences.hydration.enabled ? `${preferences.hydration.intervalHours}h` : '—'}
+                onToggle={() => handleToggleSection('hydration')}
               />
               <ReminderRow
                 label="Supplements"
-                sub="Prenatal vitamins"
-                on={!!localSettings.supplement_reminders}
-                time={formatTime(localSettings.supplement_reminder_time || '09:00')}
-                onToggle={() => handleToggle('supplement_reminders')}
+                sub={preferences.supplements.name || 'Prenatal Vitamin'}
+                on={!!preferences.supplements.enabled}
+                time={formatHHmm(preferences.supplements.time)}
+                onToggle={() => handleToggleSection('supplements')}
+                onTimePress={preferences.supplements.enabled ? () => setShowSupplementTime(v => !v) : undefined}
                 divider={false}
               />
-              {localSettings.supplement_reminders && showSupplementTime && (
+              {preferences.supplements.enabled && showSupplementTime && (
                 <View style={styles.timePickerWrap}>
                   <SimpleTimePicker
-                    value={parseTime(localSettings.supplement_reminder_time || '09:00')}
-                    onChange={(date) => handleTimeChange('supplement_reminder_time', date)}
+                    value={parseHHmm(preferences.supplements.time || '09:00')}
+                    onChange={handleSupplementTimeChange}
                   />
                 </View>
               )}
-            </View>
-
-            <View style={styles.sectionLabelWrap}>
-              <Text style={styles.sectionLabel}>Weekly insights</Text>
-            </View>
-            <View style={styles.card}>
-              <ReminderRow
-                label="Pregnancy progress"
-                sub="Weekly updates about baby's growth"
-                on={!!localSettings.weekly_progress_updates}
-                time="Sun · 9 AM"
-                onToggle={() => handleToggle('weekly_progress_updates')}
-                divider={false}
-              />
-            </View>
-
-            <View style={styles.sectionLabelWrap}>
-              <Text style={styles.sectionLabel}>Quiet hours</Text>
-            </View>
-            <View style={[styles.card, styles.quietCard]}>
-              <View style={styles.quietRow}>
-                <MaterialCommunityIcons name="weather-night" size={18} color="#5A4D42" />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowLabel}>Do not disturb</Text>
-                  <Text style={styles.rowSub}>10:00 PM — 7:00 AM</Text>
-                </View>
-                <Toggle on={!!localSettings.quiet_hours_enabled} onPress={() => handleToggle('quiet_hours_enabled')} />
-              </View>
             </View>
           </>
         )}
@@ -315,6 +331,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 18,
   },
+  permissionWarn: {
+    fontFamily: theme.typography.fontFamily.semibold,
+    fontSize: 11,
+    color: '#B84C3F',
+    marginTop: 6,
+  },
   sectionLabelWrap: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -380,15 +402,6 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     borderBottomWidth: 0.5,
     borderBottomColor: '#F0E8DC',
-  },
-  quietCard: {
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-  },
-  quietRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
   },
   savingText: {
     fontFamily: theme.typography.fontFamily.regular,

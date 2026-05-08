@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../theme';
-import { MicronutrientData } from '../types';
+import { MicronutrientData } from '../../types';
 import { MICRONUTRIENT_ICONS, ICON_COLORS, ICON_BACKGROUNDS } from '../icons/iconConstants';
 import { createFadeInSlideUpAnimation, ANIMATION_CONFIG, createProgressFillAnimation } from '../../utils/animations';
 import { Card } from '../ui/Card';
@@ -41,6 +41,13 @@ export const MicronutrientChart: React.FC<MicronutrientChartProps> = ({
 }) => {
   const [selectedNutrient, setSelectedNutrient] = useState<MicronutrientData | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   const handleNutrientPress = (nutrient: MicronutrientData) => {
     setSelectedNutrient(nutrient);
@@ -50,7 +57,8 @@ export const MicronutrientChart: React.FC<MicronutrientChartProps> = ({
 
   const handleCloseModal = () => {
     setModalVisible(false);
-    setTimeout(() => setSelectedNutrient(null), 300);
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => setSelectedNutrient(null), 300);
   };
 
   const lowNutrients = nutrients.filter(n => n.percentOfTarget < 70);

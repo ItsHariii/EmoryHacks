@@ -118,7 +118,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Update stored user data with fresh data
           await AsyncStorage.setItem('user_data', JSON.stringify(userProfile));
         } catch (error) {
-          console.log('Token validation failed, logging out');
+          if (__DEV__) {
+            console.log('Token validation failed, logging out');
+          }
           // Token invalid or expired
           await logout();
         }
@@ -190,9 +192,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Custom Tabs sometimes routes the ovi:// redirect as a plain activity
       // intent (firing Linking) instead of through expo-web-browser's native
       // redirect activity (which resolves openAuthSessionAsync directly).
-      let linkingSub: ReturnType<typeof Linking.addEventListener> | null = null;
+      // Wrap in object so closure-mutated value isn't narrowed back to null
+      // by TS flow analysis at the cleanup site.
+      const linkingSubRef: { current: { remove: () => void } | null } = { current: null };
       const linkingCallbackPromise = new Promise<string>((resolve) => {
-        linkingSub = Linking.addEventListener('url', ({ url }) => {
+        linkingSubRef.current = Linking.addEventListener('url', ({ url }) => {
           if (url.includes('auth/callback')) {
             resolve(url);
           }
@@ -201,36 +205,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       let callbackUrl: string;
       try {
-        const result = await openSupabaseOAuthBrowser(data.url, redirectUri);
+        // Race the browser session against the Linking event. On Android,
+        // Chrome Custom Tabs sometimes routes the ovi:// redirect as a plain
+        // activity intent (Linking) rather than through expo-web-browser's
+        // RedirectActivity, leaving openAuthSessionAsync hanging forever.
+        // Whichever resolves first wins.
+        const raceResult = await Promise.race([
+          openSupabaseOAuthBrowser(data.url, redirectUri).then(
+            (r) => ({ kind: 'browser' as const, result: r })
+          ),
+          linkingCallbackPromise.then(
+            (url) => ({ kind: 'linking' as const, url })
+          ),
+        ]);
 
-        if (__DEV__) {
-          console.log('[OAuth] browser result.type:', result.type);
-        }
-
-        if (result.type === 'success') {
-          callbackUrl = result.url;
+        if (raceResult.kind === 'linking') {
+          callbackUrl = raceResult.url;
           if (__DEV__) {
-            console.log('[OAuth] callback URL via openAuthSession');
+            console.log('[OAuth] callback URL via Linking (won race)');
           }
         } else {
-          // Android fallback — Chrome Custom Tabs sometimes routes the
-          // ovi:// redirect via Linking instead of expo-web-browser's native
-          // redirect activity. Wait briefly for that Linking event.
-          const linkingUrl = await Promise.race([
-            linkingCallbackPromise,
-            new Promise<null>((resolve) => setTimeout(() => resolve(null), 3500)),
-          ]);
-          if (!linkingUrl) {
-            throw new Error('OAuth sign-in cancelled');
-          }
-          callbackUrl = linkingUrl;
+          const result = raceResult.result;
           if (__DEV__) {
-            console.log('[OAuth] callback URL via Linking fallback');
+            console.log('[OAuth] browser result.type:', result.type);
+          }
+          if (result.type === 'success') {
+            callbackUrl = result.url;
+            if (__DEV__) {
+              console.log('[OAuth] callback URL via openAuthSession');
+            }
+          } else {
+            // Browser closed without success and Linking didn't win the race.
+            // Give Linking one more chance (3 s) in case Android fires it late.
+            const linkingUrl = await Promise.race([
+              linkingCallbackPromise,
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+            ]);
+            if (!linkingUrl) {
+              throw new Error('OAuth sign-in cancelled');
+            }
+            callbackUrl = linkingUrl;
+            if (__DEV__) {
+              console.log('[OAuth] callback URL via Linking fallback');
+            }
           }
         }
       } finally {
-        // Remove listener only after result/fallback handling is complete.
-        linkingSub?.remove();
+        linkingSubRef.current?.remove();
       }
 
       const { session, error: sessionError } = await completeSupabaseOAuthFromCallbackUrl(

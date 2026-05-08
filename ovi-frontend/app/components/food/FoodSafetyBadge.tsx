@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ export const FoodSafetyBadge: React.FC<FoodSafetyBadgeProps> = ({
   onPress,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const scaleValue = new Animated.Value(1);
+  const scaleValue = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
     scaleDownAnimation(scaleValue).start();

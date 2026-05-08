@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { FoodItem, FoodEntry, MealType } from '../types';
 
 interface NutritionData {
@@ -37,10 +37,9 @@ export const useFoodEntry = ({ food, entry, mealType }: UseFoodEntryProps) => {
     safety_notes: entry.food?.safety_notes,
   } as FoodItem : null);
 
-  const calculateNutrition = useCallback((): NutritionData | null => {
+  const nutrition = useMemo<NutritionData | null>(() => {
     if (!currentFood || !servingSize) return null;
 
-    // Parse serving size (e.g., "100g", "1cup", "85g")
     const match = servingSize.match(/^([\d.]+)\s*(.*)$/);
     if (!match) return null;
 
@@ -49,92 +48,77 @@ export const useFoodEntry = ({ food, entry, mealType }: UseFoodEntryProps) => {
 
     if (isNaN(amount) || amount <= 0) return null;
 
-    // Convert to grams multiplier based on unit
     let gramsMultiplier = 1;
-    
+
     switch (unit) {
       case 'g':
       case 'gram':
       case 'grams':
-        gramsMultiplier = amount / 100; // Base nutrition is per 100g
+        gramsMultiplier = amount / 100;
         break;
       case 'mg':
       case 'milligram':
       case 'milligrams':
-        gramsMultiplier = amount / 100000; // Convert mg to g, then divide by 100
+        gramsMultiplier = amount / 100000;
         break;
       case 'oz':
       case 'ounce':
       case 'ounces':
-        gramsMultiplier = (amount * 28.35) / 100; // 1 oz = 28.35g
+        gramsMultiplier = (amount * 28.35) / 100;
         break;
       case 'cup':
       case 'cups':
-        gramsMultiplier = (amount * 240) / 100; // Approximate: 1 cup = 240g
+        gramsMultiplier = (amount * 240) / 100;
         break;
       case 'tbsp':
       case 'tablespoon':
       case 'tablespoons':
-        gramsMultiplier = (amount * 15) / 100; // 1 tbsp = 15g
+        gramsMultiplier = (amount * 15) / 100;
         break;
       case 'tsp':
       case 'teaspoon':
       case 'teaspoons':
-        gramsMultiplier = (amount * 5) / 100; // 1 tsp = 5g
+        gramsMultiplier = (amount * 5) / 100;
         break;
       case 'ml':
       case 'milliliter':
       case 'milliliters':
-        gramsMultiplier = amount / 100; // Approximate: 1ml ≈ 1g for most liquids
+        gramsMultiplier = amount / 100;
         break;
       case 'serving':
-      case 'servings':
-        // Use the food's serving size if available, otherwise assume 100g per serving
+      case 'servings': {
         const servingSizeGrams = currentFood.serving_size_grams || 100;
         gramsMultiplier = (amount * servingSizeGrams) / 100;
         break;
+      }
       default:
-        gramsMultiplier = amount / 100; // Default to grams
+        gramsMultiplier = amount / 100;
     }
 
     const baseCalories = currentFood.calories_per_100g || 0;
-    const calories = Math.round(baseCalories * gramsMultiplier);
-    const protein = Math.round((currentFood.protein_per_100g || 0) * gramsMultiplier);
-    const carbs = Math.round((currentFood.carbs_per_100g || 0) * gramsMultiplier);
-    const fat = Math.round((currentFood.fat_per_100g || 0) * gramsMultiplier);
-
-    return { calories, protein, carbs, fat };
+    return {
+      calories: Math.round(baseCalories * gramsMultiplier),
+      protein: Math.round((currentFood.protein_per_100g || 0) * gramsMultiplier),
+      carbs: Math.round((currentFood.carbs_per_100g || 0) * gramsMultiplier),
+      fat: Math.round((currentFood.fat_per_100g || 0) * gramsMultiplier),
+    };
   }, [currentFood, servingSize]);
 
-  const validateForm = useCallback((): boolean => {
-    if (!currentFood || !servingSize) {
-      return false;
-    }
-
-    // Parse serving size to validate
+  const isValid = useMemo<boolean>(() => {
+    if (!currentFood || !servingSize) return false;
     const match = servingSize.match(/^([\d.]+)\s*(.*)$/);
     if (!match) return false;
-
     const amount = parseFloat(match[1]);
-    if (isNaN(amount) || amount <= 0) {
-      return false;
-    }
-
-    return true;
+    return !isNaN(amount) && amount > 0;
   }, [currentFood, servingSize]);
 
   return {
-    // State
     servingSize,
     selectedMealType,
     currentFood,
-
-    // Setters
     setServingSize,
     setSelectedMealType,
-
-    // Computed
-    nutrition: calculateNutrition(),
-    isValid: validateForm(),
+    nutrition,
+    isValid,
   };
 };

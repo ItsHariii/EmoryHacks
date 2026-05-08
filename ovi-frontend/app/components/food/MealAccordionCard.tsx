@@ -85,7 +85,11 @@ export const MealAccordionCard: React.FC<MealAccordionCardProps> = ({
             <MaterialCommunityIcons name="plus" size={16} color={theme.colors.primary} />
           </TouchableOpacity>
         ) : (
-          <Animated.View style={[styles.chevronWrap, { transform: [{ rotate: rotateInterpolate }] }]}>
+          <Animated.View
+            // React 19/RN type strips children from AnimatedProps<RefAttributes<View>>.
+            // Cast to any to keep runtime intact until upstream RN types are fixed.
+            {...({ style: [styles.chevronWrap, { transform: [{ rotate: rotateInterpolate }] }] } as any)}
+          >
             <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.text.muted} />
           </Animated.View>
         )}

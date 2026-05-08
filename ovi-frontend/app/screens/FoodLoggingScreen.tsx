@@ -19,6 +19,7 @@ import { FoodListSkeleton } from '../components/skeletons';
 import { foodAPI, nutritionAPI } from '../services/api';
 import { FoodEntry, MealType, NutritionSummary } from '../types';
 import { useNutritionStore } from '../store/useNutritionStore';
+import { TAB_BAR_HEIGHT } from '../components/layout/tabBarLayout';
 
 import type { FoodStackParamList } from '../types/navigation';
 
@@ -41,8 +42,6 @@ type FoodLoggingScreenNavigationProp = StackNavigationProp<
   FoodStackParamList,
   'FoodLoggingMain'
 >;
-
-const TAB_BAR_HEIGHT = 70;
 
 export const FoodLoggingScreen: React.FC = () => {
   const navigation = useNavigation<FoodLoggingScreenNavigationProp>();
@@ -136,6 +135,7 @@ export const FoodLoggingScreen: React.FC = () => {
 
   const groupedEntries = groupEntriesByMeal(foodEntries);
   const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const firstNonEmptyIdx = mealTypes.findIndex(m => (groupedEntries[m]?.length ?? 0) > 0);
   const targetCalories = targets?.calories || 2200;
   const totalCalories = Math.round(nutritionSummary?.total_calories || 0);
   const remainingCalories = Math.max(targetCalories - totalCalories, 0);
@@ -248,7 +248,7 @@ export const FoodLoggingScreen: React.FC = () => {
         <View style={styles.mealsContainer}>
           {mealTypes.map((mealType, index) => {
             const entriesForMeal = groupedEntries[mealType] || [];
-            const isFirstNonEmpty = mealTypes.findIndex(m => (groupedEntries[m]?.length ?? 0) > 0) === index;
+            const isFirstNonEmpty = firstNonEmptyIdx === index;
             return (
               <MealAccordionCard
                 key={mealType}

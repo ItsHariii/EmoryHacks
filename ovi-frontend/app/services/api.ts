@@ -18,6 +18,7 @@ import {
   ChatSaveResponse,
 } from '../types';
 import { invalidateNutritionCache } from '../utils/cacheInvalidation';
+import { compressImage } from '../utils/imageCompression';
 
 const ACCESS_TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -400,8 +401,9 @@ export const foodAPI = {
         : String(entry.serving_size ?? '100g'),
       meal_type: entry.meal_type ?? 'snack',
       calories_logged: entry.calories_logged
-        ?? entry.food?.calories * (entry.serving_size ?? 1)
-        ?? 0,
+        ?? (entry.food?.calories != null
+              ? entry.food.calories * (entry.serving_size ?? 1)
+              : 0),
       protein_logged: entry.protein_logged
         ?? (entry.nutrients_logged?.protein)
         ?? undefined,
@@ -455,10 +457,10 @@ export const nutritionAPI = {
   },
 
   getWeeklySummary: async (startDate: string): Promise<NutritionSummary[]> => {
-    const response = await api.get('/nutrition/weekly-summary', {
-      params: { start_date: startDate },
+    const response = await api.get('/food/log/weekly-summary', {
+      params: { start: startDate },
     });
-    return response.data;
+    return response.data.daily_summaries ?? response.data;
   },
 };
 
@@ -486,11 +488,17 @@ export const safetyAPI = {
 // Photo Analysis API
 export const photoAPI = {
   analyzePhoto: async (imageUri: string): Promise<any> => {
-    const formData = new FormData();
+    // Compress before upload to keep request under typical mobile network timeouts
+    let uploadUri = imageUri;
+    try {
+      uploadUri = await compressImage(imageUri);
+    } catch {
+      uploadUri = imageUri;
+    }
 
-    // Append the image file
+    const formData = new FormData();
     formData.append('file', {
-      uri: imageUri,
+      uri: uploadUri,
       type: 'image/jpeg',
       name: 'food.jpg',
     } as any);
@@ -499,7 +507,7 @@ export const photoAPI = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 30000, // 30 second timeout for AI analysis
+      timeout: 30000,
     });
 
     return response.data;

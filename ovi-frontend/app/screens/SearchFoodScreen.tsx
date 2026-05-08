@@ -27,8 +27,6 @@ interface RouteParams {
   date?: string;
 }
 
-const RECENT_SEARCHES = ['Greek yogurt', 'Avocado toast', 'Salmon fillet', 'Lentil soup', 'Almond butter'];
-
 export const SearchFoodScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -44,6 +42,7 @@ export const SearchFoodScreen: React.FC = () => {
   const [totalResults, setTotalResults] = useState(0);
 
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const lastQueryRef = useRef<string>('');
 
   useEffect(() => {
     loadRecentFoods();
@@ -51,9 +50,11 @@ export const SearchFoodScreen: React.FC = () => {
 
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    if (searchQuery.trim()) {
-      debounceTimer.current = setTimeout(() => handleSearch(), 300);
+    const q = searchQuery.trim();
+    if (q) {
+      debounceTimer.current = setTimeout(() => runSearch(q), 300);
     } else {
+      lastQueryRef.current = '';
       setSearchResults([]);
       setSearched(false);
     }
@@ -69,12 +70,14 @@ export const SearchFoodScreen: React.FC = () => {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+  const runSearch = async (query: string) => {
+    lastQueryRef.current = query;
     setLoading(true);
     setSearchError(false);
     try {
-      const results = await foodAPI.search(searchQuery.trim());
+      const results = await foodAPI.search(query);
+      // Drop stale results — newer query already running
+      if (lastQueryRef.current !== query) return;
       const enrichedFoods = results.foods.map(food => {
         const safety = checkFoodSafety(food.name);
         if (safety) return { ...food, safety_status: safety.status, safety_notes: safety.reason };
@@ -84,11 +87,12 @@ export const SearchFoodScreen: React.FC = () => {
       setSearched(true);
       setTotalResults(results.total);
     } catch (error) {
+      if (lastQueryRef.current !== query) return;
       setSearchResults([]);
       setSearched(true);
       setSearchError(true);
     } finally {
-      setLoading(false);
+      if (lastQueryRef.current === query) setLoading(false);
     }
   };
 
@@ -173,36 +177,18 @@ export const SearchFoodScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View>
-            {!searched && (
+            {!searched && recentFoods.length > 0 && (
               <>
-                <Text style={styles.sectionLabel}>Recent searches</Text>
-                <View style={styles.chipsWrap}>
-                  {RECENT_SEARCHES.map(r => (
-                    <TouchableOpacity
-                      key={r}
-                      style={styles.recentChip}
-                      onPress={() => setSearchQuery(r)}
-                    >
-                      <MaterialCommunityIcons name="magnify" size={11} color="#8C7E70" />
-                      <Text style={styles.recentChipText}>{r}</Text>
-                    </TouchableOpacity>
+                <View style={styles.sectionLabelRow}>
+                  <Text style={styles.sectionLabel}>Frequently logged</Text>
+                </View>
+                <View style={styles.card}>
+                  {recentFoods.map((f, i) => (
+                    <View key={f.id}>
+                      {renderFoodRow({ item: f, last: i === recentFoods.length - 1 })}
+                    </View>
                   ))}
                 </View>
-
-                {recentFoods.length > 0 && (
-                  <>
-                    <View style={styles.sectionLabelRow}>
-                      <Text style={styles.sectionLabel}>Frequently logged</Text>
-                    </View>
-                    <View style={styles.card}>
-                      {recentFoods.map((f, i) => (
-                        <View key={f.id}>
-                          {renderFoodRow({ item: f, last: i === recentFoods.length - 1 })}
-                        </View>
-                      ))}
-                    </View>
-                  </>
-                )}
               </>
             )}
 

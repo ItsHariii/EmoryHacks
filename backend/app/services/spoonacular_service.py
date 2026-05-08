@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from ..core.config import settings
 from .rate_limiter import spoonacular_client, retry_handler
 from .pregnancy_safety_service import pregnancy_safety_service
+from .food_classifier import classify_as_product, is_basic_ingredient
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +21,8 @@ class SpoonacularService:
         Classify query as product or ingredient and search accordingly.
         Returns both classification and results.
         """
-        # Classification logic based on query patterns
-        is_product = self._classify_as_product(query)
-        
+        is_product = classify_as_product(query)
+
         if is_product:
             # Search products first for packaged foods
             products = await self.search_grocery_products(query, number)
@@ -52,7 +52,7 @@ class SpoonacularService:
             
             # If no ingredients found, maintain ingredient classification for basic foods
             # This ensures USDA fallback works for common ingredients like apple, banana
-            if self._is_basic_ingredient(query):
+            if is_basic_ingredient(query):
                 return {
                     "type": "ingredient",
                     "results": [],
@@ -67,80 +67,6 @@ class SpoonacularService:
                 "fallback_attempted": True
             }
     
-    def _classify_as_product(self, query: str) -> bool:
-        """
-        Classify query as likely product (packaged food) vs ingredient (raw food).
-        Returns True if likely a product, False if likely an ingredient.
-        """
-        query_lower = query.lower().strip()
-        
-        # Product indicators - brand names, packaged food terms
-        product_indicators = [
-            # Brand names
-            'kraft', 'nestle', 'kellogg', 'general mills', 'pepsi', 'coca cola', 'frito lay',
-            'campbell', 'heinz', 'oreo', 'cheerios', 'doritos', 'lay\'s', 'pringles',
-            
-            # Packaged food terms
-            'cereal', 'crackers', 'chips', 'cookies', 'frozen', 'canned', 'bottled',
-            'packaged', 'instant', 'mix', 'sauce', 'dressing', 'snack', 'bar',
-            'yogurt', 'cheese', 'bread', 'pasta', 'pizza', 'soup', 'juice',
-            
-            # Specific product patterns
-            'whole wheat', 'low fat', 'organic', 'gluten free', 'sugar free'
-        ]
-        
-        # Ingredient indicators - raw, unprocessed foods
-        ingredient_indicators = [
-            'fresh', 'raw', 'ground', 'chopped', 'diced', 'sliced', 'whole',
-            'apple', 'banana', 'carrot', 'onion', 'garlic', 'tomato', 'potato',
-            'chicken', 'beef', 'pork', 'fish', 'salmon', 'tuna',
-            'flour', 'sugar', 'salt', 'pepper', 'oil', 'butter', 'egg',
-            'rice', 'beans', 'lentils', 'quinoa', 'oats'
-        ]
-        
-        # Check for product indicators
-        product_score = sum(1 for indicator in product_indicators if indicator in query_lower)
-        
-        # Check for ingredient indicators  
-        ingredient_score = sum(1 for indicator in ingredient_indicators if indicator in query_lower)
-        
-        # Additional heuristics
-        if len(query.split()) > 3:  # Multi-word queries often products
-            product_score += 1
-        
-        if any(char.isdigit() for char in query):  # Numbers often in product names
-            product_score += 1
-            
-        # Return True if more likely a product
-        return product_score > ingredient_score
-    
-    def _is_basic_ingredient(self, query: str) -> bool:
-        """
-        Check if query is a basic ingredient that should always be classified as ingredient.
-        Used to ensure USDA fallback works for common foods.
-        """
-        query_lower = query.lower().strip()
-        
-        # Common basic ingredients that should always use USDA fallback
-        basic_ingredients = [
-            'apple', 'banana', 'carrot', 'onion', 'garlic', 'tomato', 'potato',
-            'chicken', 'beef', 'pork', 'fish', 'salmon', 'tuna', 'egg', 'eggs',
-            'flour', 'sugar', 'salt', 'pepper', 'oil', 'butter', 
-            'rice', 'beans', 'lentils', 'quinoa', 'oats', 'milk',
-            'orange', 'lemon', 'lime', 'strawberry', 'blueberry', 'grape',
-            'lettuce', 'spinach', 'broccoli', 'cauliflower', 'cucumber',
-            'cheese', 'yogurt', 'bread', 'pasta'
-        ]
-        
-        # Check for exact match or plural/singular variants
-        for ingredient in basic_ingredients:
-            if (query_lower == ingredient or 
-                query_lower == ingredient + 's' or 
-                query_lower + 's' == ingredient):
-                return True
-        
-        return False
-
     async def search_ingredients(self, query: str, number: int = 10) -> List[Dict[str, Any]]:
         """Search for ingredient items using Spoonacular Ingredients API"""
         endpoint = f"{self.BASE_URL}/food/ingredients/search"

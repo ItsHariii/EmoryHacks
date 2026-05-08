@@ -2,8 +2,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
-import { SafetyTag } from './SafetyTag';
-import { FoodEntry } from '../types';
+import { SafetyTag } from '../ui/SafetyTag';
+import { FoodEntry } from '../../types';
 import { Card } from '../ui/Card';
 
 interface FoodEntryCardProps {

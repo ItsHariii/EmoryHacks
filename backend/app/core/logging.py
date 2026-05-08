@@ -50,14 +50,16 @@ def setup_logging() -> logging.Logger:
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
     
-    # Use JSON formatter for production, simple format for development
-    if settings.ENVIRONMENT == "production":
-        formatter = StructuredFormatter(
-            '%(timestamp)s %(level)s %(logger)s %(message)s'
+    # JSON logs by default; pretty plain-text only when DEBUG=true.
+    # Structured JSON is the prod-safe default — staging needs the same shape
+    # as prod so log pipelines (Loki/Datadog/etc.) work identically.
+    if settings.DEBUG:
+        formatter: logging.Formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
     else:
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        formatter = StructuredFormatter(
+            '%(timestamp)s %(level)s %(logger)s %(message)s'
         )
     
     console_handler.setFormatter(formatter)

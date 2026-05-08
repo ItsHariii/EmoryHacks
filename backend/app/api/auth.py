@@ -224,9 +224,10 @@ async def verify_email(
     """
     Verify user email address.
     """
+    _legacy_auth_guard()
     # In a real implementation, you would verify the token against the one stored in DB
     # or verify the JWT signature if stateless
-    
+
     # For now, we'll assume it's a simple token lookup
     user = db.query(UserModel).filter(UserModel.verification_token == token).first()
     

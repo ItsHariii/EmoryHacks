@@ -39,6 +39,7 @@ class User(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = Column(DateTime, nullable=True, index=True)
 
     # Relationships
     food_logs = relationship("FoodLog", back_populates="user", cascade="all, delete")

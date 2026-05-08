@@ -113,7 +113,12 @@ export const EditFoodEntryScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showSafetyWarning, setShowSafetyWarning] = useState(false);
 
-  // Early return if no food data
+  useEffect(() => {
+    if (currentFood?.safety_status === 'avoid' && isNewEntry) {
+      setShowSafetyWarning(true);
+    }
+  }, [currentFood, isNewEntry]);
+
   if (!currentFood) {
     return (
       <ScreenWrapper>
@@ -123,13 +128,6 @@ export const EditFoodEntryScreen: React.FC = () => {
       </ScreenWrapper>
     );
   }
-
-  // Check if food should show safety warning on mount
-  useEffect(() => {
-    if (currentFood?.safety_status === 'avoid' && isNewEntry) {
-      setShowSafetyWarning(true);
-    }
-  }, [currentFood, isNewEntry]);
 
   const handleSave = async () => {
     if (loading || !isValid) return;
@@ -186,7 +184,7 @@ export const EditFoodEntryScreen: React.FC = () => {
 
       // Navigate back
       if (isNewEntry) {
-        (navigation as any).navigate('Dashboard', { refresh: true, refreshAt: Date.now() });
+        (navigation as any).navigate('Main', { screen: 'Dashboard', params: { refresh: true, refreshAt: Date.now() } });
       } else {
         navigation.goBack();
       }
@@ -229,17 +227,6 @@ export const EditFoodEntryScreen: React.FC = () => {
       ]
     );
   };
-
-  if (!currentFood) {
-    return (
-      <ScreenWrapper>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Food not found</Text>
-          <Button title="Go Back" onPress={() => navigation.goBack()} />
-        </View>
-      </ScreenWrapper>
-    );
-  }
 
   const mealTypes: { value: MealType; label: string }[] = [
     { value: 'breakfast', label: 'Breakfast' },

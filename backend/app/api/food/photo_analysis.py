@@ -1,43 +1,45 @@
 """
 Photo analysis API endpoint for food identification using Gemini AI Vision.
 
-This endpoint:
-1. Accepts a food photo upload
-2. Uses Gemini AI to identify the food and estimate portion
-3. Searches USDA database for nutrition data
-4. Checks pregnancy safety
-5. Returns combined results in the same format as food search
-6. Allows direct logging of the analyzed food
-
-It also supports an optional background-style mode where the initial request
-returns a lightweight `job_id`, and a separate endpoint performs the heavy
-analysis work when polled.
+Sync mode runs the analysis inline. Async mode persists the upload to
+object storage and enqueues an arq job; pollers retrieve job state from
+Redis. This avoids the previous in-memory dict that lost jobs on restart
+and didn't survive multiple workers.
 """
 
 import logging
-from datetime import datetime
-from typing import Any, Dict
-from uuid import uuid4
+from typing import Any, Dict, Optional
 
+from arq.connections import ArqRedis, create_pool
+from arq.jobs import Job, JobStatus
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.food import Food
+from app.models.food import Food, FoodSafetyStatus
 from app.models.user import User
+from app.services import object_storage
 from app.services.gemini_vision_service import gemini_vision_service
 from app.services.pregnancy_safety_service import pregnancy_safety_service
 from app.services.usda_service import usda_service
 from app.utils.food_factory import FoodFactory
+from app.workers.photo_worker import _redis_settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 food_factory = FoodFactory()
 
-# In-memory store for optional background-style jobs.
-# This keeps the design simple while making it easy to move to a real queue later.
-photo_analysis_jobs: Dict[str, Dict[str, Any]] = {}
+_arq_pool: Optional[ArqRedis] = None
+
+
+async def _get_arq_pool() -> ArqRedis:
+    """Lazily build the arq Redis pool. Reused across requests."""
+    global _arq_pool
+    if _arq_pool is None:
+        _arq_pool = await create_pool(_redis_settings())
+    return _arq_pool
 
 
 @router.post("/analyze-photo")
@@ -88,20 +90,32 @@ async def analyze_food_photo(
             "allergies": getattr(current_user, "allergies", None),
         }
 
-        # Optional background-style mode: enqueue job and return job_id
+        # Async mode: persist blob, enqueue arq job. Survives process restarts.
         if mode == "async":
-            job_id = str(uuid4())
-            photo_analysis_jobs[job_id] = {
-                "status": "pending",
-                "user_id": str(current_user.id),
-                "user_context": user_context,
-                "image_data": image_data,
-                "created_at": datetime.utcnow().isoformat(),
-            }
-            logger.info("Created photo analysis job %s for user %s", job_id, current_user.id)
+            image_key = object_storage.put_image(image_data, suffix=".jpg")
+            pool = await _get_arq_pool()
+            job = await pool.enqueue_job(
+                "analyze_photo_job",
+                image_key=image_key,
+                user_id=str(current_user.id),
+                user_context=user_context,
+                _queue_name=settings.ARQ_QUEUE_NAME,
+            )
+            if job is None:
+                # arq returns None when a job with the same id already exists
+                # (deduplication). We don't dedup, so this is unexpected.
+                object_storage.delete_image(image_key)
+                raise HTTPException(
+                    status_code=500,
+                    detail="Could not enqueue photo analysis job.",
+                )
+            logger.info(
+                "Enqueued photo analysis job %s for user %s (image_key=%s)",
+                job.job_id, current_user.id, image_key,
+            )
             return {
-                "job_id": job_id,
-                "status": "pending",
+                "job_id": job.job_id,
+                "status": "queued",
                 "mode": "async",
             }
 
@@ -127,68 +141,43 @@ async def analyze_food_photo(
 async def get_photo_analysis_job_status(
     job_id: str,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
 ) -> Dict:
-    """
-    Poll and optionally execute a background-style photo analysis job.
+    """Poll an arq photo-analysis job. Returns queued/running/completed/failed."""
+    pool = await _get_arq_pool()
+    job = Job(job_id, redis=pool, _queue_name=settings.ARQ_QUEUE_NAME)
+    job_status = await job.status()
 
-    - If the job is still pending, this call will run the analysis and transition
-      the job to a completed or failed state.
-    - Subsequent calls will simply return the stored result.
-    """
-    job = photo_analysis_jobs.get(job_id)
-    if not job or job.get("user_id") != str(current_user.id):
+    if job_status == JobStatus.not_found:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    status = job.get("status")
-
-    # Run the analysis on first meaningful poll
-    if status == "pending":
-        logger.info("Starting execution of photo analysis job %s for user %s", job_id, current_user.id)
-        job["status"] = "running"
-        try:
-            image_data = job.pop("image_data")
-            user_context = job.get("user_context", {})
-            result = await _perform_photo_analysis(
-                image_data=image_data,
-                user_context=user_context,
-                user_id=str(current_user.id),
-                db=db,
-            )
-            job["status"] = "completed"
-            job["result"] = result
-        except HTTPException as e:
-            job["status"] = "failed"
-            job["error"] = e.detail
-            raise
-        except Exception as e:
-            logger.error("Error running photo analysis job %s: %s", job_id, e, exc_info=True)
-            job["status"] = "failed"
-            job["error"] = "Photo analysis failed. Please try again or use manual search."
-            raise HTTPException(
-                status_code=500,
-                detail="Photo analysis failed. Please try again or use manual search.",
-            )
-
-    # Return status to caller
-    if job["status"] in ("pending", "running"):
+    if job_status in (JobStatus.queued, JobStatus.deferred, JobStatus.in_progress):
         return {
             "job_id": job_id,
-            "status": job["status"],
+            "status": "queued" if job_status == JobStatus.queued else "running",
         }
 
-    if job["status"] == "completed":
+    # complete: get result and authorize against the stored user_id.
+    info = await job.info()
+    expected_user = None
+    if info and info.kwargs:
+        expected_user = info.kwargs.get("user_id")
+    if expected_user and expected_user != str(current_user.id):
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    try:
+        result = await job.result(timeout=0)
+    except Exception as e:
+        logger.error("Photo analysis job %s failed: %s", job_id, e)
         return {
             "job_id": job_id,
-            "status": "completed",
-            "result": job.get("result"),
+            "status": "failed",
+            "error": "Photo analysis failed. Please try again or use manual search.",
         }
 
-    # failed
     return {
         "job_id": job_id,
-        "status": "failed",
-        "error": job.get("error"),
+        "status": "completed",
+        "result": result,
     }
 
 
@@ -296,9 +285,16 @@ async def _perform_photo_analysis(
         if safety_status == "safe":
             safety_status = "limited"  # Downgrade if AI found concerns
 
-    # Update food safety status if needed
-    if existing_food and existing_food.safety_status != safety_status:
-        existing_food.safety_status = safety_status
+    # Update food safety status if needed. Coerce string to enum so the
+    # column write goes through the same type as everywhere else in the app.
+    try:
+        safety_enum = FoodSafetyStatus(safety_status)
+    except ValueError:
+        logger.warning("Unknown safety_status %r — falling back to LIMITED", safety_status)
+        safety_enum = FoodSafetyStatus.LIMITED
+
+    if existing_food and existing_food.safety_status != safety_enum:
+        existing_food.safety_status = safety_enum
         existing_food.safety_notes = safety_notes
         db.commit()
 

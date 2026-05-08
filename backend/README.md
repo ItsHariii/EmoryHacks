@@ -1,14 +1,17 @@
 # Ovi Backend API
 
+![ci](https://github.com/anthropics/EmoryHacks/actions/workflows/ci.yml/badge.svg)
+
 FastAPI-based backend for the Ovi pregnancy nutrition and wellness platform.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.9 or higher
-- PostgreSQL 13+ (or SQLite for development)
-- pip or poetry for package management
+- Python 3.11 or higher (CI runs against 3.11 + 3.12)
+- PostgreSQL 15+ (SQLite is supported for local tests only — JSONB / partial indexes need Postgres)
+- Redis 7+ (rate limiting + arq async jobs)
+- pip (Poetry is no longer used — see `pyproject.toml` for tool config only)
 
 ### Installation
 
@@ -65,14 +68,70 @@ FastAPI-based backend for the Ovi pregnancy nutrition and wellness platform.
 
 6. **Start the development server**
    ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   make dev                   # uvicorn with --reload
+   ```
+
+7. **Run the async-job worker** (required for `mode=async` photo analysis)
+   ```bash
+   make worker                # arq app.workers.photo_worker.WorkerSettings
    ```
 
 The API will be available at:
 - **API**: http://localhost:8000
 - **Interactive Docs**: http://localhost:8000/docs
 - **Alternative Docs**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/health
+- **Health Check**: http://localhost:8000/health/live
+- **Prometheus metrics**: http://localhost:8000/metrics/prometheus
+
+### Docker
+
+```bash
+make docker-up               # postgres + redis + app + worker
+```
+
+### Make targets
+
+| Target          | What it does                              |
+|-----------------|-------------------------------------------|
+| `make dev`      | Run uvicorn with autoreload               |
+| `make test`     | Run pytest                                |
+| `make test-cov` | Run pytest with coverage report           |
+| `make lint`     | `ruff check` + `ruff format --check`      |
+| `make format`   | Apply ruff format + autofixes             |
+| `make type`     | Run `mypy app`                            |
+| `make migrate`  | Apply alembic migrations                  |
+| `make worker`   | Run arq photo worker                      |
+| `make docker-up`/`docker-down` | Compose stack                |
+
+### Environment variables
+
+See `.env.example` for the full list. Required in **all** environments:
+
+| Variable                  | Notes                                                  |
+|---------------------------|--------------------------------------------------------|
+| `SECRET_KEY`              | ≥ 32 chars                                             |
+| `DATABASE_URL`            | Postgres connection string                             |
+| `SUPABASE_URL`            | Supabase project URL                                   |
+| `SUPABASE_KEY`            | anon public key                                        |
+| `SUPABASE_JWT_SECRET`     | HS256 secret (see Supabase dashboard)                  |
+| `REDIS_URL`               | rate limiter + arq queue                               |
+| `USDA_API_KEY` / `SPOONACULAR_API_KEY` / `GEMINI_API_KEY` | external services      |
+
+Optional:
+
+| Variable                  | Default     | Notes                                  |
+|---------------------------|-------------|----------------------------------------|
+| `LEGACY_AUTH_ENABLED`     | `false`     | Set `true` only for local dev          |
+| `RATE_LIMIT_BACKEND`      | `memory`    | Use `redis` in prod                    |
+| `OBJECT_STORAGE_BACKEND`  | `local`     | Set `s3` + bucket vars for prod uploads|
+
+### Run modes
+
+| Mode    | How                                                        |
+|---------|------------------------------------------------------------|
+| Dev     | `make dev` + `make worker` against local Postgres / Redis  |
+| Docker  | `make docker-up`                                           |
+| Prod    | Build image, run `uvicorn` web tier + arq worker container, point at managed Postgres + Redis |
 
 ## 📁 Project Structure
 

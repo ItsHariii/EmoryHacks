@@ -21,6 +21,7 @@ class JournalEntry(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    deleted_at = Column(DateTime, nullable=True, index=True)
 
     # Relationships
     user = relationship("User", back_populates="journal_entries")

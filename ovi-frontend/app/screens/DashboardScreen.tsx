@@ -37,6 +37,7 @@ import CelebrationModal from '../components/modals/CelebrationModal';
 import { useUserStore } from '../store/useUserStore';
 import { useNutritionStore } from '../store/useNutritionStore';
 import { getSizeComparison, getWeekMilestones } from '../utils/pregnancyCalculations';
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_MARGIN } from '../components/layout/tabBarLayout';
 
 // Helper functions for time-based greeting
 const getGreeting = () => {
@@ -52,9 +53,6 @@ const getGreetingEmoji = () => {
   if (hour < 17) return '🌤️';
   return '🌙';
 };
-
-const TAB_BAR_HEIGHT = 70;
-const TAB_BAR_BOTTOM_MARGIN = 20;
 
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -183,16 +181,12 @@ export const DashboardScreen: React.FC = () => {
   );
 
   // Explicit refresh trigger when returning from food logging flows.
+  // Just update selectedDate; useFocusEffect handles the actual fetch via its dep.
   useEffect(() => {
     if (!route.params?.refresh) return;
-
-    const today = new Date();
-    setSelectedDate(today);
-    loadAllData(today);
-
-    // Clear one-shot refresh flag to avoid repeated reloads.
+    setSelectedDate(new Date());
     (navigation as any).setParams?.({ refresh: false, refreshAt: undefined });
-  }, [route.params?.refresh, route.params?.refreshAt, loadAllData, navigation]);
+  }, [route.params?.refresh, route.params?.refreshAt, navigation]);
 
   // Handle date selection with fade animation
   const handleDateSelect = useCallback((date: Date) => {

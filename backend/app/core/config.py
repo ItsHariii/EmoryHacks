@@ -1,7 +1,7 @@
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings
 from enum import Enum
-from typing import List, Union, Optional
+from typing import Dict, List, Tuple, Union, Optional
 
 
 class Environment(str, Enum):
@@ -25,8 +25,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     TOKEN_AUDIENCE: str = "ovi-client"
     TOKEN_ISSUER: str = "ovi.api"
-    # Legacy email/password auth (Phase 3: set to false to rely fully on Supabase).
-    LEGACY_AUTH_ENABLED: bool = Field(default=True, env="LEGACY_AUTH_ENABLED")
+    # Legacy email/password auth. Disabled by default — Supabase is the canonical
+    # auth provider. Flip to true only for local dev or migration windows.
+    LEGACY_AUTH_ENABLED: bool = Field(default=False, env="LEGACY_AUTH_ENABLED")
     
     # Database & security
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 24
@@ -38,6 +39,39 @@ class Settings(BaseSettings):
     RATE_LIMIT_CALLS_PER_MINUTE: int = 100
     RATE_LIMIT_WINDOW_SECONDS: int = 60
     RATE_LIMIT_REDIS_URL: Optional[str] = None
+
+    # Object storage for photo uploads (async job payloads).
+    OBJECT_STORAGE_BACKEND: str = "local"  # Options: "local", "s3"
+    OBJECT_STORAGE_LOCAL_DIR: str = "./media/photo_uploads"
+    OBJECT_STORAGE_S3_BUCKET: Optional[str] = None
+    OBJECT_STORAGE_S3_REGION: Optional[str] = None
+    OBJECT_STORAGE_S3_PREFIX: str = "photo_uploads/"
+
+    # Async job queue (arq).
+    REDIS_URL: Optional[str] = Field(default=None, env="REDIS_URL")
+    ARQ_QUEUE_NAME: str = "ovi_photo_analysis"
+
+    # Per-external-service rate limits: (max_calls, window_seconds).
+    # Spoonacular free tier ≈ 150 calls/day. USDA free tier ≈ 1000 calls/hr.
+    # Gemini per-minute limits depend on the model — keep conservative.
+    EXTERNAL_RATE_LIMITS: Dict[str, Tuple[int, int]] = Field(
+        default_factory=lambda: {
+            "spoonacular": (150, 86400),
+            "usda": (1000, 3600),
+            "gemini": (60, 60),
+            "default": (60, 60),
+        }
+    )
+
+    # Cache TTLs in hours, keyed by source (spoonacular / usda / local / manual).
+    CACHE_TTL_HOURS: Dict[str, int] = Field(
+        default_factory=lambda: {
+            "spoonacular": 24 * 7,
+            "usda": 24 * 30,
+            "local": 24 * 3,
+            "manual": 24 * 30,
+        }
+    )
 
     # CORS
     CORS_ORIGINS: List[str] = Field(default_factory=lambda: [
@@ -168,5 +202,7 @@ try:
     settings = Settings()
 except Exception as e:
     import sys
-    print(f"❌ Environment variable error: {e}")
+    import logging
+
+    logging.getLogger(__name__).critical("Environment variable error: %s", e)
     sys.exit(1)

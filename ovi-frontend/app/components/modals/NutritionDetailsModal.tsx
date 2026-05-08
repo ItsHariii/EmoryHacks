@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme } from '../../theme';
-import { NutritionTargets } from '../types';
+import { NutritionTargets } from '../../types';
 
 interface NutritionDetailsModalProps {
     visible: boolean;

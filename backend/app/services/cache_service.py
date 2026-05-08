@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, func
+from ..core.config import settings
 from ..models.food import Food as FoodModel
 
 logger = logging.getLogger(__name__)
@@ -13,14 +14,10 @@ class CacheService:
     Service for caching and deduplication of food data.
     Handles intelligent caching, duplicate detection, and cache invalidation.
     """
-    
+
     def __init__(self):
-        # Cache TTL settings (in hours)
-        self.cache_ttl = {
-            "spoonacular": 24 * 7,  # 1 week for Spoonacular data
-            "usda": 24 * 30,        # 1 month for USDA data
-            "local": 24 * 3         # 3 days for local modifications
-        }
+        # Cache TTLs (hours) come from settings so ops can tune per env.
+        self.cache_ttl: Dict[str, int] = dict(settings.CACHE_TTL_HOURS)
     
     def generate_food_hash(self, name: str, brand: Optional[str] = None, serving_size: Optional[float] = None) -> str:
         """Generate a unique hash for food identification."""
@@ -31,7 +28,7 @@ class CacheService:
         
         # Create hash string
         hash_string = f"{name_norm}|{brand_norm}|{serving_norm}"
-        return hashlib.md5(hash_string.encode()).hexdigest()
+        return hashlib.sha256(hash_string.encode()).hexdigest()
     
     def find_duplicates(self, db: Session, name: str, brand: Optional[str] = None, 
                        spoonacular_id: Optional[str] = None, fdc_id: Optional[str] = None) -> List[FoodModel]:
@@ -76,7 +73,11 @@ class CacheService:
             for match in name_matches:
                 if match not in duplicates:
                     similarity = self._calculate_similarity(name, match.name, brand, match.brand)
-                    if similarity > 0.8:  # High similarity threshold
+                    if similarity > 0.85:
+                        logger.info(
+                            f"Fuzzy duplicate match: '{name}' ~ '{match.name}' "
+                            f"(similarity={similarity:.3f})"
+                        )
                         duplicates.append(match)
         
         return duplicates
@@ -109,53 +110,66 @@ class CacheService:
         
         return intersection / union if union > 0 else 0.0
     
+    def _compute_expires_at(self, source: Optional[str]) -> datetime:
+        ttl_hours = self.cache_ttl.get(
+            source or "local", self.cache_ttl.get("local", 24 * 3)
+        )
+        return datetime.utcnow() + timedelta(hours=ttl_hours)
+
     def is_cache_valid(self, food: FoodModel) -> bool:
-        """Check if cached food data is still valid."""
+        """Check if cached food data is still valid.
+
+        Prefers the new cache_expires_at column when populated; falls back to
+        updated_at + TTL for rows pre-dating the migration.
+        """
+        if getattr(food, "cache_expires_at", None):
+            return datetime.utcnow() < food.cache_expires_at
+
         if not food.updated_at:
             return False
-        
-        # Determine TTL based on source
         source = food.source or "local"
-        ttl_hours = self.cache_ttl.get(source, self.cache_ttl["local"])
-        
-        expiry_time = food.updated_at + timedelta(hours=ttl_hours)
-        return datetime.utcnow() < expiry_time
+        ttl_hours = self.cache_ttl.get(source, self.cache_ttl.get("local", 24 * 3))
+        return datetime.utcnow() < (food.updated_at + timedelta(hours=ttl_hours))
     
-    def get_cached_food(self, db: Session, query: str, spoonacular_id: Optional[str] = None, 
+    def get_cached_food(self, db: Session, query: str, spoonacular_id: Optional[str] = None,
                        fdc_id: Optional[str] = None) -> Optional[FoodModel]:
         """
         Get cached food with validation.
         Returns None if cache is invalid or not found.
         """
-        # Try exact API ID matches first
+        from ..middleware.metrics import metrics_collector
+
         if spoonacular_id:
             food = db.query(FoodModel).filter(FoodModel.spoonacular_id == spoonacular_id).first()
             if food and self.is_cache_valid(food):
                 logger.info(f"Cache hit for Spoonacular ID {spoonacular_id}: {food.name}")
+                metrics_collector.record_cache("food", hit=True)
                 return food
-        
+
         if fdc_id:
             food = db.query(FoodModel).filter(FoodModel.fdc_id == fdc_id).first()
             if food and self.is_cache_valid(food):
                 logger.info(f"Cache hit for USDA FDC ID {fdc_id}: {food.name}")
+                metrics_collector.record_cache("food", hit=True)
                 return food
-        
-        # Try name-based search
+
         foods = db.query(FoodModel).filter(
             or_(
                 func.lower(FoodModel.name) == query.lower(),
                 FoodModel.name.ilike(f"%{query}%")
             )
         ).order_by(FoodModel.updated_at.desc()).limit(3).all()
-        
+
         for food in foods:
             if self.is_cache_valid(food):
                 similarity = self._string_similarity(query.lower(), food.name.lower())
-                if similarity > 0.7:  # Good similarity match
+                if similarity > 0.7:
                     logger.info(f"Cache hit for query '{query}': {food.name} (similarity: {similarity:.2f})")
+                    metrics_collector.record_cache("food", hit=True)
                     return food
-        
+
         logger.info(f"Cache miss for query '{query}'")
+        metrics_collector.record_cache("food", hit=False)
         return None
     
     def cache_food(self, db: Session, food: FoodModel, merge_duplicates: bool = True) -> FoodModel:
@@ -191,14 +205,16 @@ class CacheService:
                         setattr(existing, key, value)
                 
                 existing.updated_at = datetime.utcnow()
+                existing.cache_expires_at = self._compute_expires_at(existing.source)
                 db.commit()
                 db.refresh(existing)
-                
+
                 logger.info(f"Merged food data for '{food.name}' with existing record")
                 return existing
-            
+
             # No duplicates or merge disabled - create new record
             food.updated_at = datetime.utcnow()
+            food.cache_expires_at = self._compute_expires_at(food.source)
             db.add(food)
             db.commit()
             db.refresh(food)
@@ -256,43 +272,77 @@ class CacheService:
         
         return merged
     
-    def invalidate_cache(self, db: Session, food_id: Optional[str] = None, 
-                        source: Optional[str] = None, older_than_hours: Optional[int] = None):
-        """
-        Invalidate cached food data based on various criteria.
-        
-        Args:
-            db: Database session
-            food_id: Specific food ID to invalidate
-            source: Invalidate all foods from specific source
-            older_than_hours: Invalidate foods older than specified hours
+    def mark_stale(
+        self,
+        db: Session,
+        food_id: Optional[str] = None,
+        source: Optional[str] = None,
+        older_than_hours: Optional[int] = None,
+    ) -> int:
+        """Soft-invalidate cached foods by backdating updated_at so the next
+        is_cache_valid() call returns False.
+
+        Returns the number of rows marked stale.
         """
         try:
             query = db.query(FoodModel)
-            
             if food_id:
                 query = query.filter(FoodModel.id == food_id)
-            
             if source:
                 query = query.filter(FoodModel.source == source)
-            
             if older_than_hours:
                 cutoff_time = datetime.utcnow() - timedelta(hours=older_than_hours)
                 query = query.filter(FoodModel.updated_at < cutoff_time)
-            
-            # Mark as needing refresh (could add a flag) or delete
-            foods_to_invalidate = query.all()
-            
-            for food in foods_to_invalidate:
-                # For now, we'll just update the timestamp to force refresh
-                food.updated_at = datetime.utcnow() - timedelta(days=365)  # Force expiry
-            
+
+            stale_marker = datetime.utcnow() - timedelta(days=365)
+            updated = query.update({FoodModel.updated_at: stale_marker}, synchronize_session=False)
             db.commit()
-            logger.info(f"Invalidated {len(foods_to_invalidate)} cached foods")
-            
+            logger.info(f"Marked {updated} cached foods stale")
+            return updated
         except Exception as e:
-            logger.error(f"Error invalidating cache: {e}")
+            logger.error(f"Error marking cache stale: {e}")
             db.rollback()
+            return 0
+
+    def invalidate_cache(
+        self,
+        db: Session,
+        food_id: Optional[str] = None,
+        source: Optional[str] = None,
+        older_than_hours: Optional[int] = None,
+        hard: bool = False,
+    ) -> int:
+        """Invalidate cached foods. With hard=True deletes rows; otherwise
+        delegates to mark_stale to backdate updated_at.
+
+        Returns the number of rows affected.
+        """
+        if not hard:
+            return self.mark_stale(
+                db,
+                food_id=food_id,
+                source=source,
+                older_than_hours=older_than_hours,
+            )
+
+        try:
+            query = db.query(FoodModel)
+            if food_id:
+                query = query.filter(FoodModel.id == food_id)
+            if source:
+                query = query.filter(FoodModel.source == source)
+            if older_than_hours:
+                cutoff_time = datetime.utcnow() - timedelta(hours=older_than_hours)
+                query = query.filter(FoodModel.updated_at < cutoff_time)
+
+            deleted = query.delete(synchronize_session=False)
+            db.commit()
+            logger.info(f"Hard-deleted {deleted} cached foods")
+            return deleted
+        except Exception as e:
+            logger.error(f"Error hard-invalidating cache: {e}")
+            db.rollback()
+            return 0
     
     def get_cache_stats(self, db: Session) -> Dict[str, Any]:
         """Get cache statistics for monitoring."""

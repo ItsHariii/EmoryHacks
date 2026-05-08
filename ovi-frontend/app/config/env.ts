@@ -35,21 +35,18 @@ const getEnvVars = (env = 'dev') => {
 
 export const config = getEnvVars();
 
-function isAndroidEmulator(): boolean {
-    if (Platform.OS !== 'android') return false;
-    const model = String(Platform.constants?.Model ?? '');
-    const brand = String(Platform.constants?.Brand ?? '');
-    const fingerprint = String(Platform.constants?.Fingerprint ?? '');
-    return (
-        brand === 'generic' ||
-        /sdk|emulator|gphone|Emulator/i.test(model) ||
-        /generic|google_sdk|unknown/i.test(fingerprint)
-    );
-}
-
 export const getApiBaseUrl = () => {
     if (API_URL_OVERRIDE) {
         return API_URL_OVERRIDE;
+    }
+
+    // Block prod builds from silently calling the placeholder host.
+    // Set EXPO_PUBLIC_API_URL at build time to point at the real backend.
+    if (!__DEV__) {
+        throw new Error(
+            'EXPO_PUBLIC_API_URL is required for production builds. ' +
+            'Set it to the real backend URL before building.'
+        );
     }
 
     if (Platform.OS === 'web') {
@@ -61,10 +58,8 @@ export const getApiBaseUrl = () => {
     }
 
     if (Platform.OS === 'android') {
-        if (isAndroidEmulator()) {
-            return config.androidEmulatorUrl;
-        }
-        return config.apiUrl; // Physical device: set EXPO_PUBLIC_API_URL to your LAN IP if needed
+        // Default to emulator URL in dev. Physical device: set EXPO_PUBLIC_API_URL to LAN IP.
+        return config.androidEmulatorUrl;
     }
 
     return config.apiUrl;

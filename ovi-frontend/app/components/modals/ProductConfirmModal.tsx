@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { theme } from '../../theme';
-import { FoodItem } from '../types';
+import { FoodItem } from '../../types';
 
 interface ProductConfirmModalProps {
   visible: boolean;

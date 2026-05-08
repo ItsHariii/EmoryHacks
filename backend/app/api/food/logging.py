@@ -15,6 +15,7 @@ from app.models.user import User
 from app.models.food import Food, FoodLog
 from app.schemas.food import FoodLogCreate, FoodLogUpdate, FoodLogResponse, DailyNutrition
 from app.services.usda_service import USDAService
+from app.services.smart_suggestions_service import smart_suggestions_service
 from app.utils.food_factory import FoodFactory
 from app.core.config import settings
 
@@ -238,110 +239,6 @@ async def get_food_logs(
 
     return formatted_logs
 
-@router.get("/log/{log_id}", response_model=FoodLogResponse)
-async def get_food_log(
-    log_id: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Get a specific food log by ID.
-    """
-    log = (
-        db.query(FoodLog)
-        .filter(
-            FoodLog.id == log_id, 
-            FoodLog.user_id == current_user.id,
-            FoodLog.deleted_at.is_(None)
-        )
-        .first()
-    )
-    
-    if not log:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Food log not found"
-        )
-    
-    # Get the associated food for formatting
-    food = db.query(Food).filter(Food.id == log.food_id).first()
-    if not food:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Associated food not found"
-        )
-    
-    return _format_food_log_response(log, food)
-
-@router.patch("/log/{log_id}", response_model=FoodLogResponse)
-async def update_food_log(
-    log_id: str,
-    log_in: FoodLogUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Update a food log.
-    """
-    log = (
-        db.query(FoodLog)
-        .filter(
-            FoodLog.id == log_id, 
-            FoodLog.user_id == current_user.id,
-            FoodLog.deleted_at.is_(None)
-        )
-        .first()
-    )
-    
-    if not log:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Food log not found"
-        )
-    
-    # Update fields
-    for field, value in log_in.dict(exclude_unset=True).items():
-        setattr(log, field, value)
-    
-    db.add(log)
-    db.commit()
-    db.refresh(log)
-    
-    return log
-
-@router.delete("/log/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_food_log(
-    log_id: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Delete a food log.
-    """
-    log = (
-        db.query(FoodLog)
-        .filter(
-            FoodLog.id == log_id, 
-            FoodLog.user_id == current_user.id,
-            FoodLog.deleted_at.is_(None)
-        )
-        .first()
-    )
-    
-    if not log:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Food log not found"
-        )
-    
-    # Soft delete: set deleted_at timestamp
-    log.deleted_at = datetime.utcnow()
-    db.add(log)
-    db.commit()
-    
-    return None
-
-
 @router.get("/log/summary", response_model=DailyNutrition)
 async def get_daily_summary(
     date: Optional[str] = None,
@@ -362,7 +259,7 @@ async def get_daily_summary(
             )
     else:
         target_date = datetime.now().date()
-    
+
     # Get all food logs for the specified day (excluding soft-deleted)
     logs = (
         db.query(FoodLog)
@@ -374,13 +271,13 @@ async def get_daily_summary(
         )
         .all()
     )
-    
+
     # Calculate daily nutrition
     daily_nutrition = DailyNutrition(date=target_date)
-    
+
     for log in logs:
         daily_nutrition.add_food(log.food, log.quantity)
-    
+
     return daily_nutrition
 
 
@@ -404,9 +301,9 @@ async def get_weekly_summary(
             )
     else:
         start_date = (datetime.now() - timedelta(days=6)).date()
-    
+
     end_date = start_date + timedelta(days=6)
-    
+
     # Get all food logs for the date range (excluding soft-deleted)
     logs = (
         db.query(FoodLog)
@@ -420,20 +317,20 @@ async def get_weekly_summary(
         .order_by(FoodLog.consumed_at)
         .all()
     )
-    
+
     # Initialize daily nutrition for each day in the week
     daily_summaries = {}
     current_date = start_date
     while current_date <= end_date:
         daily_summaries[current_date] = DailyNutrition(date=current_date)
         current_date += timedelta(days=1)
-    
+
     # Process food logs
     for log in logs:
         log_date = log.consumed_at.date()
         if log_date in daily_summaries:
             daily_summaries[log_date].add_food(log.food, log.quantity)
-    
+
     # Convert to list and sort by date
     result = []
     for date_key in sorted(daily_summaries.keys()):
@@ -455,7 +352,7 @@ async def get_weekly_summary(
             "folate_mcg": summary.folate_mcg,
             "trimester": current_user.trimester
         })
-    
+
     return {
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
@@ -463,6 +360,112 @@ async def get_weekly_summary(
         "total_days": len(result),
         "days_with_data": len([d for d in result if d["total_calories"] > 0])
     }
+
+
+@router.get("/log/{log_id}", response_model=FoodLogResponse)
+async def get_food_log(
+    log_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific food log by ID.
+    """
+    log = (
+        db.query(FoodLog)
+        .filter(
+            FoodLog.id == log_id,
+            FoodLog.user_id == current_user.id,
+            FoodLog.deleted_at.is_(None)
+        )
+        .first()
+    )
+
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food log not found"
+        )
+
+    # Get the associated food for formatting
+    food = db.query(Food).filter(Food.id == log.food_id).first()
+    if not food:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Associated food not found"
+        )
+
+    return _format_food_log_response(log, food)
+
+
+@router.patch("/log/{log_id}", response_model=FoodLogResponse)
+async def update_food_log(
+    log_id: str,
+    log_in: FoodLogUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update a food log.
+    """
+    log = (
+        db.query(FoodLog)
+        .filter(
+            FoodLog.id == log_id,
+            FoodLog.user_id == current_user.id,
+            FoodLog.deleted_at.is_(None)
+        )
+        .first()
+    )
+
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food log not found"
+        )
+
+    # Update fields
+    for field, value in log_in.dict(exclude_unset=True).items():
+        setattr(log, field, value)
+
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+
+    return log
+
+
+@router.delete("/log/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_food_log(
+    log_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a food log.
+    """
+    log = (
+        db.query(FoodLog)
+        .filter(
+            FoodLog.id == log_id,
+            FoodLog.user_id == current_user.id,
+            FoodLog.deleted_at.is_(None)
+        )
+        .first()
+    )
+
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food log not found"
+        )
+
+    # Soft delete: set deleted_at timestamp
+    log.deleted_at = datetime.utcnow()
+    db.add(log)
+    db.commit()
+
+    return None
 
 
 @router.get("/suggestions")

@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     environment:
@@ -18,7 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis for caching (optional)
   redis:
     image: redis:7-alpine
     ports:
@@ -31,9 +29,8 @@ services:
       timeout: 5s
       retries: 5
 
-  # Main application
   app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
@@ -44,6 +41,11 @@ services:
       - DEBUG=true
       - SECRET_KEY=dev-secret-key-change-in-production
       - CORS_ORIGINS=http://localhost:3000,http://localhost:19006
+      - REDIS_URL=redis://redis:6379/0
+      - RATE_LIMIT_BACKEND=redis
+      - RATE_LIMIT_REDIS_URL=redis://redis:6379/0
+      - OBJECT_STORAGE_BACKEND=local
+      - OBJECT_STORAGE_LOCAL_DIR=/app/media/photo_uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,14 +53,42 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-      - /app/venv  # Exclude venv from volume mount
+      - /app/venv
+      - photo_uploads:/app/media/photo_uploads
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3
     restart: unless-stopped
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["arq", "app.workers.photo_worker.WorkerSettings"]
+    environment:
+      - DATABASE_URL=postgresql://ovi_user:ovi_password@postgres:5432/ovi_dev
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - REDIS_URL=redis://redis:6379/0
+      - RATE_LIMIT_BACKEND=redis
+      - RATE_LIMIT_REDIS_URL=redis://redis:6379/0
+      - OBJECT_STORAGE_BACKEND=local
+      - OBJECT_STORAGE_LOCAL_DIR=/app/media/photo_uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/venv
+      - photo_uploads:/app/media/photo_uploads
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
+  photo_uploads:

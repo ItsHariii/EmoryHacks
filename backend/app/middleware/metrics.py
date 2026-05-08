@@ -32,6 +32,36 @@ class MetricsCollector:
             Tuple[str, str, int, str], List[float]
         ] = defaultdict(list)
 
+        # Domain-specific counters / histograms.
+        self.external_call_count: Counter[Tuple[str, str]] = Counter()  # (service, outcome)
+        self.external_call_durations: Dict[str, List[float]] = defaultdict(list)
+        self.cache_events: Counter[Tuple[str, str]] = Counter()  # (cache, hit|miss)
+        self.auth_events: Counter[Tuple[str, str]] = Counter()  # (provider, outcome)
+        self.circuit_events: Counter[str] = Counter()  # client_name → opens
+
+    def record_external_call(
+        self, service: str, outcome: str, duration_seconds: float
+    ) -> None:
+        """Record an outbound API call (gemini/spoonacular/usda)."""
+        with self._lock:
+            self.external_call_count[(service, outcome)] += 1
+            self.external_call_durations[service].append(duration_seconds)
+
+    def record_cache(self, cache: str, hit: bool) -> None:
+        """Record a cache lookup result."""
+        with self._lock:
+            self.cache_events[(cache, "hit" if hit else "miss")] += 1
+
+    def record_auth(self, provider: str, outcome: str) -> None:
+        """Record auth success/failure (provider in {legacy,supabase})."""
+        with self._lock:
+            self.auth_events[(provider, outcome)] += 1
+
+    def record_circuit_open(self, client_name: str) -> None:
+        """Record a Gemini circuit-breaker open event."""
+        with self._lock:
+            self.circuit_events[client_name] += 1
+
     def record_request(
         self,
         method: str,
@@ -185,6 +215,60 @@ class MetricsCollector:
                 f'ovi_active_requests{{environment="{env_default}"}} {self.active_requests}'
             )
 
+            # External API calls
+            if self.external_call_count:
+                lines.append(
+                    "# HELP ovi_external_calls_total Outbound API calls by service and outcome."
+                )
+                lines.append("# TYPE ovi_external_calls_total counter")
+                for (service, outcome), count in self.external_call_count.items():
+                    lines.append(
+                        f'ovi_external_calls_total{{service="{service}",outcome="{outcome}"}} {count}'
+                    )
+
+            if self.external_call_durations:
+                lines.append(
+                    "# HELP ovi_external_call_duration_seconds Outbound API latency."
+                )
+                lines.append("# TYPE ovi_external_call_duration_seconds summary")
+                for service, times in self.external_call_durations.items():
+                    if not times:
+                        continue
+                    sorted_times = sorted(times)
+                    lines.append(
+                        f'ovi_external_call_duration_seconds_sum{{service="{service}"}} {sum(sorted_times)}'
+                    )
+                    lines.append(
+                        f'ovi_external_call_duration_seconds_count{{service="{service}"}} {len(sorted_times)}'
+                    )
+
+            # Cache hit/miss
+            if self.cache_events:
+                lines.append("# HELP ovi_cache_events_total Cache hits / misses.")
+                lines.append("# TYPE ovi_cache_events_total counter")
+                for (cache, outcome), count in self.cache_events.items():
+                    lines.append(
+                        f'ovi_cache_events_total{{cache="{cache}",outcome="{outcome}"}} {count}'
+                    )
+
+            # Auth events
+            if self.auth_events:
+                lines.append("# HELP ovi_auth_events_total Auth verification outcomes.")
+                lines.append("# TYPE ovi_auth_events_total counter")
+                for (provider, outcome), count in self.auth_events.items():
+                    lines.append(
+                        f'ovi_auth_events_total{{provider="{provider}",outcome="{outcome}"}} {count}'
+                    )
+
+            # Circuit breaker opens
+            if self.circuit_events:
+                lines.append("# HELP ovi_circuit_open_total Gemini circuit-breaker opens.")
+                lines.append("# TYPE ovi_circuit_open_total counter")
+                for client_name, count in self.circuit_events.items():
+                    lines.append(
+                        f'ovi_circuit_open_total{{client="{client_name}"}} {count}'
+                    )
+
         return "\n".join(lines) + "\n"
 
     def reset_metrics(self) -> None:
@@ -197,6 +281,11 @@ class MetricsCollector:
             self.active_requests = 0
             self.request_count_by_label.clear()
             self.response_times_by_label.clear()
+            self.external_call_count.clear()
+            self.external_call_durations.clear()
+            self.cache_events.clear()
+            self.auth_events.clear()
+            self.circuit_events.clear()
 
 
 # Global metrics collector instance

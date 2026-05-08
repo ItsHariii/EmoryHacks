@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 from typing import Dict, List, Tuple, Optional
 from enum import Enum
 from ..models.food import FoodSafetyStatus
@@ -50,7 +51,7 @@ class PregnancySafetyService:
             Dict with 'status' and 'notes' keys
         """
         ingredient_key = ingredient_name.lower().strip()
-        
+
         # Direct lookup in safety rules
         if ingredient_key in self.safety_rules:
             rule = self.safety_rules[ingredient_key]
@@ -58,15 +59,23 @@ class PregnancySafetyService:
                 "status": rule["status"],
                 "notes": rule["notes"]
             }
-        
-        # Try partial matches for compound ingredients
-        for rule_key, rule_data in self.safety_rules.items():
-            if rule_key in ingredient_key or ingredient_key in rule_key:
+
+        # Whole-word match: rule_key must appear as a token in ingredient_key.
+        # Prevents "ham"→"graham" / "egg"→"eggplant" false positives.
+        # Match the longest rule first so "raw egg" wins over "egg".
+        sorted_rules = sorted(
+            self.safety_rules.items(), key=lambda kv: len(kv[0]), reverse=True
+        )
+        for rule_key, rule_data in sorted_rules:
+            if not rule_key:
+                continue
+            pattern = r"\b" + re.escape(rule_key) + r"\b"
+            if re.search(pattern, ingredient_key):
                 return {
                     "status": rule_data["status"],
                     "notes": rule_data["notes"]
                 }
-        
+
         # Default fallback for unknown ingredients
         return {
             "status": "limited",
