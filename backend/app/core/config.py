@@ -58,16 +58,19 @@ class Settings(BaseSettings):
         default_factory=lambda: {
             "spoonacular": (150, 86400),
             "usda": (1000, 3600),
+            # OFF asks for ≤1 req/sec polite usage; 60/60 is the equivalent.
+            "open_food_facts": (60, 60),
             "gemini": (60, 60),
             "default": (60, 60),
         }
     )
 
-    # Cache TTLs in hours, keyed by source (spoonacular / usda / local / manual).
+    # Cache TTLs in hours, keyed by source.
     CACHE_TTL_HOURS: Dict[str, int] = Field(
         default_factory=lambda: {
             "spoonacular": 24 * 7,
             "usda": 24 * 30,
+            "open_food_facts": 24 * 14,
             "local": 24 * 3,
             "manual": 24 * 30,
         }
@@ -149,6 +152,19 @@ class Settings(BaseSettings):
     GEMINI_TIMEOUT_SECONDS: int = 20
     GEMINI_MAX_RETRIES: int = 2
     GEMINI_COOL_DOWN_SECONDS: int = 30
+
+    # Hard cap for the synchronous /analyze-photo path. Gemini timeout (~20s)
+    # plus USDA + safety pipeline can exceed mobile request budgets; on timeout
+    # the endpoint returns fallback_action="retry_async" so the client can
+    # re-issue against the arq job path.
+    PHOTO_ANALYSIS_TIMEOUT_S: int = 25
+
+    # Gemini-backed pregnancy safety layer for novel ingredients. When True,
+    # ingest paths that hit only the curated-rule default layer also call
+    # Gemini for a structured verdict (confidence capped at 0.5,
+    # reviewed_by_human=False). Off by default until the prompt is hardened
+    # and a cost / latency budget is set.
+    ENABLE_GEMINI_SAFETY_LAYER: bool = False
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

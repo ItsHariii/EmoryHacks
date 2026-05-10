@@ -74,13 +74,17 @@ class NutritionCalculatorService:
             Serving size in base units (grams)
         """
         unit_lower = serving_unit.lower().strip()
-        
+
         # Handle 'serving' unit specially
         if unit_lower in ['serving', 'servings']:
             return serving_size * food.serving_size
-        
-        # Convert other units to grams
-        conversion_factor = self.UNIT_CONVERSIONS.get(unit_lower, 1.0)
+
+        if unit_lower not in self.UNIT_CONVERSIONS:
+            raise ValueError(
+                f"Unsupported serving unit {serving_unit!r}. "
+                f"Allowed: {sorted(self.UNIT_CONVERSIONS.keys())}"
+            )
+        conversion_factor = self.UNIT_CONVERSIONS[unit_lower]
         return serving_size * conversion_factor
     
     def calculate_nutrition_multiplier(self, food: Food, user_serving_size: float, user_serving_unit: str, quantity: float) -> float:

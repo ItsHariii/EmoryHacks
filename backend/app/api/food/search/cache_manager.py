@@ -19,7 +19,11 @@ from ..utils import (
     get_or_create_usda_ingredient,
     get_or_create_usda_food
 )
-from .result_builder import build_usda_ingredient_result, build_usda_food_result
+from .result_builder import (
+    build_usda_ingredient_result,
+    build_usda_food_result,
+    build_off_food_result,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +162,34 @@ async def cache_usda_foods(usda_foods: List[dict], db: Session, existing_results
             logger.error(f"Error caching USDA food: {e}")
     
     return new_results
+
+async def cache_off_results(off_products: List[dict], db: Session, existing_results: List) -> List:
+    """Cache Open Food Facts products and return new FoodSearchResult rows.
+
+    Skips entries whose name already exists in `existing_results`. Each
+    persisted row carries off_id + safety_verdict so subsequent lookups
+    via barcode or name hit cache.
+    """
+    new_results = []
+
+    for product in off_products:
+        food_name = (product.get("product_name") or "").strip()
+        if not food_name:
+            continue
+        if any(f.name.lower() == food_name.lower() for f in existing_results):
+            continue
+
+        try:
+            new_food = await food_factory.create_food_from_off(db, product)
+            if new_food:
+                new_results.append(build_off_food_result(new_food))
+                if len(existing_results) + len(new_results) >= 10:
+                    break
+        except Exception as e:
+            logger.error("Error caching OFF food '%s': %s", food_name, e)
+
+    return new_results
+
 
 async def cache_spoonacular_results(spoonacular_foods: List[dict], search_type: str, db: Session, existing_results: List) -> List:
     """Cache Spoonacular results and return new results."""

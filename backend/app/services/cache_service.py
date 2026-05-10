@@ -30,24 +30,30 @@ class CacheService:
         hash_string = f"{name_norm}|{brand_norm}|{serving_norm}"
         return hashlib.sha256(hash_string.encode()).hexdigest()
     
-    def find_duplicates(self, db: Session, name: str, brand: Optional[str] = None, 
-                       spoonacular_id: Optional[str] = None, fdc_id: Optional[str] = None) -> List[FoodModel]:
+    def find_duplicates(self, db: Session, name: str, brand: Optional[str] = None,
+                       spoonacular_id: Optional[str] = None, fdc_id: Optional[str] = None,
+                       off_id: Optional[str] = None) -> List[FoodModel]:
         """
         Find potential duplicate foods in the database.
         Uses multiple strategies for duplicate detection.
         """
         duplicates = []
-        
+
         # Strategy 1: Exact API ID match
         if spoonacular_id:
             spoon_match = db.query(FoodModel).filter(FoodModel.spoonacular_id == spoonacular_id).first()
             if spoon_match:
                 duplicates.append(spoon_match)
-        
+
         if fdc_id:
             usda_match = db.query(FoodModel).filter(FoodModel.fdc_id == fdc_id).first()
             if usda_match:
                 duplicates.append(usda_match)
+
+        if off_id:
+            off_match = db.query(FoodModel).filter(FoodModel.off_id == off_id).first()
+            if off_match and off_match not in duplicates:
+                duplicates.append(off_match)
         
         # Strategy 2: Exact name and brand match
         if brand:
@@ -132,7 +138,7 @@ class CacheService:
         return datetime.utcnow() < (food.updated_at + timedelta(hours=ttl_hours))
     
     def get_cached_food(self, db: Session, query: str, spoonacular_id: Optional[str] = None,
-                       fdc_id: Optional[str] = None) -> Optional[FoodModel]:
+                       fdc_id: Optional[str] = None, off_id: Optional[str] = None) -> Optional[FoodModel]:
         """
         Get cached food with validation.
         Returns None if cache is invalid or not found.
@@ -150,6 +156,13 @@ class CacheService:
             food = db.query(FoodModel).filter(FoodModel.fdc_id == fdc_id).first()
             if food and self.is_cache_valid(food):
                 logger.info(f"Cache hit for USDA FDC ID {fdc_id}: {food.name}")
+                metrics_collector.record_cache("food", hit=True)
+                return food
+
+        if off_id:
+            food = db.query(FoodModel).filter(FoodModel.off_id == off_id).first()
+            if food and self.is_cache_valid(food):
+                logger.info(f"Cache hit for OFF barcode {off_id}: {food.name}")
                 metrics_collector.record_cache("food", hit=True)
                 return food
 
@@ -191,7 +204,8 @@ class CacheService:
                 name=food.name,
                 brand=food.brand,
                 spoonacular_id=food.spoonacular_id,
-                fdc_id=food.fdc_id
+                fdc_id=food.fdc_id,
+                off_id=getattr(food, "off_id", None),
             )
             
             if duplicates and merge_duplicates:
@@ -240,7 +254,8 @@ class CacheService:
         merge_fields = [
             'name', 'brand', 'description', 'category', 'serving_size', 'serving_unit',
             'calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium',
-            'micronutrients', 'ingredients', 'allergens', 'safety_status', 'safety_notes'
+            'micronutrients', 'ingredients', 'allergens', 'safety_status', 'safety_notes',
+            'safety_verdict',
         ]
         
         for field in merge_fields:
@@ -269,7 +284,11 @@ class CacheService:
             merged['spoonacular_id'] = new.spoonacular_id
         if new.fdc_id and not existing.fdc_id:
             merged['fdc_id'] = new.fdc_id
-        
+        new_off = getattr(new, "off_id", None)
+        existing_off = getattr(existing, "off_id", None)
+        if new_off and not existing_off:
+            merged['off_id'] = new_off
+
         return merged
     
     def mark_stale(

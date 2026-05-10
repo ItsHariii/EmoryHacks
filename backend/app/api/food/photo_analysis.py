@@ -7,6 +7,7 @@ Redis. This avoids the previous in-memory dict that lost jobs on restart
 and didn't survive multiple workers.
 """
 
+import asyncio
 import logging
 from typing import Any, Dict, Optional
 
@@ -21,6 +22,7 @@ from app.core.security import get_current_user
 from app.models.food import Food, FoodSafetyStatus
 from app.models.user import User
 from app.services import object_storage
+from app.services.allergen_service import check_allergens
 from app.services.gemini_vision_service import gemini_vision_service
 from app.services.pregnancy_safety_service import pregnancy_safety_service
 from app.services.usda_service import usda_service
@@ -119,13 +121,31 @@ async def analyze_food_photo(
                 "mode": "async",
             }
 
-        # Default: synchronous analysis
-        return await _perform_photo_analysis(
-            image_data=image_data,
-            user_context=user_context,
-            user_id=str(current_user.id),
-            db=db,
-        )
+        # Default: synchronous analysis. Hard-cap the inline pipeline so a
+        # slow Gemini/USDA call can't hold the request open past the mobile
+        # client's network budget.
+        try:
+            return await asyncio.wait_for(
+                _perform_photo_analysis(
+                    image_data=image_data,
+                    user_context=user_context,
+                    user_id=str(current_user.id),
+                    db=db,
+                ),
+                timeout=settings.PHOTO_ANALYSIS_TIMEOUT_S,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                "Sync photo analysis exceeded %ss for user %s; advising async retry",
+                settings.PHOTO_ANALYSIS_TIMEOUT_S,
+                current_user.id,
+            )
+            return {
+                "success": False,
+                "error": "Analysis is taking longer than expected. Retrying in the background.",
+                "error_type": "timeout",
+                "fallback_action": "retry_async",
+            }
 
     except HTTPException:
         raise
@@ -179,6 +199,35 @@ async def get_photo_analysis_job_status(
         "status": "completed",
         "result": result,
     }
+
+
+def _photo_allergen_hits(
+    existing_food: Optional[Food],
+    basic_info: Dict[str, Any],
+    ingredients: list,
+    db: Session,
+    user_id: str,
+) -> list:
+    """Allergen scan against the user profile. Falls back to a synthetic
+    Food-shape if we never persisted a Food row (manual_search fallback)."""
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user or not getattr(user, "allergies", None):
+            return []
+        if existing_food is not None:
+            return check_allergens(existing_food, user)
+
+        class _Synth:
+            pass
+        synth = _Synth()
+        synth.name = basic_info.get("name") or ""
+        synth.allergens = []
+        synth.ingredients = ingredients or []
+        synth.description = basic_info.get("description")
+        return check_allergens(synth, user)
+    except Exception as e:
+        logger.warning("Allergen scan failed in photo analysis: %s", e)
+        return []
 
 
 async def _perform_photo_analysis(
@@ -274,16 +323,32 @@ async def _perform_photo_analysis(
     # Combine AI-detected ingredients with USDA ingredients
     all_ingredients = list(set(ingredients + basic_info.get("ingredients", [])))
 
-    safety_status, safety_notes, ingredient_details = pregnancy_safety_service.check_food_safety(
-        ingredients=all_ingredients,
-        spoonacular_data=None,
+    user_trimester = (user_context or {}).get("trimester") if isinstance(user_context, dict) else None
+    food_category = existing_food.category if existing_food else basic_info.get("category")
+
+    safety_verdict = pregnancy_safety_service.evaluate(
+        all_ingredients,
+        food_category=food_category,
+        trimester=user_trimester,
     )
+    safety_status = safety_verdict["status"]
+    safety_notes = safety_verdict["summary"]
+    ingredient_details = [
+        {
+            "name": f["ingredient"],
+            "safety_status": f["status"],
+            "safety_notes": f["notes"],
+        }
+        for f in safety_verdict["ingredient_findings"]
+        if f.get("ingredient")
+    ]
 
     # Add pregnancy concerns from AI
     if pregnancy_concerns:
         safety_notes += f" AI detected potential concerns: {', '.join(pregnancy_concerns)}"
         if safety_status == "safe":
             safety_status = "limited"  # Downgrade if AI found concerns
+            safety_verdict["status"] = "limited"
 
     # Update food safety status if needed. Coerce string to enum so the
     # column write goes through the same type as everywhere else in the app.
@@ -363,6 +428,8 @@ async def _perform_photo_analysis(
             "ingredients": all_ingredients,
             "safety_status": safety_status,
             "safety_notes": safety_notes,
+            "safety_verdict": safety_verdict,
+            "allergen_hits": _photo_allergen_hits(existing_food, basic_info, all_ingredients, db, user_id),
             "is_verified": existing_food.is_verified if existing_food else False,
         },
         "alternative_matches": [

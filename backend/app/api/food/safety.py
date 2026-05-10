@@ -3,18 +3,28 @@ Food safety checking endpoints.
 Handles pregnancy safety analysis for foods and recipes.
 """
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
+from uuid import UUID as UUIDType
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from ...core.database import get_db
 from ...core.security import get_current_user
+from ...models.food import Food
+from ...models.safety_report import SafetyReport
 from ...models.user import User
 from ...schemas.food import FoodSafetyStatus
 from ...services.spoonacular_service import SpoonacularService
 from ...services.usda_service import USDAService
 from ...services.pregnancy_safety_service import PregnancySafetyService
+
+# Max reports a single user can submit per hour. Keeps the queue clean
+# without needing a separate rate-limiter wiring.
+_REPORT_RATE_LIMIT_PER_HOUR = 5
 
 # Request and Response Models
 class IngredientSafetyResult(BaseModel):
@@ -159,3 +169,102 @@ async def check_food_safety(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while checking food safety"
         )
+
+
+class SafetyReportCreate(BaseModel):
+    food_id: Optional[UUIDType] = Field(
+        None, description="UUID of the Food row this report is about (null for ad-hoc names)."
+    )
+    food_name: str = Field(..., min_length=1, max_length=255)
+    reported_status: FoodSafetyStatus = Field(
+        ..., description="The status currently shown by the app."
+    )
+    suggested_status: Optional[FoodSafetyStatus] = Field(
+        None, description="What the user thinks the correct status should be."
+    )
+    reason: str = Field(..., min_length=5, max_length=2000)
+
+
+class SafetyReportResponse(BaseModel):
+    id: UUIDType
+    food_id: Optional[UUIDType]
+    food_name: str
+    reported_status: FoodSafetyStatus
+    suggested_status: Optional[FoodSafetyStatus]
+    reason: str
+    review_status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@router.post(
+    "/safety/report",
+    response_model=SafetyReportResponse,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Food Safety"],
+)
+async def report_incorrect_safety(
+    body: SafetyReportCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Record a user-submitted "this classification is wrong" report.
+
+    Stored in `safety_reports` for admin curation. Per-user hourly rate limit
+    keeps the queue clean. Returns the persisted report on success.
+    """
+    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+    recent_count = (
+        db.query(func.count(SafetyReport.id))
+        .filter(
+            SafetyReport.user_id == current_user.id,
+            SafetyReport.created_at >= one_hour_ago,
+        )
+        .scalar()
+        or 0
+    )
+    if recent_count >= _REPORT_RATE_LIMIT_PER_HOUR:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many reports submitted in the last hour. Try again later.",
+        )
+
+    if body.food_id is not None:
+        food = db.query(Food).filter(Food.id == body.food_id).first()
+        if not food:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Referenced food not found.",
+            )
+
+    report = SafetyReport(
+        user_id=current_user.id,
+        food_id=body.food_id,
+        food_name=body.food_name.strip(),
+        reported_status=body.reported_status.value,
+        suggested_status=body.suggested_status.value if body.suggested_status else None,
+        reason=body.reason.strip(),
+    )
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+
+    logger.info(
+        "Safety report submitted by user %s for food '%s' (%s → %s)",
+        current_user.id, report.food_name, report.reported_status, report.suggested_status,
+    )
+
+    return SafetyReportResponse(
+        id=report.id,
+        food_id=report.food_id,
+        food_name=report.food_name,
+        reported_status=FoodSafetyStatus(report.reported_status),
+        suggested_status=(
+            FoodSafetyStatus(report.suggested_status) if report.suggested_status else None
+        ),
+        reason=report.reason,
+        review_status=report.review_status,
+        created_at=report.created_at,
+    )

@@ -9,6 +9,17 @@ interface NutritionData {
   fat: number;
 }
 
+const SUPPORTED_UNITS = new Set([
+  'g', 'gram', 'grams',
+  'mg', 'milligram', 'milligrams',
+  'oz', 'ounce', 'ounces',
+  'cup', 'cups',
+  'tbsp', 'tablespoon', 'tablespoons',
+  'tsp', 'teaspoon', 'teaspoons',
+  'ml', 'milliliter', 'milliliters',
+  'serving', 'servings',
+]);
+
 interface UseFoodEntryProps {
   food?: FoodItem;
   entry?: FoodEntry;
@@ -51,6 +62,7 @@ export const useFoodEntry = ({ food, entry, mealType }: UseFoodEntryProps) => {
     let gramsMultiplier = 1;
 
     switch (unit) {
+      case '':
       case 'g':
       case 'gram':
       case 'grams':
@@ -92,7 +104,8 @@ export const useFoodEntry = ({ food, entry, mealType }: UseFoodEntryProps) => {
         break;
       }
       default:
-        gramsMultiplier = amount / 100;
+        // Unknown unit — refuse to silently coerce to grams.
+        return null;
     }
 
     const baseCalories = currentFood.calories_per_100g || 0;
@@ -109,7 +122,11 @@ export const useFoodEntry = ({ food, entry, mealType }: UseFoodEntryProps) => {
     const match = servingSize.match(/^([\d.]+)\s*(.*)$/);
     if (!match) return false;
     const amount = parseFloat(match[1]);
-    return !isNaN(amount) && amount > 0;
+    if (isNaN(amount) || amount <= 0) return false;
+    const unit = match[2].toLowerCase().trim();
+    // Empty unit defaults to grams in the calc above; anything else must be in
+    // the supported set so unknown units don't silently log as 1g/unit.
+    return unit === '' || SUPPORTED_UNITS.has(unit);
   }, [currentFood, servingSize]);
 
   return {

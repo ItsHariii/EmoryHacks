@@ -18,6 +18,7 @@ class FoodSafetyStatus(str, PyEnum):
 class FoodSource(str, PyEnum):
     SPOONACULAR = "spoonacular"
     USDA = "usda"
+    OPEN_FOOD_FACTS = "open_food_facts"
     LOCAL = "local"
     MANUAL = "manual"
 
@@ -58,6 +59,7 @@ class Food(Base):
     # API Integration
     spoonacular_id = Column(BigInteger, nullable=True, index=True)
     fdc_id = Column(BigInteger, nullable=True, index=True)  # USDA FoodData Central ID
+    off_id = Column(String(64), nullable=True, index=True)  # Open Food Facts barcode (UPC/EAN)
     
     # Safety Information
     safety_status = Column(
@@ -66,11 +68,14 @@ class Food(Base):
         server_default='safe'
     )
     safety_notes = Column(Text, nullable=True)
+    # Full layered SafetyVerdict (status, confidence, findings, citations,
+    # reviewed_by_human). Persisted at ingest so reads skip the recompute.
+    safety_verdict = Column(JSONB, nullable=True)
     usda_confidence = Column(Float, nullable=True)  # Confidence score from USDA
     
     # Metadata
     source = Column(
-        ENUM('spoonacular', 'usda', 'manual', name='foodsource'),
+        ENUM('spoonacular', 'usda', 'open_food_facts', 'manual', name='foodsource'),
         nullable=False,
         server_default='manual'
     )

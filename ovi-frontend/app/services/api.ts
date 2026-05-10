@@ -138,6 +138,25 @@ import { getApiBaseUrl } from '../config/env';
 
 const API_BASE_URL = getApiBaseUrl();
 
+// RFC 4122 v4 UUID for idempotency headers. Prefers the platform-native
+// crypto.randomUUID when present (modern Hermes / iOS / Android); falls back
+// to a Math.random implementation for older runtimes. The header doesn't
+// need cryptographic strength — just per-request uniqueness within a 60s
+// window — so the fallback is acceptable.
+const generateIdempotencyKey = (): string => {
+  try {
+    const c: any = (globalThis as any).crypto;
+    if (c && typeof c.randomUUID === 'function') {
+      return c.randomUUID();
+    }
+  } catch {}
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ch) => {
+    const r = (Math.random() * 16) | 0;
+    const v = ch === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -381,7 +400,12 @@ export const foodAPI = {
     meal_type: MealType;
     consumed_at?: string;
   }): Promise<FoodEntry> => {
-    const response = await api.post('/food/log', foodData);
+    // Idempotency-Key protects against double-submits on flaky networks.
+    // Backend stashes the response for 60s keyed on (user, header, body),
+    // so axios retries or user double-taps replay the original record.
+    const response = await api.post('/food/log', foodData, {
+      headers: { 'Idempotency-Key': generateIdempotencyKey() },
+    });
     // Invalidate nutrition cache so dashboard updates
     await invalidateNutritionCache();
     return response.data;
@@ -446,6 +470,11 @@ export const foodAPI = {
     const response = await api.post('/food/chatbot', { question });
     return response.data;
   },
+
+  lookupBarcode: async (code: string): Promise<any> => {
+    const response = await api.get(`/food/barcode/${encodeURIComponent(code)}`);
+    return response.data;
+  },
 };
 
 // Nutrition API
@@ -482,6 +511,17 @@ export const safetyAPI = {
       safety_status: data.overall_safety_status || 'safe',
       safety_notes: data.safety_summary || '',
     };
+  },
+
+  reportIncorrect: async (payload: {
+    food_id?: string | null;
+    food_name: string;
+    reported_status: 'safe' | 'limited' | 'avoid';
+    suggested_status?: 'safe' | 'limited' | 'avoid' | null;
+    reason: string;
+  }): Promise<any> => {
+    const response = await api.post('/food/safety/report', payload);
+    return response.data;
   },
 };
 

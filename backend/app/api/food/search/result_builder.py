@@ -138,6 +138,38 @@ def build_usda_food_result(food: Food) -> FoodSearchResult:
         item_type="food"
     )
 
+def build_off_food_result(food: Food) -> FoodSearchResult:
+    """Convert an Open Food Facts Food row to FoodSearchResult."""
+    micronutrients = {}
+    if food.micronutrients:
+        try:
+            if isinstance(food.micronutrients, str):
+                micronutrients = json.loads(food.micronutrients)
+            else:
+                micronutrients = food.micronutrients
+        except (json.JSONDecodeError, TypeError):
+            micronutrients = {}
+
+    return FoodSearchResult(
+        id=str(food.id),
+        name=food.name,
+        brand=food.brand,
+        serving_size=food.serving_size,
+        serving_unit=food.serving_unit,
+        calories=food.calories,
+        safety_status=food.safety_status or FoodSafetyStatus.LIMITED,
+        protein=food.protein,
+        carbs=food.carbs,
+        fat=food.fat,
+        fiber=food.fiber,
+        sugar=food.sugar,
+        sodium=(micronutrients.get("sodium") or {}).get("amount", 0.0) if isinstance(micronutrients, dict) else 0.0,
+        micronutrients=micronutrients,
+        source=food.source if isinstance(food.source, str) else (food.source.value if food.source else "open_food_facts"),
+        item_type="food",
+    )
+
+
 def build_search_results(foods: List[Food], ingredients: List[Ingredient]) -> List[FoodSearchResult]:
     """
     Build search results from lists of foods and ingredients.

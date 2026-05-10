@@ -1,14 +1,68 @@
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Literal
 from datetime import datetime, date
 from enum import Enum
 
 from .base import BaseSchema
 
+# Allowed serving units. Keep aligned with NutritionCalculatorService.UNIT_CONVERSIONS;
+# unknown units used to silently coerce to grams which corrupted logged calories.
+ServingUnit = Literal[
+    "g", "ml", "cup", "tbsp", "tsp", "oz", "lb", "serving"
+]
+
 class FoodSafetyStatus(str, Enum):
     SAFE = "safe"
     LIMITED = "limited"
     AVOID = "avoid"
+
+
+class CitedSource(BaseModel):
+    """Authoritative source backing a safety rule (FDA / CDC / ACOG / NHS / WHO)."""
+    id: str
+    label: str
+    url: Optional[str] = None
+    last_reviewed: Optional[str] = None
+
+
+class AmountLimit(BaseModel):
+    """Daily/weekly intake cap for a rule (e.g., caffeine 200mg/day)."""
+    amount: float
+    unit: str
+    period: str  # "day" | "week"
+
+
+class IngredientFinding(BaseModel):
+    """Per-ingredient match the safety pipeline produced."""
+    ingredient: str
+    status: FoodSafetyStatus
+    notes: str
+    matched_pattern: Optional[str] = None
+    matched_layer: Literal["exact", "prefix", "token", "category", "fuzzy", "default"]
+    category: Optional[str] = None
+    source: Optional[CitedSource] = None
+    confidence: float = 0.0
+    amount_limit: Optional[AmountLimit] = None
+
+
+class SafetyVerdict(BaseModel):
+    """Layered safety pipeline output for a food/ingredient set."""
+    status: FoodSafetyStatus
+    confidence: float = 0.0
+    summary: str
+    ingredient_findings: List[IngredientFinding] = Field(default_factory=list)
+    cited_sources: List[CitedSource] = Field(default_factory=list)
+    trimester: Optional[Literal["all", "t1", "t2", "t3"]] = None
+    trimester_specific: bool = False
+    amount_guidance: Optional[AmountLimit] = None
+    reviewed_by_human: bool = True
+
+
+class AllergenHit(BaseModel):
+    """User-allergy ↔ food-allergen overlap."""
+    allergen: str
+    matched_in: Literal["allergens", "ingredients", "name"]
+    severity: Literal["warn", "block"] = "warn"
 
 class NutrientBase(BaseModel):
     name: str
@@ -51,6 +105,8 @@ class FoodResponse(FoodBase):
     id: Union[str, UUIDType]
     created_at: datetime
     updated_at: datetime
+    safety_verdict: Optional[SafetyVerdict] = None
+    allergen_hits: List[AllergenHit] = Field(default_factory=list)
 
 class FoodSearchResult(BaseSchema):
     id: str
@@ -61,7 +117,9 @@ class FoodSearchResult(BaseSchema):
     calories: Optional[float] = 0.0
     safety_status: FoodSafetyStatus = FoodSafetyStatus.LIMITED
     safety_notes: Optional[str] = None
-    
+    safety_verdict: Optional[SafetyVerdict] = None
+    allergen_hits: List[AllergenHit] = Field(default_factory=list)
+
     # Macronutrients
     protein: Optional[float] = 0.0
     carbs: Optional[float] = 0.0
@@ -69,10 +127,10 @@ class FoodSearchResult(BaseSchema):
     fiber: Optional[float] = 0.0
     sugar: Optional[float] = 0.0
     sodium: Optional[float] = 0.0
-    
+
     # Micronutrients (detailed nutrition data)
     micronutrients: Optional[Dict[str, Any]] = {}
-    
+
     # Source information
     source: Optional[str] = "manual"
     item_type: str = "food"  # "food" or "ingredient"
@@ -80,10 +138,10 @@ class FoodSearchResult(BaseSchema):
 class FoodLogBase(BaseSchema):
     food_id: str
     serving_size: float = Field(..., gt=0, description="Amount consumed (e.g., 1.5)")
-    serving_unit: str = Field(..., description="Unit of serving (e.g., 'cup', 'g', 'serving')")
+    serving_unit: ServingUnit = Field(..., description="Unit of serving")
     consumed_at: datetime = Field(default_factory=datetime.utcnow)
     meal_type: Optional[str] = Field(
-        None, 
+        None,
         description="Type of meal (breakfast, lunch, dinner, snack)",
         pattern="^(breakfast|lunch|dinner|snack)$"
     )
@@ -93,11 +151,14 @@ class FoodLogCreate(FoodLogBase):
     pass
 
 class FoodLogUpdate(BaseModel):
-    serving_size: Optional[float] = None
-    serving_unit: Optional[str] = None
-    quantity: Optional[float] = None
+    serving_size: Optional[float] = Field(default=None, gt=0)
+    serving_unit: Optional[ServingUnit] = None
+    quantity: Optional[float] = Field(default=None, gt=0)
     consumed_at: Optional[datetime] = None
-    meal_type: Optional[str] = None
+    meal_type: Optional[str] = Field(
+        default=None,
+        pattern="^(breakfast|lunch|dinner|snack)$",
+    )
     notes: Optional[str] = None
 
 class FoodLogResponse(FoodLogBase):
@@ -136,34 +197,83 @@ class DailyNutrition(BaseSchema):
     vitamin_c_mg: float = 0.0
     vitamin_d_mcg: float = 0.0
     folate_mcg: float = 0.0
-    
-    def add_food(self, food: 'FoodResponse', quantity: float = 1.0):
-        """Add nutrition information from a food item to the daily total"""
-        multiplier = quantity * (food.serving_size / 100)  # Convert to 100g basis
-        
-        self.total_calories += food.calories * quantity
-        
-        # Map common nutrient names to our fields
-        nutrient_map = {
-            'protein': ('protein_g', 1),
-            'total lipid (fat)': ('fat_g', 1),
-            'carbohydrate, by difference': ('carbs_g', 1),
-            'fiber, total dietary': ('fiber_g', 1),
-            'sugars, total including NLEA': ('sugar_g', 1),
-            'sodium, Na': ('sodium_mg', 1000),  # Convert g to mg
-            'calcium, Ca': ('calcium_mg', 1000),  # Convert g to mg
-            'iron, Fe': ('iron_mg', 1000),  # Convert g to mg
-            'vitamin a, rae': ('vitamin_a_mcg', 1),
-            'vitamin c, total ascorbic acid': ('vitamin_c_mg', 1),
-            'vitamin d (d2 + d3)': ('vitamin_d_mcg', 1),
-            'folate, total': ('folate_mcg', 1)
-        }
-        
-        for nutrient_name, (field, multiplier) in nutrient_map.items():
-            if nutrient_name in food.nutrients:
-                nutrient = food.nutrients[nutrient_name]
-                current_value = getattr(self, field, 0)
-                setattr(self, field, current_value + (nutrient['amount'] * multiplier * quantity))
+    magnesium_mg: float = 0.0
+    zinc_mg: float = 0.0
+    potassium_mg: float = 0.0
+    choline_mg: float = 0.0
+    dha_mg: float = 0.0
+    omega3_mg: float = 0.0
+
+    # Maps the keys actually stored on Food.micronutrients (USDA / Spoonacular
+    # both store lower().replace(' ', '_') form, which leaves commas in place)
+    # to our canonical aggregation field. USDA returns nutrients in their
+    # native unit (mg/mcg/g) so no unit conversion is applied.
+    _NUTRIENT_FIELD_MAP = {
+        # macros — covered explicitly via food.protein/carbs/fat/fiber/sugar
+        # micros: USDA "lower replace space underscore" form
+        'sodium,_na': 'sodium_mg',
+        'calcium,_ca': 'calcium_mg',
+        'iron,_fe': 'iron_mg',
+        'magnesium,_mg': 'magnesium_mg',
+        'zinc,_zn': 'zinc_mg',
+        'potassium,_k': 'potassium_mg',
+        'vitamin_a,_rae': 'vitamin_a_mcg',
+        'vitamin_c,_total_ascorbic_acid': 'vitamin_c_mg',
+        'vitamin_d_(d2_+_d3)': 'vitamin_d_mcg',
+        'folate,_total': 'folate_mcg',
+        'folate,_dfe': 'folate_mcg',
+        'choline,_total': 'choline_mg',
+        # Spoonacular / canonical aliases (already-normalized form)
+        'sodium': 'sodium_mg',
+        'calcium': 'calcium_mg',
+        'iron': 'iron_mg',
+        'magnesium': 'magnesium_mg',
+        'zinc': 'zinc_mg',
+        'potassium': 'potassium_mg',
+        'vitamin_a': 'vitamin_a_mcg',
+        'vitamin_c': 'vitamin_c_mg',
+        'vitamin_d': 'vitamin_d_mcg',
+        'folate': 'folate_mcg',
+        'choline': 'choline_mg',
+    }
+
+    # USDA carries DHA inside the polyunsaturated fatty acid family — match by
+    # substring rather than exact key.
+    _DHA_KEY_HINTS = ('22:6', 'dha')
+    _OMEGA3_KEY_HINTS = ('n-3', 'omega-3', 'omega_3')
+
+    def add_food(self, food: 'Food', quantity: float = 1.0):
+        """Add nutrition information from a food item to the daily total.
+
+        `food` is the SQLAlchemy Food row. Macros come from explicit columns;
+        micros come from the JSONB `micronutrients` map. `quantity` is the
+        FoodLog.quantity (currently always 1.0 — serving_size already represents
+        the consumed amount, see logging.log_food).
+        """
+        self.total_calories += (food.calories or 0) * quantity
+        self.protein_g += (food.protein or 0) * quantity
+        self.carbs_g += (food.carbs or 0) * quantity
+        self.fat_g += (food.fat or 0) * quantity
+        self.fiber_g += (food.fiber or 0) * quantity
+        self.sugar_g += (food.sugar or 0) * quantity
+
+        micros = food.micronutrients or {}
+        for raw_key, nutrient in micros.items():
+            if not isinstance(nutrient, dict):
+                continue
+            amount = nutrient.get('amount')
+            if amount is None:
+                continue
+            key = raw_key.lower()
+            field = self._NUTRIENT_FIELD_MAP.get(key)
+            if field is None:
+                if any(hint in key for hint in self._DHA_KEY_HINTS):
+                    field = 'dha_mg'
+                elif any(hint in key for hint in self._OMEGA3_KEY_HINTS):
+                    field = 'omega3_mg'
+                else:
+                    continue
+            setattr(self, field, getattr(self, field, 0) + amount * quantity)
 
 
 class FoodPhotoAIAnalysisResult(BaseModel):

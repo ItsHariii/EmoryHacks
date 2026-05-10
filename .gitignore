@@ -53,6 +53,7 @@ ENV/
 env.bak/
 venv.bak/
 .venv/
+.venv*/
 
 # IDEs
 .vscode/
@@ -174,6 +175,7 @@ $RECYCLE.BIN/
 # Logs
 logs/
 *.log
+debug_*.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

@@ -292,6 +292,7 @@ _shared_retry_handler = RetryHandler()
 
 spoonacular_client = APIClientWithLimiting("spoonacular")
 usda_client = APIClientWithLimiting("usda")
+off_client = APIClientWithLimiting("open_food_facts")
 default_client = APIClientWithLimiting("default")
 
 rate_limiter = _shared_rate_limiter

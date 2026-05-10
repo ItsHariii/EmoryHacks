@@ -80,6 +80,12 @@ async def get_nutrition_summary(
             nutrition.vitamin_c_mg += log.nutrients_logged.get('vitamin_c', 0.0)
             nutrition.vitamin_d_mcg += log.nutrients_logged.get('vitamin_d', 0.0)
             nutrition.folate_mcg += log.nutrients_logged.get('folate', 0.0)
+            nutrition.magnesium_mg += log.nutrients_logged.get('magnesium', 0.0)
+            nutrition.zinc_mg += log.nutrients_logged.get('zinc', 0.0)
+            nutrition.potassium_mg += log.nutrients_logged.get('potassium', 0.0)
+            nutrition.choline_mg += log.nutrients_logged.get('choline', 0.0)
+            nutrition.dha_mg += log.nutrients_logged.get('dha', 0.0)
+            nutrition.omega3_mg += log.nutrients_logged.get('omega3', 0.0)
     
     logger.info(f"Nutrition summary for {filter_date}: {nutrition.total_calories} calories from {len(logs)} logs")
     return nutrition

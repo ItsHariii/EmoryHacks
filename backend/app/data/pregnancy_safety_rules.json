@@ -1,618 +1,292 @@
 {
-  "raw_salmon": {
-    "status": "avoid",
-    "notes": "Avoid raw salmon due to listeria risk"
-  },
-  "raw_tuna": {
-    "status": "avoid", 
-    "notes": "High mercury content and listeria risk"
-  },
-  "raw_fish": {
-    "status": "avoid",
-    "notes": "Risk of foodborne illness from raw fish"
-  },
-  "sushi": {
-    "status": "avoid",
-    "notes": "Contains raw fish with listeria and mercury risks"
-  },
-  "raw_shellfish": {
-    "status": "avoid",
-    "notes": "High risk of bacterial contamination"
-  },
-  "raw_oysters": {
-    "status": "avoid",
-    "notes": "Risk of vibrio and other bacterial infections"
-  },
-  "unpasteurized_cheese": {
-    "status": "avoid",
-    "notes": "Risk of listeria from soft unpasteurized cheeses"
-  },
-  "blue_cheese": {
-    "status": "avoid",
-    "notes": "Soft cheese with listeria risk"
-  },
-  "feta_cheese": {
-    "status": "limited",
-    "notes": "Safe if pasteurized, check label"
-  },
-  "brie": {
-    "status": "avoid",
-    "notes": "Soft cheese with potential listeria contamination"
-  },
-  "camembert": {
-    "status": "avoid",
-    "notes": "Soft cheese with listeria risk"
-  },
-  "raw_eggs": {
-    "status": "avoid",
-    "notes": "Risk of salmonella infection"
-  },
-  "undercooked_eggs": {
-    "status": "avoid",
-    "notes": "Ensure eggs are fully cooked to prevent salmonella"
-  },
-  "raw_meat": {
-    "status": "avoid",
-    "notes": "Risk of toxoplasmosis and bacterial infection"
-  },
-  "undercooked_meat": {
-    "status": "avoid",
-    "notes": "Ensure meat is fully cooked to safe temperatures"
-  },
-  "deli_meat": {
-    "status": "limited",
-    "notes": "Heat to steaming before eating to prevent listeria"
-  },
-  "hot_dogs": {
-    "status": "limited",
-    "notes": "Heat thoroughly before eating"
-  },
-  "pate": {
-    "status": "avoid",
-    "notes": "Risk of listeria contamination"
-  },
-  "liver": {
-    "status": "limited",
-    "notes": "High vitamin A content, limit consumption"
-  },
-  "caffeine": {
-    "status": "limited",
-    "notes": "Limit to <200mg per day during pregnancy"
-  },
-  "coffee": {
-    "status": "limited",
-    "notes": "Limit to 1-2 cups per day (under 200mg caffeine)"
-  },
-  "tea": {
-    "status": "limited",
-    "notes": "Moderate caffeine content, limit intake"
-  },
-  "green_tea": {
-    "status": "limited",
-    "notes": "Contains caffeine, limit to 1-2 cups daily"
-  },
-  "energy_drinks": {
-    "status": "avoid",
-    "notes": "High caffeine and other stimulants"
-  },
-  "alcohol": {
-    "status": "avoid",
-    "notes": "No safe level of alcohol during pregnancy"
-  },
-  "wine": {
-    "status": "avoid",
-    "notes": "Alcohol can cause fetal alcohol syndrome"
-  },
-  "beer": {
-    "status": "avoid",
-    "notes": "Contains alcohol which is harmful during pregnancy"
-  },
-  "unpasteurized_milk": {
-    "status": "avoid",
-    "notes": "Risk of listeria and other bacterial infections"
-  },
-  "unpasteurized_juice": {
-    "status": "avoid",
-    "notes": "Risk of bacterial contamination"
-  },
-  "herbal_tea": {
-    "status": "limited",
-    "notes": "Some herbs may be unsafe, consult healthcare provider"
-  },
-  "ginger": {
-    "status": "safe",
-    "notes": "Generally safe and may help with nausea"
-  },
-  "turmeric": {
-    "status": "limited",
-    "notes": "Safe in food amounts, avoid supplements"
-  },
-  "cinnamon": {
-    "status": "safe",
-    "notes": "Safe in normal culinary amounts"
-  },
-  "spinach": {
-    "status": "safe",
-    "notes": "Rich in folate, generally safe and beneficial"
-  },
-  "kale": {
-    "status": "safe",
-    "notes": "Excellent source of folate and iron"
-  },
-  "broccoli": {
-    "status": "safe",
-    "notes": "High in folate, vitamin C, and fiber"
-  },
-  "carrots": {
-    "status": "safe",
-    "notes": "Good source of beta-carotene and fiber"
-  },
-  "sweet_potato": {
-    "status": "safe",
-    "notes": "Rich in vitamin A and fiber"
-  },
-  "avocado": {
-    "status": "safe",
-    "notes": "Healthy fats and folate"
-  },
-  "banana": {
-    "status": "safe",
-    "notes": "Good source of potassium and vitamin B6"
-  },
-  "apple": {
-    "status": "safe",
-    "notes": "High in fiber and vitamin C"
-  },
-  "orange": {
-    "status": "safe",
-    "notes": "Excellent source of vitamin C and folate"
-  },
-  "berries": {
-    "status": "safe",
-    "notes": "Rich in antioxidants and vitamin C"
-  },
-  "strawberries": {
-    "status": "safe",
-    "notes": "High in vitamin C and folate"
-  },
-  "blueberries": {
-    "status": "safe",
-    "notes": "Rich in antioxidants and fiber"
-  },
-  "salmon": {
-    "status": "safe",
-    "notes": "Low mercury fish, good source of omega-3s when cooked"
-  },
-  "sardines": {
-    "status": "safe",
-    "notes": "Low mercury, high in omega-3 fatty acids"
-  },
-  "anchovies": {
-    "status": "safe",
-    "notes": "Low mercury fish, safe when cooked"
-  },
-  "cod": {
-    "status": "safe",
-    "notes": "Low mercury white fish"
-  },
-  "tilapia": {
-    "status": "safe",
-    "notes": "Low mercury fish option"
-  },
-  "catfish": {
-    "status": "safe",
-    "notes": "Low mercury freshwater fish"
-  },
-  "shrimp": {
-    "status": "safe",
-    "notes": "Low mercury shellfish when fully cooked"
-  },
-  "crab": {
-    "status": "safe",
-    "notes": "Low mercury shellfish when fully cooked"
-  },
-  "lobster": {
-    "status": "limited",
-    "notes": "Moderate mercury levels, limit consumption"
-  },
-  "shark": {
-    "status": "avoid",
-    "notes": "Very high mercury content"
-  },
-  "swordfish": {
-    "status": "avoid",
-    "notes": "High mercury levels"
-  },
-  "king_mackerel": {
-    "status": "avoid",
-    "notes": "High mercury content"
-  },
-  "tilefish": {
-    "status": "avoid",
-    "notes": "High mercury levels"
-  },
-  "tuna": {
-    "status": "limited",
-    "notes": "Limit to 6oz per week due to mercury content"
-  },
-  "albacore_tuna": {
-    "status": "limited",
-    "notes": "Higher mercury than light tuna, limit consumption"
-  },
-  "chicken": {
-    "status": "safe",
-    "notes": "Lean protein when fully cooked"
-  },
-  "turkey": {
-    "status": "safe",
-    "notes": "Good protein source when fully cooked"
-  },
-  "beef": {
-    "status": "safe",
-    "notes": "Good iron source when fully cooked"
-  },
-  "pork": {
-    "status": "safe",
-    "notes": "Safe when cooked to proper temperature"
-  },
-  "lamb": {
-    "status": "safe",
-    "notes": "Safe when fully cooked"
-  },
-  "eggs": {
-    "status": "safe",
-    "notes": "Excellent protein when fully cooked"
-  },
-  "pasteurized_cheese": {
-    "status": "safe",
-    "notes": "Safe cheese option during pregnancy"
-  },
-  "cheddar": {
-    "status": "safe",
-    "notes": "Hard cheese, generally pasteurized and safe"
-  },
-  "mozzarella": {
-    "status": "safe",
-    "notes": "Safe when pasteurized"
-  },
-  "parmesan": {
-    "status": "safe",
-    "notes": "Hard aged cheese, very safe"
-  },
-  "swiss_cheese": {
-    "status": "safe",
-    "notes": "Hard cheese, typically safe"
-  },
-  "yogurt": {
-    "status": "safe",
-    "notes": "Good source of calcium and probiotics"
-  },
-  "milk": {
-    "status": "safe",
-    "notes": "Pasteurized milk is safe and nutritious"
-  },
-  "beans": {
-    "status": "safe",
-    "notes": "Excellent source of protein and folate"
-  },
-  "lentils": {
-    "status": "safe",
-    "notes": "High in protein, iron, and folate"
-  },
-  "chickpeas": {
-    "status": "safe",
-    "notes": "Good source of protein and fiber"
-  },
-  "quinoa": {
-    "status": "safe",
-    "notes": "Complete protein and good source of folate"
-  },
-  "brown_rice": {
-    "status": "safe",
-    "notes": "Whole grain with B vitamins"
-  },
-  "oats": {
-    "status": "safe",
-    "notes": "High fiber whole grain"
-  },
-  "whole_wheat": {
-    "status": "safe",
-    "notes": "Good source of B vitamins and fiber"
-  },
-  "nuts": {
-    "status": "safe",
-    "notes": "Healthy fats and protein, unless allergic"
-  },
-  "almonds": {
-    "status": "safe",
-    "notes": "Good source of vitamin E and healthy fats"
-  },
-  "walnuts": {
-    "status": "safe",
-    "notes": "Rich in omega-3 fatty acids"
-  },
-  "peanuts": {
-    "status": "safe",
-    "notes": "Safe unless allergic, good protein source"
-  },
-  "sunflower_seeds": {
-    "status": "safe",
-    "notes": "Good source of vitamin E"
-  },
-  "chia_seeds": {
-    "status": "safe",
-    "notes": "Rich in omega-3s and fiber"
-  },
-  "flax_seeds": {
-    "status": "safe",
-    "notes": "Good source of omega-3 fatty acids"
-  },
-  "olive_oil": {
-    "status": "safe",
-    "notes": "Healthy monounsaturated fats"
-  },
-  "coconut_oil": {
-    "status": "safe",
-    "notes": "Safe in moderation"
-  },
-  "butter": {
-    "status": "safe",
-    "notes": "Safe in moderation when pasteurized"
-  },
-  "honey": {
-    "status": "safe",
-    "notes": "Safe for pregnant women (botulism risk only for infants)"
-  },
-  "garlic": {
-    "status": "safe",
-    "notes": "Safe and may have health benefits"
-  },
-  "onion": {
-    "status": "safe",
-    "notes": "Safe and nutritious"
-  },
-  "tomato": {
-    "status": "safe",
-    "notes": "Rich in lycopene and vitamin C"
-  },
-  "bell_pepper": {
-    "status": "safe",
-    "notes": "High in vitamin C"
-  },
-  "cucumber": {
-    "status": "safe",
-    "notes": "Hydrating and low calorie"
-  },
-  "lettuce": {
-    "status": "safe",
-    "notes": "Safe when properly washed"
-  },
-  "cabbage": {
-    "status": "safe",
-    "notes": "Good source of vitamin C"
-  },
-  "cauliflower": {
-    "status": "safe",
-    "notes": "Rich in folate and vitamin C"
-  },
-  "zucchini": {
-    "status": "safe",
-    "notes": "Low calorie, good source of vitamins"
-  },
-  "eggplant": {
-    "status": "safe",
-    "notes": "Safe when cooked properly"
-  },
-  "mushrooms": {
-    "status": "safe",
-    "notes": "Safe when cooked, avoid wild varieties"
-  },
-  "asparagus": {
-    "status": "safe",
-    "notes": "Excellent source of folate"
-  },
-  "artichoke": {
-    "status": "safe",
-    "notes": "High in fiber and folate"
-  },
-  "beets": {
-    "status": "safe",
-    "notes": "Good source of folate and fiber"
-  },
-  "celery": {
-    "status": "safe",
-    "notes": "Low calorie, wash thoroughly"
-  },
-  "corn": {
-    "status": "safe",
-    "notes": "Good source of fiber"
-  },
-  "peas": {
-    "status": "safe",
-    "notes": "High in protein and folate"
-  },
-  "potato": {
-    "status": "safe",
-    "notes": "Good source of potassium when cooked"
-  },
-  "pumpkin": {
-    "status": "safe",
-    "notes": "Rich in beta-carotene"
-  },
-  "squash": {
-    "status": "safe",
-    "notes": "Good source of vitamins A and C"
-  },
-  "watermelon": {
-    "status": "safe",
-    "notes": "Hydrating and rich in lycopene"
-  },
-  "cantaloupe": {
-    "status": "safe",
-    "notes": "High in vitamin A and C"
-  },
-  "honeydew": {
-    "status": "safe",
-    "notes": "Good source of vitamin C"
-  },
-  "grapes": {
-    "status": "safe",
-    "notes": "Safe when washed thoroughly"
-  },
-  "pineapple": {
-    "status": "safe",
-    "notes": "Rich in vitamin C, safe in normal amounts"
-  },
-  "mango": {
-    "status": "safe",
-    "notes": "High in vitamin A and C"
-  },
-  "papaya": {
-    "status": "limited",
-    "notes": "Ripe papaya is safe, avoid unripe papaya"
-  },
-  "kiwi": {
-    "status": "safe",
-    "notes": "Excellent source of vitamin C"
-  },
-  "peach": {
-    "status": "safe",
-    "notes": "Good source of vitamin A"
-  },
-  "plum": {
-    "status": "safe",
-    "notes": "Safe and nutritious"
-  },
-  "cherry": {
-    "status": "safe",
-    "notes": "Rich in antioxidants"
-  },
-  "cranberries": {
-    "status": "safe",
-    "notes": "May help prevent UTIs"
-  },
-  "pomegranate": {
-    "status": "safe",
-    "notes": "Rich in antioxidants"
-  },
-  "coconut": {
-    "status": "safe",
-    "notes": "Safe and hydrating"
-  },
-  "dates": {
-    "status": "safe",
-    "notes": "High in fiber and potassium"
-  },
-  "figs": {
-    "status": "safe",
-    "notes": "Good source of calcium and fiber"
-  },
-  "raisins": {
-    "status": "safe",
-    "notes": "High in iron and fiber"
-  },
-  "prunes": {
-    "status": "safe",
-    "notes": "High in fiber, may help with constipation"
-  },
-  "basil": {
-    "status": "safe",
-    "notes": "Safe in culinary amounts"
-  },
-  "oregano": {
-    "status": "safe",
-    "notes": "Safe as seasoning"
-  },
-  "thyme": {
-    "status": "safe",
-    "notes": "Safe in cooking amounts"
-  },
-  "rosemary": {
-    "status": "safe",
-    "notes": "Safe in culinary quantities"
-  },
-  "parsley": {
-    "status": "safe",
-    "notes": "Rich in folate and vitamin C"
-  },
-  "cilantro": {
-    "status": "safe",
-    "notes": "Safe and nutritious herb"
-  },
-  "mint": {
-    "status": "safe",
-    "notes": "Safe and may help with nausea"
-  },
-  "dill": {
-    "status": "safe",
-    "notes": "Safe in culinary amounts"
-  },
-  "sage": {
-    "status": "limited",
-    "notes": "Safe in small culinary amounts, avoid large quantities"
-  },
-  "black_pepper": {
-    "status": "safe",
-    "notes": "Safe as seasoning"
-  },
-  "salt": {
-    "status": "limited",
-    "notes": "Use in moderation, watch sodium intake"
-  },
-  "vanilla": {
-    "status": "safe",
-    "notes": "Safe flavoring in normal amounts"
-  },
-  "lemon": {
-    "status": "safe",
-    "notes": "High in vitamin C, may help with nausea"
-  },
-  "lime": {
-    "status": "safe",
-    "notes": "Rich in vitamin C"
-  },
-  "vinegar": {
-    "status": "safe",
-    "notes": "Safe in normal culinary amounts"
-  },
-  "baking_soda": {
-    "status": "safe",
-    "notes": "Safe in baking applications"
-  },
-  "cornstarch": {
-    "status": "safe",
-    "notes": "Safe thickening agent"
-  },
-  "flour": {
-    "status": "safe",
-    "notes": "Safe when used in cooked products"
-  },
-  "sugar": {
-    "status": "limited",
-    "notes": "Safe in moderation, monitor intake"
-  },
-  "brown_sugar": {
-    "status": "limited",
-    "notes": "Safe in moderation"
-  },
-  "maple_syrup": {
-    "status": "limited",
-    "notes": "Natural sweetener, use in moderation"
-  },
-  "molasses": {
-    "status": "safe",
-    "notes": "Good source of iron when used sparingly"
-  },
-  "cocoa": {
-    "status": "limited",
-    "notes": "Contains caffeine, consume in moderation"
-  },
-  "dark_chocolate": {
-    "status": "limited",
-    "notes": "Contains caffeine, limit intake"
-  },
-  "milk_chocolate": {
-    "status": "limited",
-    "notes": "Contains caffeine and sugar, consume moderately"
-  }
+  "version": 2,
+  "sources": {
+    "fda_fish_2024": {
+      "label": "FDA — Advice About Eating Fish (2024)",
+      "url": "https://www.fda.gov/food/consumers/advice-about-eating-fish",
+      "last_reviewed": "2024-03-15"
+    },
+    "cdc_listeria": {
+      "label": "CDC — Listeria and Pregnancy",
+      "url": "https://www.cdc.gov/listeria/prevention/pregnant-women.html",
+      "last_reviewed": "2024-08-01"
+    },
+    "acog_nutrition": {
+      "label": "ACOG — Nutrition During Pregnancy",
+      "url": "https://www.acog.org/womens-health/faqs/nutrition-during-pregnancy",
+      "last_reviewed": "2023-06-01"
+    },
+    "nhs_foods_avoid": {
+      "label": "NHS — Foods to avoid in pregnancy",
+      "url": "https://www.nhs.uk/pregnancy/keeping-well/foods-to-avoid/",
+      "last_reviewed": "2023-12-01"
+    },
+    "who_food_safety": {
+      "label": "WHO — Food Safety Recommendations",
+      "url": "https://www.who.int/news-room/fact-sheets/detail/food-safety",
+      "last_reviewed": "2022-05-01"
+    },
+    "internal_v1": {
+      "label": "Internal review (Ovi v1 ruleset)",
+      "url": null,
+      "last_reviewed": "2025-01-01"
+    }
+  },
+  "categories": {
+    "soft_cheese": {
+      "label": "Soft / mold-ripened cheese",
+      "default_status": "avoid",
+      "default_source_id": "cdc_listeria",
+      "default_notes": "Soft and mold-ripened cheeses can harbor Listeria. Confirm pasteurization on the label, or choose hard cheese instead."
+    },
+    "high_mercury_fish": {
+      "label": "High-mercury fish",
+      "default_status": "avoid",
+      "default_source_id": "fda_fish_2024",
+      "default_notes": "FDA flags this fish in the Choices to Avoid tier due to high mercury content."
+    },
+    "deli_meat": {
+      "label": "Deli / lunch meat",
+      "default_status": "limited",
+      "default_source_id": "cdc_listeria",
+      "default_notes": "Heat to steaming (165°F / 74°C) before eating to reduce Listeria risk."
+    },
+    "raw_animal_protein": {
+      "label": "Raw or undercooked animal protein",
+      "default_status": "avoid",
+      "default_source_id": "who_food_safety",
+      "default_notes": "Raw or undercooked animal protein can carry Salmonella, Toxoplasma, and other pathogens. Cook thoroughly."
+    },
+    "alcohol": {
+      "label": "Alcoholic beverage",
+      "default_status": "avoid",
+      "default_source_id": "acog_nutrition",
+      "default_notes": "ACOG: no amount of alcohol is known to be safe during pregnancy."
+    }
+  },
+  "rules": [
+    {"pattern": "raw salmon", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Avoid raw salmon — Listeria and parasite risk.", "source_id": "cdc_listeria"},
+    {"pattern": "raw tuna", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "High mercury and Listeria risk in raw tuna.", "source_id": "fda_fish_2024"},
+    {"pattern": "raw fish", "pattern_type": "prefix", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Raw fish carries Listeria and parasite risk.", "source_id": "cdc_listeria"},
+    {"pattern": "sushi", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Most sushi contains raw fish — Listeria and mercury risk. Cooked rolls (e.g., shrimp tempura) may be acceptable.", "source_id": "cdc_listeria"},
+    {"pattern": "sashimi", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Sashimi is raw fish — avoid during pregnancy.", "source_id": "cdc_listeria"},
+    {"pattern": "ceviche", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Acid-cured fish is not heat-cooked; treat as raw.", "source_id": "cdc_listeria"},
+    {"pattern": "raw shellfish", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "High risk of bacterial and viral contamination.", "source_id": "cdc_listeria"},
+    {"pattern": "raw oysters", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Vibrio and norovirus risk in raw oysters.", "source_id": "cdc_listeria"},
+    {"pattern": "raw clams", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Avoid raw clams — pathogen risk.", "source_id": "cdc_listeria"},
+    {"pattern": "raw mussels", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Avoid raw mussels — pathogen risk.", "source_id": "cdc_listeria"},
+    {"pattern": "smoked salmon", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Cold-smoked / refrigerated smoked seafood can carry Listeria. Heat to steaming or eat in cooked dishes only.", "source_id": "cdc_listeria"},
+    {"pattern": "lox", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Cold-smoked salmon — Listeria risk. Heat before eating.", "source_id": "cdc_listeria"},
+
+    {"pattern": "shark", "pattern_type": "exact", "category": "high_mercury_fish", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "FDA Choices to Avoid — very high mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "swordfish", "pattern_type": "exact", "category": "high_mercury_fish", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "FDA Choices to Avoid — high mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "king mackerel", "pattern_type": "exact", "category": "high_mercury_fish", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "FDA Choices to Avoid — high mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "tilefish", "pattern_type": "exact", "category": "high_mercury_fish", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "FDA Choices to Avoid — Gulf of Mexico tilefish has very high mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "marlin", "pattern_type": "exact", "category": "high_mercury_fish", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "FDA Choices to Avoid — high mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "orange roughy", "pattern_type": "exact", "category": "high_mercury_fish", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "FDA Choices to Avoid — high mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "bigeye tuna", "pattern_type": "exact", "category": "high_mercury_fish", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "FDA Choices to Avoid — high mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "tuna", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.5, "trimester": "all", "notes": "FDA Good Choice (canned light tuna) up to 1 serving/week. Limit albacore/yellowfin to 1 serving/week.", "source_id": "fda_fish_2024", "amount_limit": {"amount": 4, "unit": "oz", "period": "week"}},
+    {"pattern": "albacore tuna", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "FDA Good Choice — limit to 1 serving (4oz) per week due to mercury.", "source_id": "fda_fish_2024", "amount_limit": {"amount": 4, "unit": "oz", "period": "week"}},
+    {"pattern": "yellowfin tuna", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "FDA Good Choice — limit to 1 serving per week.", "source_id": "fda_fish_2024"},
+    {"pattern": "salmon", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "FDA Best Choice — low-mercury, high omega-3. Cook to 145°F.", "source_id": "fda_fish_2024"},
+    {"pattern": "sardines", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "FDA Best Choice — low mercury, high omega-3.", "source_id": "fda_fish_2024"},
+    {"pattern": "anchovies", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "FDA Best Choice — low mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "cod", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "FDA Best Choice — low mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "tilapia", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "FDA Best Choice — low mercury.", "source_id": "fda_fish_2024"},
+    {"pattern": "catfish", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "FDA Best Choice — low mercury freshwater fish.", "source_id": "fda_fish_2024"},
+    {"pattern": "shrimp", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "FDA Best Choice — low mercury when fully cooked.", "source_id": "fda_fish_2024"},
+    {"pattern": "crab", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.15, "trimester": "all", "notes": "FDA Best Choice — fully cooked.", "source_id": "fda_fish_2024"},
+    {"pattern": "lobster", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "FDA Good Choice — moderate mercury, limit to 1 serving/week.", "source_id": "fda_fish_2024"},
+    {"pattern": "halibut", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "FDA Good Choice — limit to 1 serving/week.", "source_id": "fda_fish_2024"},
+    {"pattern": "sea bass", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.5, "trimester": "all", "notes": "FDA Good Choice — limit to 1 serving/week.", "source_id": "fda_fish_2024"},
+    {"pattern": "mahi mahi", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.5, "trimester": "all", "notes": "FDA Good Choice — limit to 1 serving/week.", "source_id": "fda_fish_2024"},
+
+    {"pattern": "brie", "pattern_type": "exact", "category": "soft_cheese", "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Soft mold-ripened cheese — Listeria risk unless made with pasteurized milk.", "source_id": "cdc_listeria"},
+    {"pattern": "camembert", "pattern_type": "exact", "category": "soft_cheese", "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Soft mold-ripened cheese — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "blue cheese", "pattern_type": "exact", "category": "soft_cheese", "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Soft blue-veined cheese — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "gorgonzola", "pattern_type": "exact", "category": "soft_cheese", "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Soft blue-veined cheese — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "roquefort", "pattern_type": "exact", "category": "soft_cheese", "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Soft blue-veined cheese — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "queso fresco", "pattern_type": "exact", "category": "soft_cheese", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Frequently made from unpasteurized milk — strongly associated with Listeria outbreaks.", "source_id": "cdc_listeria"},
+    {"pattern": "queso blanco", "pattern_type": "exact", "category": "soft_cheese", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Frequently unpasteurized — Listeria outbreak history.", "source_id": "cdc_listeria"},
+    {"pattern": "feta cheese", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "Safe if pasteurized — confirm on label.", "source_id": "cdc_listeria"},
+    {"pattern": "feta", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "Safe if pasteurized — confirm on label.", "source_id": "cdc_listeria"},
+    {"pattern": "unpasteurized cheese", "pattern_type": "prefix", "category": "soft_cheese", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Unpasteurized cheese — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "pasteurized cheese", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Pasteurized cheese is safe.", "source_id": "cdc_listeria"},
+    {"pattern": "cheddar", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Hard cheese — typically pasteurized and low Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "mozzarella", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.15, "trimester": "all", "notes": "Safe if pasteurized — fresh mozzarella should be confirmed on label.", "source_id": "cdc_listeria"},
+    {"pattern": "parmesan", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Hard aged cheese — very low risk.", "source_id": "cdc_listeria"},
+    {"pattern": "swiss cheese", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Hard cheese — typically safe.", "source_id": "cdc_listeria"},
+
+    {"pattern": "raw eggs", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Salmonella risk in raw eggs. Avoid uncooked batters and dressings made with raw egg.", "source_id": "who_food_safety"},
+    {"pattern": "undercooked eggs", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.8, "trimester": "all", "notes": "Cook eggs until both yolk and white are firm.", "source_id": "who_food_safety"},
+    {"pattern": "runny eggs", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.8, "trimester": "all", "notes": "Salmonella risk — cook fully.", "source_id": "who_food_safety"},
+    {"pattern": "raw meat", "pattern_type": "prefix", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Toxoplasmosis and bacterial risk. Cook to safe internal temperature.", "source_id": "who_food_safety"},
+    {"pattern": "undercooked meat", "pattern_type": "prefix", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Cook meat to USDA-recommended internal temperature.", "source_id": "who_food_safety"},
+    {"pattern": "tartare", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Steak/beef tartare is raw — avoid.", "source_id": "who_food_safety"},
+    {"pattern": "carpaccio", "pattern_type": "exact", "category": "raw_animal_protein", "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Carpaccio is raw thinly-sliced meat — avoid.", "source_id": "who_food_safety"},
+
+    {"pattern": "deli meat", "pattern_type": "prefix", "category": "deli_meat", "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Heat to steaming (165°F) before eating — Listeria.", "source_id": "cdc_listeria"},
+    {"pattern": "lunch meat", "pattern_type": "prefix", "category": "deli_meat", "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Heat to steaming — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "cold cuts", "pattern_type": "prefix", "category": "deli_meat", "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Heat to steaming — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "hot dogs", "pattern_type": "exact", "category": "deli_meat", "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Heat to steaming — Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "salami", "pattern_type": "exact", "category": "deli_meat", "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Heat before eating to reduce Listeria risk.", "source_id": "cdc_listeria"},
+    {"pattern": "prosciutto", "pattern_type": "exact", "category": "deli_meat", "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "Cured but not cooked — heat before eating.", "source_id": "cdc_listeria"},
+    {"pattern": "pate", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Refrigerated pâté — Listeria risk. Shelf-stable canned pâté is acceptable.", "source_id": "cdc_listeria"},
+    {"pattern": "pâté", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Refrigerated pâté — Listeria risk.", "source_id": "cdc_listeria"},
+
+    {"pattern": "liver", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "t1", "notes": "Liver is extremely high in retinol (preformed vitamin A); excess in early pregnancy is teratogenic. Avoid liver and liver products in T1.", "source_id": "nhs_foods_avoid"},
+    {"pattern": "liver pate", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Liver pâté combines two risks — high retinol plus refrigerated-pâté Listeria risk.", "source_id": "nhs_foods_avoid"},
+    {"pattern": "cod liver oil", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "High preformed vitamin A — avoid unless prescribed.", "source_id": "nhs_foods_avoid"},
+    {"pattern": "vitamin a supplement", "pattern_type": "prefix", "category": null, "status": "avoid", "severity_score": 0.9, "trimester": "all", "notes": "Preformed vitamin A supplements (retinol) — teratogenic in excess. Use only under medical guidance.", "source_id": "nhs_foods_avoid"},
+
+    {"pattern": "caffeine", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "ACOG: limit caffeine to under 200 mg per day during pregnancy.", "source_id": "acog_nutrition", "amount_limit": {"amount": 200, "unit": "mg", "period": "day"}},
+    {"pattern": "coffee", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.3, "trimester": "all", "notes": "Limit to ~1–2 cups per day (under 200 mg caffeine).", "source_id": "acog_nutrition", "amount_limit": {"amount": 200, "unit": "mg", "period": "day"}},
+    {"pattern": "espresso", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "About 64mg per shot — count toward 200mg daily limit.", "source_id": "acog_nutrition"},
+    {"pattern": "tea", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.25, "trimester": "all", "notes": "Caffeinated tea counts toward the 200mg daily caffeine limit.", "source_id": "acog_nutrition"},
+    {"pattern": "green tea", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.25, "trimester": "all", "notes": "Contains caffeine; counts toward 200mg daily limit.", "source_id": "acog_nutrition"},
+    {"pattern": "black tea", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.25, "trimester": "all", "notes": "Caffeinated — counts toward 200mg daily limit.", "source_id": "acog_nutrition"},
+    {"pattern": "energy drinks", "pattern_type": "prefix", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "High caffeine plus other stimulants and herbal additives not studied in pregnancy.", "source_id": "acog_nutrition"},
+    {"pattern": "kombucha", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.7, "trimester": "all", "notes": "Unpasteurized fermented tea — small alcohol content and bacterial risk.", "source_id": "acog_nutrition"},
+
+    {"pattern": "alcohol", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "ACOG: no amount of alcohol is known to be safe during pregnancy.", "source_id": "acog_nutrition"},
+    {"pattern": "wine", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "Avoid all wine — fetal alcohol risk.", "source_id": "acog_nutrition"},
+    {"pattern": "beer", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "Avoid all beer — fetal alcohol risk.", "source_id": "acog_nutrition"},
+    {"pattern": "champagne", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "Avoid — alcohol.", "source_id": "acog_nutrition"},
+    {"pattern": "whiskey", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "Avoid — alcohol.", "source_id": "acog_nutrition"},
+    {"pattern": "vodka", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "Avoid — alcohol.", "source_id": "acog_nutrition"},
+    {"pattern": "rum", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "Avoid — alcohol.", "source_id": "acog_nutrition"},
+    {"pattern": "cocktail", "pattern_type": "exact", "category": "alcohol", "status": "avoid", "severity_score": 1.0, "trimester": "all", "notes": "Avoid — likely contains alcohol.", "source_id": "acog_nutrition"},
+
+    {"pattern": "unpasteurized milk", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Raw milk — Listeria, E. coli, Salmonella risk.", "source_id": "cdc_listeria"},
+    {"pattern": "raw milk", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.95, "trimester": "all", "notes": "Raw milk — Listeria, E. coli, Salmonella risk.", "source_id": "cdc_listeria"},
+    {"pattern": "unpasteurized juice", "pattern_type": "prefix", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Unpasteurized juice — bacterial contamination risk.", "source_id": "cdc_listeria"},
+
+    {"pattern": "raw sprouts", "pattern_type": "prefix", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Sprouts (alfalfa, clover, mung) — Salmonella and E. coli risk. Cook fully or avoid.", "source_id": "cdc_listeria"},
+    {"pattern": "alfalfa sprouts", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Sprouts — bacterial contamination risk.", "source_id": "cdc_listeria"},
+
+    {"pattern": "herbal tea", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.5, "trimester": "all", "notes": "Some herbal teas are unsafe (e.g., high-dose sage, parsley, licorice). Confirm each ingredient with your provider.", "source_id": "nhs_foods_avoid"},
+    {"pattern": "licorice", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.6, "trimester": "all", "notes": "High glycyrrhizin intake associated with adverse outcomes — limit black licorice.", "source_id": "nhs_foods_avoid"},
+    {"pattern": "ginger", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Generally safe — may help with morning sickness.", "source_id": "internal_v1"},
+    {"pattern": "turmeric", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.3, "trimester": "all", "notes": "Safe in food amounts; avoid concentrated supplements.", "source_id": "internal_v1"},
+    {"pattern": "cinnamon", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Safe in normal culinary amounts.", "source_id": "internal_v1"},
+    {"pattern": "sage", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "Safe in small culinary amounts; avoid concentrated/medicinal doses.", "source_id": "nhs_foods_avoid"},
+    {"pattern": "parsley", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Safe as garnish/seasoning. Avoid medicinal-dose parsley extracts.", "source_id": "internal_v1"},
+
+    {"pattern": "papaya", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.5, "trimester": "all", "notes": "Ripe papaya is generally safe. Unripe/green papaya contains latex linked to uterine contractions — avoid.", "source_id": "internal_v1"},
+    {"pattern": "unripe papaya", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Latex in unripe papaya can stimulate uterine contractions — avoid.", "source_id": "internal_v1"},
+
+    {"pattern": "spinach", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "High in folate — wash thoroughly.", "source_id": "internal_v1"},
+    {"pattern": "kale", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "High in folate and iron — wash thoroughly.", "source_id": "internal_v1"},
+    {"pattern": "broccoli", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "High in folate and vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "carrots", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Beta-carotene and fiber.", "source_id": "internal_v1"},
+    {"pattern": "carrot", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Beta-carotene and fiber.", "source_id": "internal_v1"},
+    {"pattern": "sweet potato", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin A and fiber.", "source_id": "internal_v1"},
+    {"pattern": "avocado", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Healthy fats and folate.", "source_id": "internal_v1"},
+    {"pattern": "banana", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Potassium and B6.", "source_id": "internal_v1"},
+    {"pattern": "apple", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Fiber and vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "orange", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin C and folate.", "source_id": "internal_v1"},
+    {"pattern": "berries", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Antioxidants and vitamin C — wash thoroughly.", "source_id": "internal_v1"},
+    {"pattern": "strawberries", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "High in vitamin C and folate — wash thoroughly.", "source_id": "internal_v1"},
+    {"pattern": "blueberries", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Antioxidants and fiber.", "source_id": "internal_v1"},
+
+    {"pattern": "chicken", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Lean protein when fully cooked (165°F).", "source_id": "who_food_safety"},
+    {"pattern": "turkey", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Cook to 165°F.", "source_id": "who_food_safety"},
+    {"pattern": "beef", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Iron source — cook to 145°F (whole) or 160°F (ground).", "source_id": "who_food_safety"},
+    {"pattern": "ground beef", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.15, "trimester": "all", "notes": "Cook to 160°F internal.", "source_id": "who_food_safety"},
+    {"pattern": "pork", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Cook to 145°F internal.", "source_id": "who_food_safety"},
+    {"pattern": "lamb", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Cook to 145°F internal.", "source_id": "who_food_safety"},
+
+    {"pattern": "eggs", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Cook until both yolk and white are firm.", "source_id": "who_food_safety"},
+    {"pattern": "yogurt", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Calcium and probiotics — confirm pasteurized.", "source_id": "internal_v1"},
+    {"pattern": "milk", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Pasteurized milk is safe and nutritious.", "source_id": "cdc_listeria"},
+
+    {"pattern": "beans", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Protein and folate.", "source_id": "internal_v1"},
+    {"pattern": "lentils", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Protein, iron, folate.", "source_id": "internal_v1"},
+    {"pattern": "chickpeas", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Protein and fiber.", "source_id": "internal_v1"},
+    {"pattern": "quinoa", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Complete protein and folate.", "source_id": "internal_v1"},
+    {"pattern": "brown rice", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Whole grain B vitamins.", "source_id": "internal_v1"},
+    {"pattern": "oats", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "High fiber whole grain.", "source_id": "internal_v1"},
+    {"pattern": "whole wheat", "pattern_type": "prefix", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "B vitamins and fiber.", "source_id": "internal_v1"},
+
+    {"pattern": "nuts", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Healthy fats and protein — unless allergic.", "source_id": "internal_v1"},
+    {"pattern": "almonds", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin E and healthy fats.", "source_id": "internal_v1"},
+    {"pattern": "walnuts", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Omega-3 fatty acids.", "source_id": "internal_v1"},
+    {"pattern": "peanuts", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe unless allergic.", "source_id": "internal_v1"},
+    {"pattern": "sunflower seeds", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin E.", "source_id": "internal_v1"},
+    {"pattern": "chia seeds", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Omega-3s and fiber.", "source_id": "internal_v1"},
+    {"pattern": "flax seeds", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Omega-3 fatty acids.", "source_id": "internal_v1"},
+
+    {"pattern": "olive oil", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Healthy monounsaturated fats.", "source_id": "internal_v1"},
+    {"pattern": "coconut oil", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Safe in moderation.", "source_id": "internal_v1"},
+    {"pattern": "butter", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Safe in moderation when pasteurized.", "source_id": "internal_v1"},
+    {"pattern": "honey", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Safe for adults — botulism risk only applies to infants.", "source_id": "internal_v1"},
+
+    {"pattern": "garlic", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe.", "source_id": "internal_v1"},
+    {"pattern": "onion", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe.", "source_id": "internal_v1"},
+    {"pattern": "tomato", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Lycopene and vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "bell pepper", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "High vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "cucumber", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Hydrating, low calorie.", "source_id": "internal_v1"},
+    {"pattern": "lettuce", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Wash thoroughly — pre-washed bagged greens have had Listeria recalls; rinse anyway.", "source_id": "cdc_listeria"},
+    {"pattern": "cabbage", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "cauliflower", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Folate and vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "zucchini", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Low calorie vitamins.", "source_id": "internal_v1"},
+    {"pattern": "eggplant", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Cooked is safe.", "source_id": "internal_v1"},
+    {"pattern": "mushrooms", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Cooked cultivated mushrooms are safe — avoid wild-foraged varieties.", "source_id": "internal_v1"},
+    {"pattern": "asparagus", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Folate.", "source_id": "internal_v1"},
+    {"pattern": "artichoke", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Fiber and folate.", "source_id": "internal_v1"},
+    {"pattern": "beets", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Folate and fiber.", "source_id": "internal_v1"},
+    {"pattern": "celery", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Wash thoroughly.", "source_id": "internal_v1"},
+    {"pattern": "corn", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Fiber.", "source_id": "internal_v1"},
+    {"pattern": "peas", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Protein and folate.", "source_id": "internal_v1"},
+    {"pattern": "potato", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Cooked potato is safe — green/sprouted potatoes contain solanine; trim.", "source_id": "internal_v1"},
+    {"pattern": "pumpkin", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Beta-carotene.", "source_id": "internal_v1"},
+    {"pattern": "squash", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamins A and C.", "source_id": "internal_v1"},
+
+    {"pattern": "watermelon", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Hydrating, lycopene.", "source_id": "internal_v1"},
+    {"pattern": "cantaloupe", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.4, "trimester": "all", "notes": "CDC has linked cantaloupe to multiple Listeria/Salmonella outbreaks via the rind. Wash rind thoroughly before cutting; eat soon.", "source_id": "cdc_listeria"},
+    {"pattern": "honeydew", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Wash rind before cutting.", "source_id": "internal_v1"},
+    {"pattern": "grapes", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Wash thoroughly.", "source_id": "internal_v1"},
+    {"pattern": "pineapple", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Safe in normal amounts. Bromelain content is too low in fruit to cause concern.", "source_id": "internal_v1"},
+    {"pattern": "mango", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamins A and C.", "source_id": "internal_v1"},
+    {"pattern": "kiwi", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "peach", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin A.", "source_id": "internal_v1"},
+    {"pattern": "plum", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe.", "source_id": "internal_v1"},
+    {"pattern": "cherry", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Antioxidants.", "source_id": "internal_v1"},
+    {"pattern": "cranberries", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "May help prevent UTIs.", "source_id": "internal_v1"},
+    {"pattern": "pomegranate", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Antioxidants.", "source_id": "internal_v1"},
+    {"pattern": "coconut", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe.", "source_id": "internal_v1"},
+    {"pattern": "dates", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Fiber and potassium.", "source_id": "internal_v1"},
+    {"pattern": "figs", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Calcium and fiber.", "source_id": "internal_v1"},
+    {"pattern": "raisins", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Iron and fiber.", "source_id": "internal_v1"},
+    {"pattern": "prunes", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Fiber.", "source_id": "internal_v1"},
+
+    {"pattern": "basil", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe in culinary amounts.", "source_id": "internal_v1"},
+    {"pattern": "oregano", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe as seasoning.", "source_id": "internal_v1"},
+    {"pattern": "thyme", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe in cooking.", "source_id": "internal_v1"},
+    {"pattern": "rosemary", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe in culinary amounts.", "source_id": "internal_v1"},
+    {"pattern": "cilantro", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe.", "source_id": "internal_v1"},
+    {"pattern": "mint", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe and may help with nausea.", "source_id": "internal_v1"},
+    {"pattern": "dill", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe in culinary amounts.", "source_id": "internal_v1"},
+    {"pattern": "black pepper", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe as seasoning.", "source_id": "internal_v1"},
+    {"pattern": "vanilla", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe in normal amounts. Vanilla extract has trace alcohol but quantities used in baking are negligible.", "source_id": "internal_v1"},
+    {"pattern": "lemon", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "lime", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Vitamin C.", "source_id": "internal_v1"},
+    {"pattern": "vinegar", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe in normal culinary amounts.", "source_id": "internal_v1"},
+    {"pattern": "baking soda", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe in baking.", "source_id": "internal_v1"},
+    {"pattern": "cornstarch", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.05, "trimester": "all", "notes": "Safe thickener.", "source_id": "internal_v1"},
+    {"pattern": "flour", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.3, "trimester": "all", "notes": "Raw flour can carry E. coli — only consume in cooked products. Avoid raw cookie dough/batter.", "source_id": "who_food_safety"},
+
+    {"pattern": "salt", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.2, "trimester": "all", "notes": "Use in moderation — watch sodium intake.", "source_id": "internal_v1"},
+    {"pattern": "sugar", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.2, "trimester": "all", "notes": "Safe in moderation — monitor intake.", "source_id": "internal_v1"},
+    {"pattern": "brown sugar", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.2, "trimester": "all", "notes": "Safe in moderation.", "source_id": "internal_v1"},
+    {"pattern": "maple syrup", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.2, "trimester": "all", "notes": "Natural sweetener — moderate.", "source_id": "internal_v1"},
+    {"pattern": "molasses", "pattern_type": "exact", "category": null, "status": "safe", "severity_score": 0.1, "trimester": "all", "notes": "Iron source when used sparingly.", "source_id": "internal_v1"},
+
+    {"pattern": "cocoa", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.25, "trimester": "all", "notes": "Contains caffeine — counts toward 200mg daily limit.", "source_id": "acog_nutrition"},
+    {"pattern": "dark chocolate", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.3, "trimester": "all", "notes": "~12mg caffeine per oz — counts toward daily caffeine limit.", "source_id": "acog_nutrition"},
+    {"pattern": "milk chocolate", "pattern_type": "exact", "category": null, "status": "limited", "severity_score": 0.2, "trimester": "all", "notes": "Lower caffeine than dark; still counts toward daily limit.", "source_id": "acog_nutrition"},
+
+    {"pattern": "raw cookie dough", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Raw flour and raw eggs — E. coli and Salmonella risk.", "source_id": "who_food_safety"},
+    {"pattern": "raw batter", "pattern_type": "exact", "category": null, "status": "avoid", "severity_score": 0.85, "trimester": "all", "notes": "Raw flour and raw eggs — pathogen risk.", "source_id": "who_food_safety"}
+  ]
 }

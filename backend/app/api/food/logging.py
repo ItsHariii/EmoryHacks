@@ -5,7 +5,7 @@ Handles CRUD operations for food consumption logs.
 import logging
 from datetime import datetime, timedelta, date as date_type
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from app.services.nutrition_calculator_service import NutritionCalculatorService
@@ -16,19 +16,60 @@ from app.models.food import Food, FoodLog
 from app.schemas.food import FoodLogCreate, FoodLogUpdate, FoodLogResponse, DailyNutrition
 from app.services.usda_service import USDAService
 from app.services.smart_suggestions_service import smart_suggestions_service
+from app.services.pregnancy_safety_service import pregnancy_safety_service
+from app.services.allergen_service import check_allergens
 from app.utils.food_factory import FoodFactory
 from app.core.config import settings
+from app.middleware.idempotency import idempotency_check, idempotency_store
 
 # Initialize router and logger
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-def _format_food_log_response(food_log: FoodLog, food: Food, serving_size: float = None, serving_unit: str = None) -> dict:
+def _build_safety_verdict(food: Food, user: Optional[User]) -> Optional[dict]:
+    """Return the safety verdict for a food.
+
+    Prefers the persisted Food.safety_verdict column (written at ingest, may
+    carry a Gemini layer-5 finding) so reads don't recompute. Falls back to
+    a fresh layered evaluation if the column is empty — keeps backward
+    compatibility with rows that pre-date the column.
+    """
+    try:
+        persisted = getattr(food, "safety_verdict", None)
+        # User trimester only matters when re-evaluating; the persisted
+        # verdict was computed at ingest with a generic trimester. If the
+        # user has a real trimester, re-eval for trimester-specific rules.
+        user_trimester = getattr(user, "trimester", None) if user else None
+        if persisted and not user_trimester:
+            return persisted
+
+        ingredients = list(getattr(food, "ingredients", None) or [])
+        if not ingredients and getattr(food, "name", None):
+            ingredients = [food.name]
+        return pregnancy_safety_service.evaluate(
+            ingredients,
+            food_category=getattr(food, "category", None),
+            trimester=user_trimester,
+        )
+    except Exception as e:
+        logger.warning("Safety verdict generation failed for food %s: %s", getattr(food, "id", None), e)
+        return None
+
+
+def _format_food_log_response(
+    food_log: FoodLog,
+    food: Food,
+    serving_size: float = None,
+    serving_unit: str = None,
+    user: Optional[User] = None,
+) -> dict:
     """Helper function to format food log response with clarity fields."""
-    # Use provided serving info or fall back to food defaults
     actual_serving_size = serving_size or food.serving_size
     actual_serving_unit = serving_unit or food.serving_unit
-    
+
+    safety_verdict = _build_safety_verdict(food, user)
+    allergen_hits = check_allergens(food, user) if user else []
+
     return {
         "id": str(food_log.id),
         "user_id": str(food_log.user_id),
@@ -65,6 +106,8 @@ def _format_food_log_response(food_log: FoodLog, food: Food, serving_size: float
             },
             "safety_status": food.safety_status,
             "safety_notes": food.safety_notes,
+            "safety_verdict": safety_verdict,
+            "allergen_hits": allergen_hits,
             "fdc_id": str(food.fdc_id) if food.fdc_id is not None else None,
             "created_at": food.created_at,
             "updated_at": food.updated_at,
@@ -81,12 +124,31 @@ food_factory = FoodFactory()
 async def log_food(
     log_in: FoodLogCreate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
 ):
     """
     Log a food item for the current user.
     Handles both local database foods and USDA foods.
     """
+    # Replay protection: if the client retries the same logical write within
+    # the idempotency window (default 60s), return the stored response instead
+    # of double-inserting. Keyed on (user, header, canonical request body) so
+    # accidental key reuse with different body still goes through.
+    request_signature = log_in.dict()
+    replay = await idempotency_check(
+        scope="food_log",
+        user_id=str(current_user.id),
+        key=idempotency_key,
+        body=request_signature,
+    )
+    if replay is not None:
+        logger.info(
+            "Idempotent replay for food_log key=%s user=%s",
+            idempotency_key, current_user.id,
+        )
+        return replay
+
     food_id = log_in.food_id
     food = None
     
@@ -181,7 +243,17 @@ async def log_food(
         logger.info(f"Successfully created food log {food_log.id} with {nutrition_data['calories_logged']} calories")
 
         # Format response with serving info
-        return _format_food_log_response(food_log, food)
+        response = _format_food_log_response(food_log, food, user=current_user)
+
+        # Stash for replay within the idempotency window.
+        await idempotency_store(
+            scope="food_log",
+            user_id=str(current_user.id),
+            key=idempotency_key,
+            body=request_signature,
+            response=response,
+        )
+        return response
 
     except HTTPException:
         raise
@@ -235,7 +307,7 @@ async def get_food_logs(
     formatted_logs = []
     for log in logs:
         if log.food:
-            formatted_logs.append(_format_food_log_response(log, log.food))
+            formatted_logs.append(_format_food_log_response(log, log.food, user=current_user))
 
     return formatted_logs
 
@@ -350,6 +422,12 @@ async def get_weekly_summary(
             "vitamin_c_mg": summary.vitamin_c_mg,
             "vitamin_d_mcg": summary.vitamin_d_mcg,
             "folate_mcg": summary.folate_mcg,
+            "magnesium_mg": summary.magnesium_mg,
+            "zinc_mg": summary.zinc_mg,
+            "potassium_mg": summary.potassium_mg,
+            "choline_mg": summary.choline_mg,
+            "dha_mg": summary.dha_mg,
+            "omega3_mg": summary.omega3_mg,
             "trimester": current_user.trimester
         })
 
@@ -395,7 +473,7 @@ async def get_food_log(
             detail="Associated food not found"
         )
 
-    return _format_food_log_response(log, food)
+    return _format_food_log_response(log, food, user=current_user)
 
 
 @router.patch("/log/{log_id}", response_model=FoodLogResponse)
@@ -424,15 +502,36 @@ async def update_food_log(
             detail="Food log not found"
         )
 
-    # Update fields
-    for field, value in log_in.dict(exclude_unset=True).items():
+    food = db.query(Food).filter(Food.id == log.food_id).first()
+    if not food:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Associated food not found"
+        )
+
+    update_fields = log_in.dict(exclude_unset=True)
+    for field, value in update_fields.items():
         setattr(log, field, value)
 
+    # Recompute nutrition when serving size, serving unit, or quantity changes,
+    # otherwise stored calories_logged/nutrients_logged go stale.
+    if any(k in update_fields for k in ("serving_size", "serving_unit", "quantity")):
+        nutrition_calculator = NutritionCalculatorService()
+        nutrition_data = nutrition_calculator.calculate_consumed_nutrition(
+            food=food,
+            user_serving_size=log.serving_size,
+            user_serving_unit=log.serving_unit,
+            quantity=log.quantity or 1.0,
+        )
+        log.calories_logged = nutrition_data['calories_logged']
+        log.nutrients_logged = nutrition_data['nutrients_logged']
+
+    log.updated_at = datetime.utcnow()
     db.add(log)
     db.commit()
     db.refresh(log)
 
-    return log
+    return _format_food_log_response(log, food, user=current_user)
 
 
 @router.delete("/log/{log_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -18,6 +18,43 @@ export interface User {
   dietary_preferences?: string;
 }
 
+export interface CitedSource {
+  id: string;
+  label: string;
+  url?: string | null;
+  last_reviewed?: string | null;
+}
+
+export interface IngredientFinding {
+  ingredient: string;
+  status: 'safe' | 'limited' | 'avoid';
+  notes: string;
+  matched_pattern?: string | null;
+  matched_layer: 'exact' | 'prefix' | 'token' | 'category' | 'fuzzy' | 'default';
+  category?: string | null;
+  source?: CitedSource | null;
+  confidence: number;
+  amount_limit?: { amount: number; unit: string; period: string } | null;
+}
+
+export interface SafetyVerdict {
+  status: 'safe' | 'limited' | 'avoid';
+  confidence: number;
+  summary: string;
+  ingredient_findings: IngredientFinding[];
+  cited_sources: CitedSource[];
+  trimester?: 'all' | 't1' | 't2' | 't3' | null;
+  trimester_specific: boolean;
+  amount_guidance?: { amount: number; unit: string; period: string } | null;
+  reviewed_by_human: boolean;
+}
+
+export interface AllergenHit {
+  allergen: string;
+  matched_in: 'allergens' | 'ingredients' | 'name';
+  severity: 'warn' | 'block';
+}
+
 export interface FoodItem {
   id: string;
   name: string;
@@ -33,6 +70,8 @@ export interface FoodItem {
   serving_unit?: string;
   safety_status?: 'safe' | 'limited' | 'avoid';
   safety_notes?: string;
+  safety_verdict?: SafetyVerdict | null;
+  allergen_hits?: AllergenHit[];
 }
 
 export interface FoodEntry {
